@@ -15,5 +15,5 @@ import java.util.List;
 public class SpanishExpression {
     private String expression;
     private int score;
-    private List<String> translations;
+    private List<EnglishExpression> translations;
 }
