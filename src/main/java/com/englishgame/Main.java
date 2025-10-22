@@ -8,7 +8,7 @@ import com.englishgame.service.implementations.DatabaseServiceImpl;
 import com.englishgame.service.implementations.GameDataServiceImpl;
 import com.englishgame.service.implementations.GameLogicServiceImpl;
 import com.englishgame.service.implementations.ScoreServiceImpl;
-import com.englishgame.view.MainGameView;
+import com.englishgame.view.LandingPageView;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -50,9 +50,9 @@ public class Main {
             // Initialize controller
             GameController gameController = new GameController(gameLogicService, databaseService, gameDataService);
             
-            // Initialize and show main view
-            MainGameView mainView = new MainGameView(gameController);
-            mainView.showView();
+            // Initialize and show landing page
+            LandingPageView landingPageView = new LandingPageView(gameController);
+            landingPageView.setVisible(true);
             
             log.info("English Learning Game started successfully");
             

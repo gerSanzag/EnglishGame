@@ -170,4 +170,22 @@ public class GameController {
         gameDataService.loadGameData();
         log.debug("Game state loaded successfully");
     }
+
+    /**
+     * Gets all Spanish expressions from a specific database
+     * @param databaseName name of the database
+     * @return list of Spanish expressions
+     */
+    public List<SpanishExpression> getSpanishExpressionsFromDatabase(String databaseName) {
+        return databaseService.getSpanishExpressions(databaseName);
+    }
+
+    /**
+     * Gets all English expressions from a specific database
+     * @param databaseName name of the database
+     * @return list of English expressions
+     */
+    public List<EnglishExpression> getEnglishExpressionsFromDatabase(String databaseName) {
+        return databaseService.getEnglishExpressions(databaseName);
+    }
 }
