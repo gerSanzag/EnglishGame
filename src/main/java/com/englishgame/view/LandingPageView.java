@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.RenderingHints;
 
 /**
  * Landing page for the English Learning Game
@@ -20,10 +21,11 @@ public class LandingPageView extends JFrame {
     public LandingPageView(GameController gameController) {
         this.gameController = gameController;
         setTitle("English Learning Game - Main Menu");
-        setSize(600, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
+        setMinimumSize(new Dimension(600, 500));
+        pack();
         
         initComponents();
         setupLayout();
@@ -35,29 +37,39 @@ public class LandingPageView extends JFrame {
     private void initComponents() {
         // Main title
         JLabel titleLabel = new JLabel("English Learning Game", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 28));
-        titleLabel.setForeground(new Color(0, 102, 204));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
+        titleLabel.setForeground(Color.WHITE);
         
         // Subtitle
         JLabel subtitleLabel = new JLabel("Master English through interactive learning", SwingConstants.CENTER);
-        subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-        subtitleLabel.setForeground(Color.GRAY);
+        subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 18));
+        subtitleLabel.setForeground(Color.WHITE);
         
-        // Navigation buttons
-        JButton dataManagementButton = createStyledButton("📊 Manage Databases & Data", 
-            "Create and manage your learning databases");
+        // Welcome message
+        JLabel welcomeLabel = new JLabel("Welcome to your English learning journey!", SwingConstants.CENTER);
+        welcomeLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        welcomeLabel.setForeground(Color.WHITE);
         
-        JButton viewWordsButton = createStyledButton("📚 View Saved Words", 
-            "Browse and review your vocabulary");
+        // Instruction
+        JLabel instructionLabel = new JLabel("Choose an option below to get started.", SwingConstants.CENTER);
+        instructionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
+        instructionLabel.setForeground(Color.WHITE);
         
-        JButton playGameButton = createStyledButton("🎮 Play Interactive Game", 
-            "Start learning with our game system");
+        // Navigation buttons with different colors
+        JButton dataManagementButton = createStyledButton("Manage Databases & Data", 
+            "Create and manage your learning databases", new Color(52, 152, 219)); // Blue
         
-        JButton learnedWordsButton = createStyledButton("🏆 Learned Words", 
-            "See your mastered vocabulary");
+        JButton viewWordsButton = createStyledButton("View Saved Words", 
+            "Browse and review your vocabulary", new Color(46, 204, 113)); // Green
         
-        JButton exitButton = createStyledButton("❌ Exit Application", 
-            "Close the application");
+        JButton playGameButton = createStyledButton("Play Interactive Game", 
+            "Start learning with our game system", new Color(241, 196, 15)); // Orange
+        
+        JButton learnedWordsButton = createStyledButton("Learned Words", 
+            "See your mastered vocabulary", new Color(155, 89, 182)); // Purple
+        
+        JButton exitButton = createStyledButton("Exit Application", 
+            "Close the application", new Color(231, 76, 60)); // Red
         
         // Add action listeners
         dataManagementButton.addActionListener(e -> openDataManagement());
@@ -74,26 +86,46 @@ public class LandingPageView extends JFrame {
         this.exitButton = exitButton;
         this.titleLabel = titleLabel;
         this.subtitleLabel = subtitleLabel;
+        this.welcomeLabel = welcomeLabel;
+        this.instructionLabel = instructionLabel;
     }
 
-    private JButton createStyledButton(String text, String tooltip) {
+    private JButton createStyledButton(String text, String tooltip, Color buttonColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 14));
-        button.setPreferredSize(new Dimension(300, 50));
+        button.setPreferredSize(new Dimension(350, 50));
+        button.setMinimumSize(new Dimension(300, 50));
+        button.setMaximumSize(new Dimension(400, 50));
         button.setToolTipText(tooltip);
-        button.setBackground(new Color(70, 130, 180));
+        button.setBackground(buttonColor);
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setBorderPainted(true);
         
-        // Hover effect
+        // Create darker border color
+        Color borderColor = new Color(
+            Math.max(0, buttonColor.getRed() - 30),
+            Math.max(0, buttonColor.getGreen() - 30),
+            Math.max(0, buttonColor.getBlue() - 30)
+        );
+        button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
+        
+        // Hover effect with lighter color
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(100, 149, 237));
+                Color hoverColor = new Color(
+                    Math.min(255, buttonColor.getRed() + 30),
+                    Math.min(255, buttonColor.getGreen() + 30),
+                    Math.min(255, buttonColor.getBlue() + 30)
+                );
+                button.setBackground(hoverColor);
+                button.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(buttonColor);
+                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
             }
         });
         
@@ -101,21 +133,58 @@ public class LandingPageView extends JFrame {
     }
 
     private void setupLayout() {
-        setLayout(new BorderLayout(20, 20));
+        setLayout(new BorderLayout());
         
-        // Top panel with title
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
-        topPanel.setBackground(new Color(248, 249, 250));
+        // Blue banner panel with gradient
+        JPanel bannerPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                // Create gradient from light blue to dark blue
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(100, 149, 237),  // Light blue at top
+                    0, getHeight(), new Color(70, 130, 180)  // Dark blue at bottom
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        bannerPanel.setLayout(new BoxLayout(bannerPanel, BoxLayout.Y_AXIS));
+        bannerPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
+        bannerPanel.setPreferredSize(new Dimension(600, 180));
+        bannerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
         
-        topPanel.add(titleLabel, BorderLayout.NORTH);
-        topPanel.add(subtitleLabel, BorderLayout.SOUTH);
+        // Add title and subtitle to banner
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        
+        bannerPanel.add(Box.createVerticalStrut(10));
+        bannerPanel.add(titleLabel);
+        bannerPanel.add(Box.createVerticalStrut(10));
+        bannerPanel.add(subtitleLabel);
+        bannerPanel.add(Box.createVerticalStrut(20));
+        bannerPanel.add(welcomeLabel);
+        bannerPanel.add(Box.createVerticalStrut(5));
+        bannerPanel.add(instructionLabel);
         
         // Center panel with buttons
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         centerPanel.setBackground(Color.WHITE);
+        centerPanel.setPreferredSize(new Dimension(600, 400));
+        
+        // Center buttons horizontally
+        dataManagementButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        viewWordsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        playGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        learnedWordsButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        exitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         centerPanel.add(Box.createVerticalStrut(20));
         centerPanel.add(dataManagementButton);
@@ -128,7 +197,7 @@ public class LandingPageView extends JFrame {
         centerPanel.add(Box.createVerticalStrut(30));
         centerPanel.add(exitButton);
         
-        add(topPanel, BorderLayout.NORTH);
+        add(bannerPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
     }
 
@@ -180,6 +249,8 @@ public class LandingPageView extends JFrame {
     // UI Components
     private JLabel titleLabel;
     private JLabel subtitleLabel;
+    private JLabel welcomeLabel;
+    private JLabel instructionLabel;
     private JButton dataManagementButton;
     private JButton viewWordsButton;
     private JButton playGameButton;
