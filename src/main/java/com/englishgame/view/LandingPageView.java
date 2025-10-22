@@ -25,6 +25,7 @@ public class LandingPageView extends JFrame {
         setLocationRelativeTo(null);
         setResizable(true);
         setMinimumSize(new Dimension(600, 500));
+        setPreferredSize(new Dimension(800, 600));
         pack();
         
         initComponents();
@@ -93,9 +94,10 @@ public class LandingPageView extends JFrame {
     private JButton createStyledButton(String text, String tooltip, Color buttonColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 14));
+        // Dynamic sizing based on window width
         button.setPreferredSize(new Dimension(350, 50));
-        button.setMinimumSize(new Dimension(300, 50));
-        button.setMaximumSize(new Dimension(400, 50));
+        button.setMinimumSize(new Dimension(250, 45));
+        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
         button.setToolTipText(tooltip);
         button.setBackground(buttonColor);
         button.setForeground(Color.WHITE);
@@ -154,8 +156,10 @@ public class LandingPageView extends JFrame {
         };
         bannerPanel.setLayout(new BoxLayout(bannerPanel, BoxLayout.Y_AXIS));
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
-        bannerPanel.setPreferredSize(new Dimension(600, 180));
-        bannerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 180));
+        // Fixed height to prevent text cutting
+        bannerPanel.setMinimumSize(new Dimension(400, 200));
+        bannerPanel.setPreferredSize(new Dimension(800, 200));
+        bannerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
         
         // Add title and subtitle to banner
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -163,21 +167,25 @@ public class LandingPageView extends JFrame {
         welcomeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         instructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        bannerPanel.add(Box.createVerticalStrut(10));
+        bannerPanel.add(Box.createVerticalStrut(20));
         bannerPanel.add(titleLabel);
-        bannerPanel.add(Box.createVerticalStrut(10));
+        bannerPanel.add(Box.createVerticalStrut(12));
         bannerPanel.add(subtitleLabel);
         bannerPanel.add(Box.createVerticalStrut(20));
         bannerPanel.add(welcomeLabel);
-        bannerPanel.add(Box.createVerticalStrut(5));
+        bannerPanel.add(Box.createVerticalStrut(12));
         bannerPanel.add(instructionLabel);
+        bannerPanel.add(Box.createVerticalStrut(15));
         
         // Center panel with buttons
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
         centerPanel.setBackground(Color.WHITE);
-        centerPanel.setPreferredSize(new Dimension(600, 400));
+        // Allow dynamic resizing
+        centerPanel.setMinimumSize(new Dimension(400, 300));
+        centerPanel.setPreferredSize(new Dimension(800, 380));
+        centerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
         
         // Center buttons horizontally
         dataManagementButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -208,6 +216,51 @@ public class LandingPageView extends JFrame {
             public void windowClosing(java.awt.event.WindowEvent e) {
                 log.info("Application closing from landing page");
                 System.exit(0);
+            }
+        });
+        
+        // Dynamic resizing listener
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                int width = getWidth();
+                int height = getHeight();
+                
+                // Adjust button sizes based on window width
+                int buttonWidth = Math.max(250, Math.min(500, width - 100));
+                int buttonHeight = Math.max(45, Math.min(60, height / 12));
+                
+                // Update button sizes
+                dataManagementButton.setPreferredSize(new Dimension(buttonWidth, buttonHeight));
+                viewWordsButton.setPreferredSize(new Dimension(buttonWidth, buttonHeight));
+                playGameButton.setPreferredSize(new Dimension(buttonWidth, buttonHeight));
+                learnedWordsButton.setPreferredSize(new Dimension(buttonWidth, buttonHeight));
+                exitButton.setPreferredSize(new Dimension(buttonWidth, buttonHeight));
+                
+                // Adjust font size based on window size
+                int fontSize = Math.max(12, Math.min(16, width / 40));
+                Font dynamicFont = new Font("Arial", Font.BOLD, fontSize);
+                
+                dataManagementButton.setFont(dynamicFont);
+                viewWordsButton.setFont(dynamicFont);
+                playGameButton.setFont(dynamicFont);
+                learnedWordsButton.setFont(dynamicFont);
+                exitButton.setFont(dynamicFont);
+                
+                // Fixed font sizes to prevent text cutting
+                titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+                subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+                welcomeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+                instructionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+                
+                // Banner height will be handled by the layout manager
+                
+                // Revalidate and repaint
+                revalidate();
+                repaint();
+                
+                log.debug("Window resized to {}x{}, buttons adjusted to {}x{}", 
+                         width, height, buttonWidth, buttonHeight);
             }
         });
     }
