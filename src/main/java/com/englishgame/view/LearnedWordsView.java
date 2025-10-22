@@ -6,10 +6,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Learned Words Window
@@ -20,11 +24,16 @@ public class LearnedWordsView extends JFrame {
 
     private final GameController gameController;
     private final LandingPageView landingPage;
+    
+    // Data storage for filtering
+    private List<Object[]> allData = new ArrayList<>();
 
     // Components
     private JTable learnedWordsTable;
-    private JLabel statsLabel;
+    private JTextField searchField;
     private JButton refreshButton;
+    private JButton deleteAllButton;
+    private JButton reviewButton;
     private JButton backToLandingButton;
     private JButton dataManagementButton;
     private JButton viewWordsButton;
@@ -51,7 +60,7 @@ public class LearnedWordsView extends JFrame {
 
     private void initComponents() {
         // Learned words table
-        String[] columnNames = {"English Expression", "Score", "Spanish Translations", "Date Learned"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -59,16 +68,25 @@ public class LearnedWordsView extends JFrame {
             }
         };
         learnedWordsTable = new JTable(tableModel);
-        learnedWordsTable.setRowHeight(25);
+        learnedWordsTable.setRowHeight(35);
         learnedWordsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // Stats label
-        statsLabel = new JLabel("Loading learned words...", SwingConstants.CENTER);
-        statsLabel.setFont(new Font("Arial", Font.BOLD, 16));
-        statsLabel.setForeground(new Color(0, 150, 0));
+        // Set custom renderer for button columns
+        learnedWordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
+        learnedWordsTable.getColumn("Move").setCellEditor(new ButtonEditor(new JCheckBox()));
+        learnedWordsTable.getColumn("Delete").setCellRenderer(new ButtonRenderer("Delete"));
+        learnedWordsTable.getColumn("Delete").setCellEditor(new ButtonEditor(new JCheckBox()));
+        
+        // Search field
+        searchField = new JTextField(20);
+        searchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        searchField.setToolTipText("Search learned words...");
+        searchField.setPreferredSize(new Dimension(200, 30));
         
         // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the learned words list");
+        deleteAllButton = createStyledButton("Delete All", "Delete all learned words");
+        reviewButton = createStyledButton("Review", "Review learned words");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
         viewWordsButton = createStyledButton("View Words", "View all saved words");
@@ -130,6 +148,10 @@ public class LearnedWordsView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Refresh")) {
             return new Color(59, 130, 246); // Vibrant blue for refresh
+        } else if (buttonText.contains("Delete") && buttonText.contains("All")) {
+            return new Color(220, 38, 127); // Vibrant pink for delete all
+        } else if (buttonText.contains("Review")) {
+            return new Color(124, 58, 237); // Vibrant purple for review
         } else if (buttonText.contains("Manage") || buttonText.contains("Data")) {
             return new Color(37, 99, 235); // Vibrant blue for data management
         } else if (buttonText.contains("View") || buttonText.contains("Words")) {
@@ -167,13 +189,12 @@ public class LearnedWordsView extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Statistics Section
-        JPanel statsSection = createSectionPanel("Statistics");
-        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        statsPanel.add(statsLabel);
-        statsPanel.add(Box.createHorizontalStrut(20));
-        statsPanel.add(refreshButton);
-        statsSection.add(statsPanel);
+        // Search Section
+        JPanel searchSection = createSectionPanel("Search");
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        searchPanel.add(new JLabel("Search:"));
+        searchPanel.add(searchField);
+        searchSection.add(searchPanel);
         
         // Learned Words Table Section
         JPanel tableSection = createSectionPanel("Learned Words and Expressions");
@@ -182,6 +203,16 @@ public class LearnedWordsView extends JFrame {
         tableScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         tableScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         tableSection.add(tableScrollPane);
+        
+        // Actions Section
+        JPanel actionsSection = createSectionPanel("Actions");
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        actionsPanel.add(refreshButton);
+        actionsPanel.add(Box.createHorizontalStrut(10));
+        actionsPanel.add(deleteAllButton);
+        actionsPanel.add(Box.createHorizontalStrut(10));
+        actionsPanel.add(reviewButton);
+        actionsSection.add(actionsPanel);
         
         // Navigation Section
         JPanel navSection = createSectionPanel("Navigation");
@@ -193,9 +224,11 @@ public class LearnedWordsView extends JFrame {
         navSection.add(navPanel);
         
         // Add all sections to main panel
-        mainPanel.add(statsSection);
+        mainPanel.add(searchSection);
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(tableSection);
+        mainPanel.add(Box.createVerticalStrut(20));
+        mainPanel.add(actionsSection);
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(navSection);
         
@@ -216,8 +249,18 @@ public class LearnedWordsView extends JFrame {
     }
 
     private void addListeners() {
+        // Search field
+        searchField.addActionListener(e -> filterLearnedWordsTable());
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) { filterLearnedWordsTable(); }
+            public void removeUpdate(DocumentEvent e) { filterLearnedWordsTable(); }
+            public void insertUpdate(DocumentEvent e) { filterLearnedWordsTable(); }
+        });
+        
         // Buttons
         refreshButton.addActionListener(e -> refreshLearnedWordsTable());
+        deleteAllButton.addActionListener(e -> deleteAllLearnedWords());
+        reviewButton.addActionListener(e -> reviewLearnedWords());
         backToLandingButton.addActionListener(e -> returnToLanding());
         dataManagementButton.addActionListener(e -> openDataManagement());
         viewWordsButton.addActionListener(e -> openViewWords());
@@ -227,6 +270,7 @@ public class LearnedWordsView extends JFrame {
     private void refreshLearnedWordsTable() {
         DefaultTableModel model = (DefaultTableModel) learnedWordsTable.getModel();
         model.setRowCount(0); // Clear existing data
+        allData.clear(); // Clear stored data
         
         try {
             // Get learned words from the learned_words database
@@ -238,37 +282,23 @@ public class LearnedWordsView extends JFrame {
                     .reduce((a, b) -> a + ", " + b)
                     .orElse("None");
                 
-                // For now, we'll use a placeholder for the date learned
-                // In a real implementation, you'd track when words were learned
-                String dateLearned = "Recently"; // TODO: Implement actual date tracking
-                
-                model.addRow(new Object[]{
+                Object[] rowData = {
                     learnedWord.getExpression(),
-                    learnedWord.getScore(),
                     spanishTranslations,
-                    dateLearned
-                });
+                    learnedWord.getScore(),
+                    "Move",
+                    "Delete"
+                };
+                allData.add(rowData);
+                model.addRow(rowData);
             }
             
-            // Update stats
-            int totalLearned = learnedWords.size();
-            statsLabel.setText("🏆 Total Learned Words: " + totalLearned);
-            
-            if (totalLearned == 0) {
-                statsLabel.setText("📚 No learned words yet. Keep playing to learn new words!");
-                statsLabel.setForeground(new Color(255, 140, 0));
-            } else {
-                statsLabel.setForeground(new Color(0, 150, 0));
-            }
-            
-            log.info("Learned words table refreshed with {} words", totalLearned);
+            log.info("Learned words table refreshed with {} words", learnedWords.size());
             
         } catch (Exception e) {
             log.error("Error refreshing learned words table", e);
             JOptionPane.showMessageDialog(this, "Error loading learned words: " + e.getMessage(), 
                 "Error", JOptionPane.ERROR_MESSAGE);
-            statsLabel.setText("❌ Error loading learned words");
-            statsLabel.setForeground(Color.RED);
         }
     }
 
@@ -297,5 +327,155 @@ public class LearnedWordsView extends JFrame {
         log.info("Returning to landing page");
         this.setVisible(false);
         landingPage.returnToLanding();
+    }
+
+    private void filterLearnedWordsTable() {
+        String searchText = searchField.getText().toLowerCase().trim();
+        DefaultTableModel model = (DefaultTableModel) learnedWordsTable.getModel();
+        model.setRowCount(0); // Clear existing data
+        
+        if (searchText.isEmpty()) {
+            // Show all data if search is empty
+            for (Object[] rowData : allData) {
+                model.addRow(rowData);
+            }
+        } else {
+            // Filter data based on search text
+            for (Object[] rowData : allData) {
+                String expression = rowData[0].toString().toLowerCase();
+                String translation = rowData[1].toString().toLowerCase();
+                
+                if (expression.contains(searchText) || translation.contains(searchText)) {
+                    model.addRow(rowData);
+                }
+            }
+        }
+        
+        log.debug("Learned words table filtered with search text: '{}', showing {} rows", searchText, model.getRowCount());
+    }
+
+    private void deleteAllLearnedWords() {
+        int result = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete ALL learned words?\n\nThis action cannot be undone!",
+            "Confirm Delete All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        
+        if (result == JOptionPane.YES_OPTION) {
+            try {
+                // TODO: Implement delete all learned words functionality through controller
+                log.info("Delete all learned words requested");
+                JOptionPane.showMessageDialog(this, 
+                    "Delete all learned words functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+                
+                // Refresh table after deletion
+                refreshLearnedWordsTable();
+                
+            } catch (Exception e) {
+                log.error("Error deleting all learned words", e);
+                JOptionPane.showMessageDialog(this, "Error deleting learned words: " + e.getMessage(), 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void reviewLearnedWords() {
+        log.info("Review learned words requested");
+        // TODO: Implement review functionality
+        JOptionPane.showMessageDialog(this, 
+            "Review functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // Custom button renderer for table cells
+    class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer(String text) {
+            setOpaque(true);
+            setText(text);
+            setFont(new Font("Arial", Font.BOLD, 10));
+            setPreferredSize(new Dimension(60, 25));
+            setMinimumSize(new Dimension(50, 20));
+            setMaximumSize(new Dimension(70, 30));
+        }
+
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            if (isSelected) {
+                setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else {
+                setForeground(table.getForeground());
+                setBackground(UIManager.getColor("Button.background"));
+            }
+            setText((value == null) ? "" : value.toString());
+            return this;
+        }
+    }
+
+    // Custom button editor for table cells
+    class ButtonEditor extends DefaultCellEditor {
+        protected JButton button;
+        private String label;
+        private boolean isPushed;
+        private int row;
+        private String expression;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            label = (value == null) ? "" : value.toString();
+            button.setText(label);
+            isPushed = true;
+            this.row = row;
+            
+            // Get the expression from the first column
+            expression = (String) table.getValueAt(row, 0);
+            
+            return button;
+        }
+
+        public Object getCellEditorValue() {
+            if (isPushed) {
+                if ("Move".equals(label)) {
+                    handleMoveExpression();
+                } else if ("Delete".equals(label)) {
+                    handleDeleteExpression();
+                }
+            }
+            isPushed = false;
+            return label;
+        }
+
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
+        }
+
+        protected void fireEditingStopped() {
+            super.fireEditingStopped();
+        }
+
+        private void handleMoveExpression() {
+            log.info("Move button clicked for expression: {}", expression);
+            // TODO: Implement move to another database
+            JOptionPane.showMessageDialog(LearnedWordsView.this, 
+                "Move functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        private void handleDeleteExpression() {
+            log.info("Delete button clicked for expression: {}", expression);
+            int result = JOptionPane.showConfirmDialog(LearnedWordsView.this,
+                "Are you sure you want to delete the learned word: " + expression + "?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            
+            if (result == JOptionPane.YES_OPTION) {
+                // TODO: Implement delete expression
+                JOptionPane.showMessageDialog(LearnedWordsView.this, 
+                    "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+            }
+        }
     }
 }
