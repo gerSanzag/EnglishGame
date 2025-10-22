@@ -46,6 +46,7 @@ public class DataManagementView extends JFrame {
     // Navigation components
     private JButton viewWordsButton;
     private JButton playGameButton;
+    private JButton learnedWordsButton;
     private JButton backToLandingButton;
 
     public DataManagementView(GameController gameController, LandingPageView landingPage) {
@@ -53,10 +54,11 @@ public class DataManagementView extends JFrame {
         this.landingPage = landingPage;
         
         setTitle("Data Management - English Learning Game");
-        setSize(800, 700);
+        setSize(1000, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
+        setMinimumSize(new Dimension(900, 600));
         
         initComponents();
         setupLayout();
@@ -71,76 +73,138 @@ public class DataManagementView extends JFrame {
         databaseSelector = new JComboBox<>();
         databaseSelector.setPreferredSize(new Dimension(200, 30));
         
-        newDatabaseField = new JTextField(20);
+        newDatabaseField = new JTextField(25);
         newDatabaseField.setToolTipText("Enter name for new database");
         
         createDatabaseButton = createStyledButton("Create Database", "Create a new database");
         deleteDatabaseButton = createStyledButton("Delete Database", "Delete selected database");
         
         // Individual Entry Section
-        spanishField = new JTextField(20);
+        spanishField = new JTextField(25);
         spanishField.setToolTipText("Enter Spanish expression");
         
-        englishField = new JTextField(20);
+        englishField = new JTextField(25);
         englishField.setToolTipText("Enter English translation");
         
         addIndividualButton = createStyledButton("Add Expression", "Add individual expression pair");
         
         // Bulk Entry Section
-        bulkTextArea = new JTextArea(10, 50);
+        bulkTextArea = new JTextArea(10, 60);
         bulkTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         bulkTextArea.setToolTipText("Enter expressions in format: Spanish - English\\nCasa - house\\nCasa - home");
         
-        pasteButton = createStyledButton("Paste Text", "Paste text from clipboard");
         loadFileButton = createStyledButton("Load File", "Load expressions from file");
-        processBulkButton = createStyledButton("Process Bulk Data", "Process all entered expressions");
+        processBulkButton = createStyledButton("Add Expressions", "Add all entered expressions to database");
         
         // Navigation buttons
         viewWordsButton = createStyledButton("View Words", "View saved words");
         playGameButton = createStyledButton("Play Game", "Start interactive game");
+        learnedWordsButton = createStyledButton("Learned Words", "View learned words");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
     }
 
     private JButton createStyledButton(String text, String tooltip) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setFont(new Font("Arial", Font.BOLD, 14));
         button.setToolTipText(tooltip);
-        button.setBackground(new Color(70, 130, 180));
+        button.setPreferredSize(new Dimension(150, 40));
+        button.setMinimumSize(new Dimension(120, 35));
+        button.setMaximumSize(new Dimension(200, 45));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
+        button.setBorderPainted(true);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
         
-        // Hover effect
+        // Assign different colors based on button function
+        Color buttonColor = getButtonColor(text);
+        button.setBackground(buttonColor);
+        
+        // Create darker border color
+        Color borderColor = new Color(
+            Math.max(0, buttonColor.getRed() - 30),
+            Math.max(0, buttonColor.getGreen() - 30),
+            Math.max(0, buttonColor.getBlue() - 30)
+        );
+        button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+        
+        // Enhanced hover effect with subtle glow
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(100, 149, 237));
+                Color hoverColor = new Color(
+                    Math.min(255, buttonColor.getRed() + 25),
+                    Math.min(255, buttonColor.getGreen() + 25),
+                    Math.min(255, buttonColor.getBlue() + 25)
+                );
+                button.setBackground(hoverColor);
+                // Create a subtle glow effect with lighter border
+                Color glowBorder = new Color(
+                    Math.min(255, buttonColor.getRed() + 50),
+                    Math.min(255, buttonColor.getGreen() + 50),
+                    Math.min(255, buttonColor.getBlue() + 50)
+                );
+                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(buttonColor);
+                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
             }
         });
         
         return button;
     }
+    
+    private Color getButtonColor(String buttonText) {
+        // Assign colors based on button function
+        if (buttonText.contains("Create") || buttonText.contains("Add") || buttonText.contains("Process")) {
+            return new Color(16, 185, 129); // Vibrant green for creation actions
+        } else if (buttonText.contains("Delete")) {
+            return new Color(220, 38, 127); // Vibrant pink for deletion
+        } else if (buttonText.contains("Paste") || buttonText.contains("Load")) {
+            return new Color(59, 130, 246); // Vibrant blue for data operations
+        } else if (buttonText.contains("View") || buttonText.contains("Play")) {
+            return new Color(245, 101, 101); // Vibrant coral for navigation
+        } else if (buttonText.contains("Back")) {
+            return new Color(124, 58, 237); // Vibrant purple for return actions
+        } else {
+            return new Color(59, 130, 246); // Default vibrant blue
+        }
+    }
 
     private void setupLayout() {
         setLayout(new BorderLayout(10, 10));
         
-        // Create main panel with scroll
-        JPanel mainPanel = new JPanel();
+        // Create main panel with soft background
+        JPanel mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Create soft gradient from light cream to very light blue
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(248, 250, 252),  // Very light cream at top
+                    0, getHeight(), new Color(240, 248, 255)  // Very light blue at bottom
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Database Management Section
         JPanel dbSection = createSectionPanel("Database Management");
-        JPanel dbTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel dbTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         dbTopPanel.add(new JLabel("Current Database:"));
         dbTopPanel.add(databaseSelector);
+        dbTopPanel.add(Box.createHorizontalStrut(10));
         dbTopPanel.add(createDatabaseButton);
         dbTopPanel.add(deleteDatabaseButton);
         
-        JPanel dbBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel dbBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         dbBottomPanel.add(new JLabel("New Database Name:"));
         dbBottomPanel.add(newDatabaseField);
         
@@ -149,38 +213,45 @@ public class DataManagementView extends JFrame {
         
         // Individual Entry Section
         JPanel individualSection = createSectionPanel("Individual Expression Entry");
-        JPanel individualPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel individualPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         individualPanel.add(new JLabel("Spanish:"));
         individualPanel.add(spanishField);
+        individualPanel.add(Box.createHorizontalStrut(10));
         individualPanel.add(new JLabel("English:"));
         individualPanel.add(englishField);
+        individualPanel.add(Box.createHorizontalStrut(10));
         individualPanel.add(addIndividualButton);
         individualSection.add(individualPanel);
         
         // Bulk Entry Section
         JPanel bulkSection = createSectionPanel("Bulk Expression Entry");
-        JPanel bulkTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        bulkTopPanel.add(pasteButton);
+        JPanel bulkTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         bulkTopPanel.add(loadFileButton);
         bulkTopPanel.add(processBulkButton);
         
         JScrollPane scrollPane = new JScrollPane(bulkTextArea);
-        scrollPane.setPreferredSize(new Dimension(700, 200));
+        scrollPane.setPreferredSize(new Dimension(900, 200));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         
-        JPanel bulkInstructions = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        bulkInstructions.add(new JLabel("Format: Spanish - English (one per line)"));
-        bulkInstructions.add(new JLabel("Example: Casa - house, home"));
+        JPanel bulkInstructions = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        bulkInstructions.add(new JLabel("Paste your list directly into the text box or load it from a file with Load File."));
+        
+        JPanel bulkFormat = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        bulkFormat.add(new JLabel("Format: Spanish - English (one per line)"));
+        bulkFormat.add(Box.createHorizontalStrut(10));
+        bulkFormat.add(new JLabel("Example: Casa - house, home"));
         
         bulkSection.add(bulkTopPanel);
         bulkSection.add(bulkInstructions);
+        bulkSection.add(bulkFormat);
         bulkSection.add(scrollPane);
         
         // Navigation Section
         JPanel navSection = createSectionPanel("Navigation");
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         navPanel.add(viewWordsButton);
         navPanel.add(playGameButton);
+        navPanel.add(learnedWordsButton);
         navPanel.add(backToLandingButton);
         navSection.add(navPanel);
         
@@ -203,8 +274,9 @@ public class DataManagementView extends JFrame {
         JPanel section = new JPanel();
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
         section.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.GRAY, 1), title));
-        section.setBackground(new Color(248, 249, 250));
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 2), title));
+        section.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent white
+        section.setOpaque(true);
         return section;
     }
 
@@ -217,13 +289,13 @@ public class DataManagementView extends JFrame {
         addIndividualButton.addActionListener(e -> addIndividualExpression());
         
         // Bulk entry
-        pasteButton.addActionListener(e -> pasteFromClipboard());
         loadFileButton.addActionListener(e -> loadFromFile());
         processBulkButton.addActionListener(e -> processBulkData());
         
         // Navigation
         viewWordsButton.addActionListener(e -> openViewWords());
         playGameButton.addActionListener(e -> openGame());
+        learnedWordsButton.addActionListener(e -> openLearnedWords());
         backToLandingButton.addActionListener(e -> returnToLanding());
         
         // Enter key for individual entry
@@ -311,16 +383,6 @@ public class DataManagementView extends JFrame {
         log.info("Individual expression added: '{}' - '{}'", spanish, english);
     }
 
-    private void pasteFromClipboard() {
-        try {
-            String clipboardContent = (String) Toolkit.getDefaultToolkit().getSystemClipboard().getData(java.awt.datatransfer.DataFlavor.stringFlavor);
-            bulkTextArea.setText(clipboardContent);
-            log.info("Content pasted from clipboard");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Failed to paste from clipboard", "Error", JOptionPane.ERROR_MESSAGE);
-            log.error("Failed to paste from clipboard", e);
-        }
-    }
 
     private void loadFromFile() {
         JFileChooser fileChooser = new JFileChooser();
@@ -417,6 +479,13 @@ public class DataManagementView extends JFrame {
         this.setVisible(false);
         GameView gameView = new GameView(gameController, landingPage);
         gameView.setVisible(true);
+    }
+
+    private void openLearnedWords() {
+        log.info("Opening learned words window");
+        this.setVisible(false);
+        LearnedWordsView learnedWordsView = new LearnedWordsView(gameController, landingPage);
+        learnedWordsView.setVisible(true);
     }
 
     private void returnToLanding() {

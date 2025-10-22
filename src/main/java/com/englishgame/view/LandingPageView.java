@@ -56,21 +56,21 @@ public class LandingPageView extends JFrame {
         instructionLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         instructionLabel.setForeground(Color.WHITE);
         
-        // Navigation buttons with different colors
+        // Navigation buttons with vibrant complementary colors
         JButton dataManagementButton = createStyledButton("Manage Databases & Data", 
-            "Create and manage your learning databases", new Color(52, 152, 219)); // Blue
+            "Create and manage your learning databases", new Color(37, 99, 235)); // Vibrant blue
         
         JButton viewWordsButton = createStyledButton("View Saved Words", 
-            "Browse and review your vocabulary", new Color(46, 204, 113)); // Green
+            "Browse and review your vocabulary", new Color(16, 185, 129)); // Vibrant green
         
         JButton playGameButton = createStyledButton("Play Interactive Game", 
-            "Start learning with our game system", new Color(241, 196, 15)); // Orange
+            "Start learning with our game system", new Color(245, 101, 101)); // Vibrant coral
         
         JButton learnedWordsButton = createStyledButton("Learned Words", 
-            "See your mastered vocabulary", new Color(155, 89, 182)); // Purple
+            "See your mastered vocabulary", new Color(124, 58, 237)); // Vibrant purple
         
         JButton exitButton = createStyledButton("Exit Application", 
-            "Close the application", new Color(231, 76, 60)); // Red
+            "Close the application", new Color(220, 38, 127)); // Vibrant pink
         
         // Add action listeners
         dataManagementButton.addActionListener(e -> openDataManagement());
@@ -114,16 +114,22 @@ public class LandingPageView extends JFrame {
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setOpaque(true);
         
-        // Hover effect with lighter color
+        // Enhanced hover effect with subtle glow
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 Color hoverColor = new Color(
-                    Math.min(255, buttonColor.getRed() + 30),
-                    Math.min(255, buttonColor.getGreen() + 30),
-                    Math.min(255, buttonColor.getBlue() + 30)
+                    Math.min(255, buttonColor.getRed() + 25),
+                    Math.min(255, buttonColor.getGreen() + 25),
+                    Math.min(255, buttonColor.getBlue() + 25)
                 );
                 button.setBackground(hoverColor);
-                button.setBorder(BorderFactory.createLineBorder(buttonColor, 2));
+                // Create a subtle glow effect with lighter border
+                Color glowBorder = new Color(
+                    Math.min(255, buttonColor.getRed() + 50),
+                    Math.min(255, buttonColor.getGreen() + 50),
+                    Math.min(255, buttonColor.getBlue() + 50)
+                );
+                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(buttonColor);
@@ -156,10 +162,10 @@ public class LandingPageView extends JFrame {
         };
         bannerPanel.setLayout(new BoxLayout(bannerPanel, BoxLayout.Y_AXIS));
         bannerPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 30, 20));
-        // Fixed height to prevent text cutting
-        bannerPanel.setMinimumSize(new Dimension(400, 200));
-        bannerPanel.setPreferredSize(new Dimension(800, 200));
-        bannerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+        // Dynamic height that adapts to content
+        bannerPanel.setMinimumSize(new Dimension(400, 180));
+        bannerPanel.setPreferredSize(new Dimension(800, 220));
+        bannerPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
         
         // Add title and subtitle to banner
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -177,11 +183,26 @@ public class LandingPageView extends JFrame {
         bannerPanel.add(instructionLabel);
         bannerPanel.add(Box.createVerticalStrut(15));
         
-        // Center panel with buttons
-        JPanel centerPanel = new JPanel();
+        // Center panel with buttons - Custom gradient background
+        JPanel centerPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Create vibrant gradient from soft blue to lavender
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(219, 234, 254),  // Soft blue at top
+                    0, getHeight(), new Color(221, 214, 254)  // Soft lavender at bottom
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
-        centerPanel.setBackground(Color.WHITE);
         // Allow dynamic resizing
         centerPanel.setMinimumSize(new Dimension(400, 300));
         centerPanel.setPreferredSize(new Dimension(800, 380));
@@ -247,11 +268,15 @@ public class LandingPageView extends JFrame {
                 learnedWordsButton.setFont(dynamicFont);
                 exitButton.setFont(dynamicFont);
                 
-                // Fixed font sizes to prevent text cutting
-                titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
-                subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 16));
-                welcomeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-                instructionLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+                // Dynamic font sizes based on window size
+                int titleFontSize = Math.max(20, Math.min(36, width / 25));
+                int subtitleFontSize = Math.max(12, Math.min(20, width / 40));
+                int textFontSize = Math.max(10, Math.min(16, width / 50));
+                
+                titleLabel.setFont(new Font("Arial", Font.BOLD, titleFontSize));
+                subtitleLabel.setFont(new Font("Arial", Font.ITALIC, subtitleFontSize));
+                welcomeLabel.setFont(new Font("Arial", Font.PLAIN, textFontSize));
+                instructionLabel.setFont(new Font("Arial", Font.PLAIN, textFontSize));
                 
                 // Banner height will be handled by the layout manager
                 
