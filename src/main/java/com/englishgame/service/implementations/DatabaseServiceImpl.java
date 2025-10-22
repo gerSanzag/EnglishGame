@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * Implementation of DatabaseService for managing game databases
@@ -33,45 +34,47 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public boolean createDatabase(String databaseName) {
-        if (databaseName == null || databaseName.trim().isEmpty()) {
-            log.warn("Cannot create database with null or empty name");
-            return false;
-        }
-        
-        if (databaseExists(databaseName)) {
-            log.warn("Database '{}' already exists", databaseName);
-            return false;
-        }
-        
-        spanishDatabases.put(databaseName, new ArrayList<>());
-        englishDatabases.put(databaseName, new ArrayList<>());
-        
-        log.info("Database '{}' created successfully", databaseName);
-        return true;
+        return Optional.ofNullable(databaseName)
+                .filter(name -> !name.trim().isEmpty())
+                .filter(name -> !databaseExists(name))
+                .map(name -> {
+                    spanishDatabases.put(name, new ArrayList<>());
+                    englishDatabases.put(name, new ArrayList<>());
+                    log.info("Database '{}' created successfully", name);
+                    return true;
+                })
+                .orElseGet(() -> {
+                    if (databaseName == null || databaseName.trim().isEmpty()) {
+                        log.warn("Cannot create database with null or empty name");
+                    } else {
+                        log.warn("Database '{}' already exists", databaseName);
+                    }
+                    return false;
+                });
     }
     
     @Override
     public boolean deleteDatabase(String databaseName) {
-        if (databaseName == null || databaseName.trim().isEmpty()) {
-            log.warn("Cannot delete database with null or empty name");
-            return false;
-        }
-        
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return false;
-        }
-        
-        if (LEARNED_WORDS_DATABASE.equals(databaseName)) {
-            log.warn("Cannot delete the learned words database");
-            return false;
-        }
-        
-        spanishDatabases.remove(databaseName);
-        englishDatabases.remove(databaseName);
-        
-        log.info("Database '{}' deleted successfully", databaseName);
-        return true;
+        return Optional.ofNullable(databaseName)
+                .filter(name -> !name.trim().isEmpty())
+                .filter(name -> databaseExists(name))
+                .filter(name -> !LEARNED_WORDS_DATABASE.equals(name))
+                .map(name -> {
+                    spanishDatabases.remove(name);
+                    englishDatabases.remove(name);
+                    log.info("Database '{}' deleted successfully", name);
+                    return true;
+                })
+                .orElseGet(() -> {
+                    if (databaseName == null || databaseName.trim().isEmpty()) {
+                        log.warn("Cannot delete database with null or empty name");
+                    } else if (!databaseExists(databaseName)) {
+                        log.warn("Database '{}' does not exist", databaseName);
+                    } else if (LEARNED_WORDS_DATABASE.equals(databaseName)) {
+                        log.warn("Cannot delete the learned words database");
+                    }
+                    return false;
+                });
     }
     
     @Override

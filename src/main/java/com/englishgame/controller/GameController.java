@@ -1,260 +1,173 @@
 package com.englishgame.controller;
 
-import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
-import com.englishgame.service.interfaces.GameLogicService;
-import com.englishgame.service.interfaces.ScoreService;
+import com.englishgame.model.SpanishExpression;
 import com.englishgame.service.interfaces.DatabaseService;
+import com.englishgame.service.interfaces.GameDataService;
+import com.englishgame.service.interfaces.GameLogicService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Controller for managing the English learning game
- * Orchestrates the game flow and coordinates between services
+ * Controller for orchestrating the game flow
+ * Handles user interactions and coordinates between services
  */
 @Slf4j
 public class GameController {
-    
+
     private final GameLogicService gameLogicService;
-    private final ScoreService scoreService;
     private final DatabaseService databaseService;
-    
+    private final GameDataService gameDataService;
+
     private String currentDatabase;
     private SpanishExpression currentSpanishExpression;
-    private boolean gameInProgress;
-    
-    public GameController(GameLogicService gameLogicService, 
-                         ScoreService scoreService, 
-                         DatabaseService databaseService) {
+
+    public GameController(GameLogicService gameLogicService, DatabaseService databaseService, GameDataService gameDataService) {
         this.gameLogicService = gameLogicService;
-        this.scoreService = scoreService;
         this.databaseService = databaseService;
-        this.gameInProgress = false;
+        this.gameDataService = gameDataService;
+        initializeGame();
     }
-    
-    /**
-     * Starts a new game session with the specified database
-     * @param databaseName name of the database to use
-     * @return true if game started successfully, false otherwise
-     */
-    public boolean startGame(String databaseName) {
-        log.info("Starting new game with database: {}", databaseName);
-        
-        if (!databaseService.databaseExists(databaseName)) {
-            log.error("Database '{}' does not exist", databaseName);
-            return false;
-        }
-        
-        if (databaseService.getSpanishExpressionCount(databaseName) == 0) {
-            log.error("Database '{}' is empty", databaseName);
-            return false;
-        }
-        
-        this.currentDatabase = databaseName;
-        this.gameInProgress = true;
-        
-        log.info("Game started successfully with database: {}", databaseName);
-        return true;
+
+    private void initializeGame() {
+        log.info("Initializing game controller...");
+        gameDataService.loadGameData(); // Load previous game state
+        log.info("Game initialized. Loaded {} databases.", databaseService.getAvailableDatabases().size());
     }
-    
-    /**
-     * Gets a random Spanish expression for the current game
-     * @return Spanish expression or null if no game in progress
-     */
-    public SpanishExpression getCurrentQuestion() {
-        if (!gameInProgress) {
-            log.warn("No game in progress");
-            return null;
-        }
-        
-        currentSpanishExpression = gameLogicService.getRandomSpanishExpression(currentDatabase);
-        if (currentSpanishExpression == null) {
-            log.error("Failed to get Spanish expression from database: {}", currentDatabase);
-            return null;
-        }
-        
-        log.debug("Current question: '{}'", currentSpanishExpression.getExpression());
-        return currentSpanishExpression;
-    }
-    
-    /**
-     * Submits an answer and processes the result
-     * @param userAnswer the user's English translation
-     * @return GameResult containing the result of the answer
-     */
-    public GameResult submitAnswer(String userAnswer) {
-        if (!gameInProgress || currentSpanishExpression == null) {
-            log.warn("No game in progress or no current question");
-            return new GameResult(false, "No game in progress", null, null);
-        }
-        
-        if (userAnswer == null || userAnswer.trim().isEmpty()) {
-            log.warn("Empty answer submitted");
-            return new GameResult(false, "Answer cannot be empty", null, null);
-        }
-        
-        log.debug("Processing answer: '{}' for question: '{}'", 
-                userAnswer, currentSpanishExpression.getExpression());
-        
-        boolean isCorrect = gameLogicService.validateTranslation(currentSpanishExpression, userAnswer);
-        
-        if (isCorrect) {
-            return processCorrectAnswer(userAnswer);
-        } else {
-            return processIncorrectAnswer(userAnswer);
-        }
-    }
-    
-    /**
-     * Processes a correct answer
-     * @param userAnswer the correct answer
-     * @return GameResult with success information
-     */
-    private GameResult processCorrectAnswer(String userAnswer) {
-        log.info("Correct answer: '{}' for '{}'", 
-                userAnswer, currentSpanishExpression.getExpression());
-        
-        EnglishExpression updatedExpression = gameLogicService.processCorrectAnswer(
-                currentSpanishExpression, userAnswer);
-        
-        boolean isLearned = scoreService.isLearned(updatedExpression);
-        String message = isLearned ? 
-                String.format("Correct! '%s' has been learned!", updatedExpression.getExpression()) :
-                String.format("Correct! Score: %d/%d", 
-                        updatedExpression.getScore(), scoreService.getLearnedThreshold());
-        
-        return new GameResult(true, message, updatedExpression, null);
-    }
-    
-    /**
-     * Processes an incorrect answer
-     * @param userAnswer the incorrect answer
-     * @return GameResult with penalty information
-     */
-    private GameResult processIncorrectAnswer(String userAnswer) {
-        log.info("Incorrect answer: '{}' for '{}'", 
-                userAnswer, currentSpanishExpression.getExpression());
-        
-        List<EnglishExpression> penalizedExpressions = gameLogicService.processIncorrectAnswer(
-                currentSpanishExpression, userAnswer);
-        
-        String message = String.format("Incorrect! Penalty applied to all translations. Score: %d", 
-                penalizedExpressions.get(0).getScore());
-        
-        return new GameResult(false, message, null, penalizedExpressions);
-    }
-    
-    /**
-     * Ends the current game
-     */
-    public void endGame() {
-        log.info("Ending current game");
-        this.gameInProgress = false;
-        this.currentSpanishExpression = null;
-        this.currentDatabase = null;
-    }
-    
-    /**
-     * Gets the current game status
-     * @return GameStatus with current game information
-     */
-    public GameStatus getGameStatus() {
-        return new GameStatus(
-                gameInProgress,
-                currentDatabase,
-                currentSpanishExpression,
-                databaseService.getAvailableDatabases()
-        );
-    }
-    
-    /**
-     * Creates a new database
-     * @param databaseName name of the new database
-     * @return true if created successfully, false otherwise
-     */
-    public boolean createDatabase(String databaseName) {
-        log.info("Creating new database: {}", databaseName);
-        return databaseService.createDatabase(databaseName);
-    }
-    
-    /**
-     * Gets all available databases
-     * @return list of database names
-     */
+
     public List<String> getAvailableDatabases() {
         return databaseService.getAvailableDatabases();
     }
-    
-    /**
-     * Gets the learned expressions
-     * @return list of learned English expressions
-     */
-    public List<EnglishExpression> getLearnedExpressions() {
-        return databaseService.getLearnedExpressions();
+
+    public boolean selectDatabase(String databaseName) {
+        return Optional.ofNullable(databaseName)
+                .filter(databaseService::databaseExists)
+                .map(name -> {
+                    this.currentDatabase = name;
+                    log.info("Database selected: {}", name);
+                    return true;
+                })
+                .orElseGet(() -> {
+                    log.warn("Attempted to select non-existent database: {}", databaseName);
+                    return false;
+                });
     }
-    
-    /**
-     * Gets the current database name
-     * @return current database name or null if no game in progress
-     */
+
+    public SpanishExpression startNewRound() {
+        return Optional.ofNullable(currentDatabase)
+                .map(databaseName -> {
+                    log.debug("Starting new round with database: {}", databaseName);
+                    return gameLogicService.getRandomSpanishExpression(databaseName);
+                })
+                .map(expression -> {
+                    this.currentSpanishExpression = expression;
+                    if (expression != null) {
+                        log.info("New round started. Spanish expression: '{}'", expression.getExpression());
+                    } else {
+                        log.warn("Could not select a Spanish expression from database: {}", currentDatabase);
+                    }
+                    return expression;
+                })
+                .orElseGet(() -> {
+                    log.error("No database selected. Cannot start a new round.");
+                    return null;
+                });
+    }
+
+    public boolean processAnswer(String userTranslation) {
+        return Optional.ofNullable(currentSpanishExpression)
+                .map(expr -> {
+                    log.debug("Processing answer '{}' for Spanish expression '{}'", userTranslation, expr.getExpression());
+                    
+                    return gameLogicService.validateTranslation(expr, userTranslation)
+                            ? processCorrectAnswer(expr, userTranslation)
+                            : processIncorrectAnswer(expr, userTranslation);
+                })
+                .orElseGet(() -> {
+                    log.error("No current Spanish expression to process answer for.");
+                    return false;
+                });
+    }
+
+    private boolean processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
+        return Optional.ofNullable(gameLogicService.processCorrectAnswer(spanishExpression, userTranslation))
+                .map(updatedEnglishExpression -> {
+                    // Update the Spanish expression's translations list with the updated English expression
+                    spanishExpression.getTranslations().replaceAll(e -> 
+                        e.getExpression().equals(updatedEnglishExpression.getExpression()) ? updatedEnglishExpression : e);
+                    
+                    log.info("Correct answer! English expression '{}' score updated to {}.", 
+                            updatedEnglishExpression.getExpression(), updatedEnglishExpression.getScore());
+
+                    if (gameLogicService.isExpressionLearned(updatedEnglishExpression)) {
+                        gameLogicService.moveToLearnedWords(updatedEnglishExpression);
+                        log.info("English expression '{}' moved to learned words!", updatedEnglishExpression.getExpression());
+                    }
+                    
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    private boolean processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
+        List<EnglishExpression> updatedTranslations = gameLogicService.processIncorrectAnswer(spanishExpression, userTranslation);
+        spanishExpression.setTranslations(updatedTranslations); // Update the Spanish expression with penalized translations
+        log.info("Incorrect answer. All English translations for '{}' penalized.", spanishExpression.getExpression());
+        return false;
+    }
+
+    public SpanishExpression getCurrentSpanishExpression() {
+        return currentSpanishExpression;
+    }
+
     public String getCurrentDatabase() {
         return currentDatabase;
     }
-    
-    /**
-     * Checks if a game is currently in progress
-     * @return true if game in progress, false otherwise
-     */
-    public boolean isGameInProgress() {
-        return gameInProgress;
+
+    public boolean createNewDatabase(String databaseName) {
+        return Optional.ofNullable(databaseName)
+                .filter(name -> !name.trim().isEmpty())
+                .map(name -> {
+                    boolean created = databaseService.createDatabase(name);
+                    if (created) {
+                        gameDataService.saveGameData(); // Save changes after creating a new database
+                        log.info("New database '{}' created successfully", name);
+                    }
+                    return created;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot create database with null or empty name");
+                    return false;
+                });
     }
-    
-    /**
-     * Result of a game answer submission
-     */
-    public static class GameResult {
-        private final boolean correct;
-        private final String message;
-        private final EnglishExpression updatedExpression;
-        private final List<EnglishExpression> penalizedExpressions;
-        
-        public GameResult(boolean correct, String message, 
-                         EnglishExpression updatedExpression, 
-                         List<EnglishExpression> penalizedExpressions) {
-            this.correct = correct;
-            this.message = message;
-            this.updatedExpression = updatedExpression;
-            this.penalizedExpressions = penalizedExpressions;
-        }
-        
-        public boolean isCorrect() { return correct; }
-        public String getMessage() { return message; }
-        public EnglishExpression getUpdatedExpression() { return updatedExpression; }
-        public List<EnglishExpression> getPenalizedExpressions() { return penalizedExpressions; }
+
+    public boolean addExpressionToDatabase(String databaseName, SpanishExpression spanishExpression) {
+        return Optional.ofNullable(databaseName)
+                .filter(databaseService::databaseExists)
+                .map(name -> {
+                    boolean added = databaseService.addSpanishExpression(name, spanishExpression);
+                    if (added) {
+                        gameDataService.saveGameData(); // Save changes after adding expression
+                        log.info("Spanish expression '{}' added to database '{}'", 
+                                spanishExpression.getExpression(), name);
+                    }
+                    return added;
+                })
+                .orElseGet(() -> {
+                    log.warn("Database '{}' does not exist", databaseName);
+                    return false;
+                });
     }
-    
-    /**
-     * Current game status information
-     */
-    public static class GameStatus {
-        private final boolean gameInProgress;
-        private final String currentDatabase;
-        private final SpanishExpression currentQuestion;
-        private final List<String> availableDatabases;
-        
-        public GameStatus(boolean gameInProgress, String currentDatabase, 
-                         SpanishExpression currentQuestion, 
-                         List<String> availableDatabases) {
-            this.gameInProgress = gameInProgress;
-            this.currentDatabase = currentDatabase;
-            this.currentQuestion = currentQuestion;
-            this.availableDatabases = availableDatabases;
-        }
-        
-        public boolean isGameInProgress() { return gameInProgress; }
-        public String getCurrentDatabase() { return currentDatabase; }
-        public SpanishExpression getCurrentQuestion() { return currentQuestion; }
-        public List<String> getAvailableDatabases() { return availableDatabases; }
+
+    public void saveGameState() {
+        gameDataService.saveGameData();
+        log.debug("Game state saved successfully");
+    }
+
+    public void loadGameState() {
+        gameDataService.loadGameData();
+        log.debug("Game state loaded successfully");
     }
 }

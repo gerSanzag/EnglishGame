@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * Implementation of GameLogicService for managing game logic
@@ -29,83 +30,109 @@ public class GameLogicServiceImpl implements GameLogicService {
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
         log.debug("Getting random Spanish expression from database: {}", databaseName);
         
-        List<SpanishExpression> expressions = getSpanishExpressionsFromDatabase(databaseName);
-        if (expressions.isEmpty()) {
-            log.warn("Database '{}' is empty", databaseName);
-            return null;
-        }
-        
-        Random random = new Random();
-        SpanishExpression selectedExpression = expressions.get(random.nextInt(expressions.size()));
-        log.debug("Selected Spanish expression: '{}' with score: {}", 
-                selectedExpression.getExpression(), selectedExpression.getScore());
-        
-        return selectedExpression;
+        return Optional.ofNullable(databaseName)
+                .map(this::getSpanishExpressionsFromDatabase)
+                .filter(expressions -> !expressions.isEmpty())
+                .map(expressions -> {
+                    Random random = new Random();
+                    SpanishExpression selectedExpression = expressions.get(random.nextInt(expressions.size()));
+                    log.debug("Selected Spanish expression: '{}' with score: {}", 
+                            selectedExpression.getExpression(), selectedExpression.getScore());
+                    return selectedExpression;
+                })
+                .orElseGet(() -> {
+                    log.warn("Database '{}' is empty", databaseName);
+                    return null;
+                });
     }
     
     @Override
     public boolean validateTranslation(SpanishExpression spanishExpression, String userTranslation) {
-        if (spanishExpression == null || userTranslation == null || userTranslation.trim().isEmpty()) {
-            log.warn("Invalid parameters for translation validation");
-            return false;
-        }
-        
-        log.debug("Validating translation '{}' for Spanish expression '{}'", 
-                userTranslation, spanishExpression.getExpression());
-        
-        boolean isValid = spanishExpression.getTranslations().stream()
-                .anyMatch(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()));
-        
-        log.debug("Translation validation result: {}", isValid);
-        return isValid;
+        return Optional.ofNullable(spanishExpression)
+                .filter(expr -> userTranslation != null && !userTranslation.trim().isEmpty())
+                .map(expr -> {
+                    log.debug("Validating translation '{}' for Spanish expression '{}'", 
+                            userTranslation, expr.getExpression());
+                    
+                    boolean isValid = expr.getTranslations().stream()
+                            .anyMatch(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()));
+                    
+                    log.debug("Translation validation result: {}", isValid);
+                    return isValid;
+                })
+                .orElseGet(() -> {
+                    log.warn("Invalid parameters for translation validation");
+                    return false;
+                });
     }
     
     @Override
     public EnglishExpression processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
-        log.debug("Processing correct answer for '{}' -> '{}'", 
-                spanishExpression.getExpression(), userTranslation);
-        
-        // Find the matching English expression
-        EnglishExpression matchingExpression = spanishExpression.getTranslations().stream()
-                .filter(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()))
-                .findFirst()
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    log.debug("Processing correct answer for '{}' -> '{}'", 
+                            expr.getExpression(), userTranslation);
+                    
+                    return expr.getTranslations().stream()
+                            .filter(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()))
+                            .findFirst()
+                            .map(matchingExpression -> {
+                                // Add 1 point to the English expression
+                                matchingExpression.setScore(matchingExpression.getScore() + 1);
+                                log.debug("Added 1 point to English expression '{}'. New score: {}", 
+                                        matchingExpression.getExpression(), matchingExpression.getScore());
+                                
+                                // Check if learned
+                                if (isExpressionLearned(matchingExpression)) {
+                                    log.info("English expression '{}' has been learned! Moving to learned words.", 
+                                            matchingExpression.getExpression());
+                                    moveToLearnedWords(matchingExpression);
+                                }
+                                
+                                return matchingExpression;
+                            })
+                            .orElse(null);
+                })
                 .orElse(null);
-        
-        if (matchingExpression != null) {
-            // Add 1 point to the English expression
-            matchingExpression.setScore(matchingExpression.getScore() + 1);
-            log.debug("Added 1 point to English expression '{}'. New score: {}", 
-                    matchingExpression.getExpression(), matchingExpression.getScore());
-            
-            // Check if learned
-            if (isExpressionLearned(matchingExpression)) {
-                log.info("English expression '{}' has been learned! Moving to learned words.", 
-                        matchingExpression.getExpression());
-                moveToLearnedWords(matchingExpression);
-            }
-        }
-        
-        return matchingExpression;
     }
     
     @Override
     public List<EnglishExpression> processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
-        log.debug("Processing incorrect answer for '{}' -> '{}'", 
-                spanishExpression.getExpression(), userTranslation);
-        
-        List<EnglishExpression> updatedExpressions = new ArrayList<>();
-        
-        // Subtract 5 points from all English expressions in the translations list
-        for (EnglishExpression englishExpr : spanishExpression.getTranslations()) {
-            int newScore = Math.max(0, englishExpr.getScore() - PENALTY_POINTS);
-            englishExpr.setScore(newScore);
-            updatedExpressions.add(englishExpr);
-            
-            log.debug("Subtracted {} points from English expression '{}'. New score: {}", 
-                    PENALTY_POINTS, englishExpr.getExpression(), newScore);
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    log.debug("Processing incorrect answer for '{}' -> '{}'", 
+                            expr.getExpression(), userTranslation);
+                    
+                    return expr.getTranslations().stream()
+                            .map(englishExpr -> {
+                                int currentScore = englishExpr.getScore();
+                                int penalty = calculateDynamicPenalty(currentScore);
+                                int newScore = Math.max(0, currentScore - penalty);
+                                englishExpr.setScore(newScore);
+                                
+                                log.debug("Applied {} penalty points to English expression '{}' (was {}, now {})", 
+                                        penalty, englishExpr.getExpression(), currentScore, newScore);
+                                
+                                return englishExpr;
+                            })
+                            .collect(java.util.stream.Collectors.toList());
+                })
+                .orElse(new ArrayList<>());
+    }
+    
+    /**
+     * Calculates dynamic penalty based on current score
+     * @param currentScore the current score of the expression
+     * @return penalty points to subtract
+     */
+    private int calculateDynamicPenalty(int currentScore) {
+        if (currentScore < 5) {
+            return 2; // Light penalty for low scores
+        } else if (currentScore <= 10) {
+            return 3; // Medium penalty for medium scores
+        } else {
+            return 5; // Heavy penalty for high scores
         }
-        
-        return updatedExpressions;
     }
     
     @Override

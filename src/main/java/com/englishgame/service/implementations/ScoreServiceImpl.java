@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Implementation of ScoreService for managing scoring system
@@ -21,184 +22,193 @@ public class ScoreServiceImpl implements ScoreService {
     
     @Override
     public EnglishExpression addPoints(EnglishExpression englishExpression, int points) {
-        if (englishExpression == null) {
-            log.warn("Cannot add points to null English expression");
-            return null;
-        }
-        
-        int newScore = englishExpression.getScore() + points;
-        englishExpression.setScore(newScore);
-        
-        log.debug("Added {} points to English expression '{}'. New score: {}", 
-                points, englishExpression.getExpression(), newScore);
-        
-        return englishExpression;
+        return Optional.ofNullable(englishExpression)
+                .map(expr -> {
+                    int newScore = expr.getScore() + points;
+                    expr.setScore(newScore);
+                    log.debug("Added {} points to English expression '{}'. New score: {}", 
+                            points, expr.getExpression(), newScore);
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot add points to null English expression");
+                    return null;
+                });
     }
     
     @Override
     public EnglishExpression subtractPoints(EnglishExpression englishExpression, int points) {
-        if (englishExpression == null) {
-            log.warn("Cannot subtract points from null English expression");
-            return null;
-        }
-        
-        int newScore = Math.max(0, englishExpression.getScore() - points);
-        englishExpression.setScore(newScore);
-        
-        log.debug("Subtracted {} points from English expression '{}'. New score: {}", 
-                points, englishExpression.getExpression(), newScore);
-        
-        return englishExpression;
+        return Optional.ofNullable(englishExpression)
+                .map(expr -> {
+                    int newScore = Math.max(0, expr.getScore() - points);
+                    expr.setScore(newScore);
+                    log.debug("Subtracted {} points from English expression '{}'. New score: {}", 
+                            points, expr.getExpression(), newScore);
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot subtract points from null English expression");
+                    return null;
+                });
     }
     
     @Override
     public SpanishExpression addPoints(SpanishExpression spanishExpression, int points) {
-        if (spanishExpression == null) {
-            log.warn("Cannot add points to null Spanish expression");
-            return null;
-        }
-        
-        int newScore = spanishExpression.getScore() + points;
-        spanishExpression.setScore(newScore);
-        
-        log.debug("Added {} points to Spanish expression '{}'. New score: {}", 
-                points, spanishExpression.getExpression(), newScore);
-        
-        return spanishExpression;
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    int newScore = expr.getScore() + points;
+                    expr.setScore(newScore);
+                    log.debug("Added {} points to Spanish expression '{}'. New score: {}", 
+                            points, expr.getExpression(), newScore);
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot add points to null Spanish expression");
+                    return null;
+                });
     }
     
     @Override
     public SpanishExpression subtractPoints(SpanishExpression spanishExpression, int points) {
-        if (spanishExpression == null) {
-            log.warn("Cannot subtract points from null Spanish expression");
-            return null;
-        }
-        
-        int newScore = Math.max(0, spanishExpression.getScore() - points);
-        spanishExpression.setScore(newScore);
-        
-        log.debug("Subtracted {} points from Spanish expression '{}'. New score: {}", 
-                points, spanishExpression.getExpression(), newScore);
-        
-        return spanishExpression;
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    int newScore = Math.max(0, expr.getScore() - points);
+                    expr.setScore(newScore);
+                    log.debug("Subtracted {} points from Spanish expression '{}'. New score: {}", 
+                            points, expr.getExpression(), newScore);
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot subtract points from null Spanish expression");
+                    return null;
+                });
     }
     
     @Override
     public List<EnglishExpression> applyPenaltyToAllTranslations(SpanishExpression spanishExpression, int penaltyPoints) {
-        if (spanishExpression == null || spanishExpression.getTranslations() == null) {
-            log.warn("Cannot apply penalty to null Spanish expression or translations");
-            return new ArrayList<>();
+        return Optional.ofNullable(spanishExpression)
+                .map(SpanishExpression::getTranslations)
+                .map(translations -> translations.stream()
+                        .map(englishExpr -> {
+                            int dynamicPenalty = calculateDynamicPenalty(englishExpr.getScore());
+                            return subtractPoints(englishExpr, dynamicPenalty);
+                        })
+                        .collect(java.util.stream.Collectors.toList()))
+                .map(updatedExpressions -> {
+                    log.debug("Applied dynamic penalty to {} English expressions", updatedExpressions.size());
+                    return updatedExpressions;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot apply penalty to null Spanish expression or translations");
+                    return new ArrayList<>();
+                });
+    }
+    
+    /**
+     * Calculates dynamic penalty based on current score
+     * @param currentScore the current score of the expression
+     * @return penalty points to subtract
+     */
+    private int calculateDynamicPenalty(int currentScore) {
+        if (currentScore < 5) {
+            return 2; // Light penalty for low scores
+        } else if (currentScore <= 10) {
+            return 3; // Medium penalty for medium scores
+        } else {
+            return 5; // Heavy penalty for high scores
         }
-        
-        List<EnglishExpression> updatedExpressions = new ArrayList<>();
-        
-        for (EnglishExpression englishExpr : spanishExpression.getTranslations()) {
-            EnglishExpression updated = subtractPoints(englishExpr, penaltyPoints);
-            updatedExpressions.add(updated);
-        }
-        
-        log.debug("Applied {} penalty points to {} English expressions", 
-                penaltyPoints, updatedExpressions.size());
-        
-        return updatedExpressions;
     }
     
     @Override
     public boolean isLearned(EnglishExpression englishExpression) {
-        if (englishExpression == null) {
-            return false;
-        }
-        
-        boolean learned = englishExpression.getScore() >= LEARNED_THRESHOLD;
-        log.debug("English expression '{}' learned status: {} (score: {})", 
-                englishExpression.getExpression(), learned, englishExpression.getScore());
-        
-        return learned;
+        return Optional.ofNullable(englishExpression)
+                .map(expr -> {
+                    boolean learned = expr.getScore() >= LEARNED_THRESHOLD;
+                    log.debug("English expression '{}' learned status: {} (score: {})", 
+                            expr.getExpression(), learned, expr.getScore());
+                    return learned;
+                })
+                .orElse(false);
     }
     
     @Override
     public boolean isLearned(SpanishExpression spanishExpression) {
-        if (spanishExpression == null) {
-            return false;
-        }
-        
-        boolean learned = spanishExpression.getScore() >= LEARNED_THRESHOLD;
-        log.debug("Spanish expression '{}' learned status: {} (score: {})", 
-                spanishExpression.getExpression(), learned, spanishExpression.getScore());
-        
-        return learned;
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    boolean learned = expr.getScore() >= LEARNED_THRESHOLD;
+                    log.debug("Spanish expression '{}' learned status: {} (score: {})", 
+                            expr.getExpression(), learned, expr.getScore());
+                    return learned;
+                })
+                .orElse(false);
     }
     
     @Override
     public int getScore(EnglishExpression englishExpression) {
-        if (englishExpression == null) {
-            return 0;
-        }
-        return englishExpression.getScore();
+        return Optional.ofNullable(englishExpression)
+                .map(EnglishExpression::getScore)
+                .orElse(0);
     }
     
     @Override
     public int getScore(SpanishExpression spanishExpression) {
-        if (spanishExpression == null) {
-            return 0;
-        }
-        return spanishExpression.getScore();
+        return Optional.ofNullable(spanishExpression)
+                .map(SpanishExpression::getScore)
+                .orElse(0);
     }
     
     @Override
     public EnglishExpression resetScore(EnglishExpression englishExpression) {
-        if (englishExpression == null) {
-            log.warn("Cannot reset score of null English expression");
-            return null;
-        }
-        
-        englishExpression.setScore(0);
-        log.debug("Reset score of English expression '{}' to 0", englishExpression.getExpression());
-        
-        return englishExpression;
+        return Optional.ofNullable(englishExpression)
+                .map(expr -> {
+                    expr.setScore(0);
+                    log.debug("Reset score of English expression '{}' to 0", expr.getExpression());
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot reset score of null English expression");
+                    return null;
+                });
     }
     
     @Override
     public SpanishExpression resetScore(SpanishExpression spanishExpression) {
-        if (spanishExpression == null) {
-            log.warn("Cannot reset score of null Spanish expression");
-            return null;
-        }
-        
-        spanishExpression.setScore(0);
-        log.debug("Reset score of Spanish expression '{}' to 0", spanishExpression.getExpression());
-        
-        return spanishExpression;
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    expr.setScore(0);
+                    log.debug("Reset score of Spanish expression '{}' to 0", expr.getExpression());
+                    return expr;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot reset score of null Spanish expression");
+                    return null;
+                });
     }
     
     @Override
     public double getLearningProgress(EnglishExpression englishExpression) {
-        if (englishExpression == null) {
-            return 0.0;
-        }
-        
-        double progress = (double) englishExpression.getScore() / LEARNED_THRESHOLD * 100;
-        progress = Math.min(100.0, Math.max(0.0, progress));
-        
-        log.debug("Learning progress for '{}': {:.1f}%", 
-                englishExpression.getExpression(), progress);
-        
-        return progress;
+        return Optional.ofNullable(englishExpression)
+                .map(expr -> {
+                    double progress = (double) expr.getScore() / LEARNED_THRESHOLD * 100;
+                    progress = Math.min(100.0, Math.max(0.0, progress));
+                    log.debug("Learning progress for '{}': {:.1f}%", 
+                            expr.getExpression(), progress);
+                    return progress;
+                })
+                .orElse(0.0);
     }
     
     @Override
     public double getLearningProgress(SpanishExpression spanishExpression) {
-        if (spanishExpression == null) {
-            return 0.0;
-        }
-        
-        double progress = (double) spanishExpression.getScore() / LEARNED_THRESHOLD * 100;
-        progress = Math.min(100.0, Math.max(0.0, progress));
-        
-        log.debug("Learning progress for '{}': {:.1f}%", 
-                spanishExpression.getExpression(), progress);
-        
-        return progress;
+        return Optional.ofNullable(spanishExpression)
+                .map(expr -> {
+                    double progress = (double) expr.getScore() / LEARNED_THRESHOLD * 100;
+                    progress = Math.min(100.0, Math.max(0.0, progress));
+                    log.debug("Learning progress for '{}': {:.1f}%", 
+                            expr.getExpression(), progress);
+                    return progress;
+                })
+                .orElse(0.0);
     }
     
     @Override
