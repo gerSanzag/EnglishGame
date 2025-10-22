@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -45,10 +47,11 @@ public class GameView extends JFrame {
         this.landingPage = landingPage;
         
         setTitle("Interactive Game - English Learning Game");
-        setSize(700, 500);
+        setSize(1000, 800);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
         
         initComponents();
         setupLayout();
@@ -87,92 +90,182 @@ public class GameView extends JFrame {
         progressLabel.setForeground(new Color(255, 140, 0));
         
         // Navigation buttons
-        backToLandingButton = createStyledButton("🏠 Main Menu", "Return to main menu");
-        dataManagementButton = createStyledButton("📊 Manage Data", "Go to data management");
-        viewWordsButton = createStyledButton("📚 View Words", "View saved words");
-        learnedWordsButton = createStyledButton("🏆 Learned Words", "View learned words");
+        backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
+        dataManagementButton = createStyledButton("Manage Data", "Go to data management");
+        viewWordsButton = createStyledButton("View Words", "View saved words");
+        learnedWordsButton = createStyledButton("Learned Words", "View learned words");
     }
 
     private JButton createStyledButton(String text, String tooltip) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setFont(new Font("Arial", Font.BOLD, 14));
         button.setToolTipText(tooltip);
-        button.setBackground(new Color(70, 130, 180));
+        button.setPreferredSize(new Dimension(150, 40));
+        button.setMinimumSize(new Dimension(120, 35));
+        button.setMaximumSize(new Dimension(200, 45));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
+        button.setBorderPainted(true);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
         
-        // Hover effect
+        // Assign different colors based on button function
+        Color buttonColor = getButtonColor(text);
+        button.setBackground(buttonColor);
+        
+        // Create darker border color
+        Color borderColor = new Color(
+            Math.max(0, buttonColor.getRed() - 30),
+            Math.max(0, buttonColor.getGreen() - 30),
+            Math.max(0, buttonColor.getBlue() - 30)
+        );
+        button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+        
+        // Enhanced hover effect with subtle glow
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(100, 149, 237));
+                Color hoverColor = new Color(
+                    Math.min(255, buttonColor.getRed() + 25),
+                    Math.min(255, buttonColor.getGreen() + 25),
+                    Math.min(255, buttonColor.getBlue() + 25)
+                );
+                button.setBackground(hoverColor);
+                // Create a subtle glow effect with lighter border
+                Color glowBorder = new Color(
+                    Math.min(255, buttonColor.getRed() + 50),
+                    Math.min(255, buttonColor.getGreen() + 50),
+                    Math.min(255, buttonColor.getBlue() + 50)
+                );
+                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(buttonColor);
+                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
             }
         });
         
         return button;
     }
 
+    private Color getButtonColor(String buttonText) {
+        // Assign colors based on button function
+        if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
+            return new Color(16, 185, 129); // Vibrant green for submit actions
+        } else if (buttonText.contains("New") || buttonText.contains("Round")) {
+            return new Color(59, 130, 246); // Vibrant blue for new actions
+        } else if (buttonText.contains("Manage") || buttonText.contains("Data")) {
+            return new Color(37, 99, 235); // Vibrant blue for data management
+        } else if (buttonText.contains("View") || buttonText.contains("Words")) {
+            return new Color(16, 185, 129); // Vibrant green for view actions
+        } else if (buttonText.contains("Learned")) {
+            return new Color(124, 58, 237); // Vibrant purple for learned words
+        } else if (buttonText.contains("Back") || buttonText.contains("Main")) {
+            return new Color(220, 38, 127); // Vibrant pink for return actions
+        } else {
+            return new Color(59, 130, 246); // Default vibrant blue
+        }
+    }
+
     private void setupLayout() {
         setLayout(new BorderLayout(10, 10));
         
-        // Top panel with database selector
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        topPanel.add(new JLabel("Database:"));
-        topPanel.add(databaseSelector);
+        // Create main panel with soft background
+        JPanel mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Create soft gradient from light cream to very light blue
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(248, 250, 252),  // Very light cream at top
+                    0, getHeight(), new Color(240, 248, 255)  // Very light blue at bottom
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Center panel with game area
-        JPanel centerPanel = new JPanel();
-        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
-        centerPanel.setBackground(new Color(248, 249, 250));
+        // Database Selection Section
+        JPanel dbSection = createSectionPanel("Database Selection");
+        JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        dbPanel.add(new JLabel("Database:"));
+        dbPanel.add(databaseSelector);
+        dbSection.add(dbPanel);
+        
+        // Game Area Section
+        JPanel gameSection = createSectionPanel("Interactive Game");
+        JPanel gamePanel = new JPanel();
+        gamePanel.setLayout(new BoxLayout(gamePanel, BoxLayout.Y_AXIS));
+        gamePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Spanish expression
         spanishExpressionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerPanel.add(spanishExpressionLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        gamePanel.add(spanishExpressionLabel);
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
         // English input
         englishTranslationField.setAlignmentX(Component.CENTER_ALIGNMENT);
         englishTranslationField.setMaximumSize(new Dimension(300, 35));
-        centerPanel.add(englishTranslationField);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        gamePanel.add(englishTranslationField);
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
-        // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Game buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         buttonPanel.add(submitButton);
         buttonPanel.add(newRoundButton);
-        centerPanel.add(buttonPanel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        gamePanel.add(buttonPanel);
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
         // Feedback
         feedbackLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        centerPanel.add(feedbackLabel);
-        centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        gamePanel.add(feedbackLabel);
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
         // Score and progress
-        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
         statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         statsPanel.add(scoreLabel);
         statsPanel.add(progressLabel);
-        centerPanel.add(statsPanel);
+        gamePanel.add(statsPanel);
         
-        // Bottom panel with navigation
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        bottomPanel.add(dataManagementButton);
-        bottomPanel.add(viewWordsButton);
-        bottomPanel.add(learnedWordsButton);
-        bottomPanel.add(backToLandingButton);
+        gameSection.add(gamePanel);
         
-        add(topPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        // Navigation Section
+        JPanel navSection = createSectionPanel("Navigation");
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        navPanel.add(dataManagementButton);
+        navPanel.add(viewWordsButton);
+        navPanel.add(learnedWordsButton);
+        navPanel.add(backToLandingButton);
+        navSection.add(navPanel);
+        
+        // Add all sections to main panel
+        mainPanel.add(dbSection);
+        mainPanel.add(Box.createVerticalStrut(20));
+        mainPanel.add(gameSection);
+        mainPanel.add(Box.createVerticalStrut(20));
+        mainPanel.add(navSection);
+        
+        // Add to frame with scroll
+        JScrollPane mainScrollPane = new JScrollPane(mainPanel);
+        mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        add(mainScrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createSectionPanel(String title) {
+        JPanel section = new JPanel();
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 2), title));
+        section.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent white
+        section.setOpaque(true);
+        return section;
     }
 
     private void addListeners() {

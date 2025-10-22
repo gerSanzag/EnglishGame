@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.util.List;
 
 /**
@@ -33,7 +35,8 @@ public class LearnedWordsView extends JFrame {
         this.landingPage = landingPage;
         
         setTitle("Learned Words - English Learning Game");
-        setSize(800, 600);
+        setSize(1000, 800);
+        setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
@@ -65,69 +68,151 @@ public class LearnedWordsView extends JFrame {
         statsLabel.setForeground(new Color(0, 150, 0));
         
         // Buttons
-        refreshButton = createStyledButton("🔄 Refresh", "Refresh the learned words list");
-        backToLandingButton = createStyledButton("🏠 Main Menu", "Return to main menu");
-        dataManagementButton = createStyledButton("📊 Manage Data", "Go to data management");
-        viewWordsButton = createStyledButton("📚 View Words", "View all saved words");
-        playGameButton = createStyledButton("🎮 Play Game", "Start interactive game");
+        refreshButton = createStyledButton("Refresh", "Refresh the learned words list");
+        backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
+        dataManagementButton = createStyledButton("Manage Data", "Go to data management");
+        viewWordsButton = createStyledButton("View Words", "View all saved words");
+        playGameButton = createStyledButton("Play Game", "Start interactive game");
     }
 
     private JButton createStyledButton(String text, String tooltip) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 12));
+        button.setFont(new Font("Arial", Font.BOLD, 14));
         button.setToolTipText(tooltip);
-        button.setBackground(new Color(70, 130, 180));
+        button.setPreferredSize(new Dimension(150, 40));
+        button.setMinimumSize(new Dimension(120, 35));
+        button.setMaximumSize(new Dimension(200, 45));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
-        button.setBorderPainted(false);
+        button.setBorderPainted(true);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        button.setOpaque(true);
         
-        // Hover effect
+        // Assign different colors based on button function
+        Color buttonColor = getButtonColor(text);
+        button.setBackground(buttonColor);
+        
+        // Create darker border color
+        Color borderColor = new Color(
+            Math.max(0, buttonColor.getRed() - 30),
+            Math.max(0, buttonColor.getGreen() - 30),
+            Math.max(0, buttonColor.getBlue() - 30)
+        );
+        button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+        
+        // Enhanced hover effect with subtle glow
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(100, 149, 237));
+                Color hoverColor = new Color(
+                    Math.min(255, buttonColor.getRed() + 25),
+                    Math.min(255, buttonColor.getGreen() + 25),
+                    Math.min(255, buttonColor.getBlue() + 25)
+                );
+                button.setBackground(hoverColor);
+                // Create a subtle glow effect with lighter border
+                Color glowBorder = new Color(
+                    Math.min(255, buttonColor.getRed() + 50),
+                    Math.min(255, buttonColor.getGreen() + 50),
+                    Math.min(255, buttonColor.getBlue() + 50)
+                );
+                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(70, 130, 180));
+                button.setBackground(buttonColor);
+                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
             }
         });
         
         return button;
     }
 
+    private Color getButtonColor(String buttonText) {
+        // Assign colors based on button function
+        if (buttonText.contains("Refresh")) {
+            return new Color(59, 130, 246); // Vibrant blue for refresh
+        } else if (buttonText.contains("Manage") || buttonText.contains("Data")) {
+            return new Color(37, 99, 235); // Vibrant blue for data management
+        } else if (buttonText.contains("View") || buttonText.contains("Words")) {
+            return new Color(16, 185, 129); // Vibrant green for view actions
+        } else if (buttonText.contains("Play") || buttonText.contains("Game")) {
+            return new Color(245, 101, 101); // Vibrant coral for game
+        } else if (buttonText.contains("Back") || buttonText.contains("Main")) {
+            return new Color(220, 38, 127); // Vibrant pink for return actions
+        } else {
+            return new Color(59, 130, 246); // Default vibrant blue
+        }
+    }
+
     private void setupLayout() {
         setLayout(new BorderLayout(10, 10));
         
-        // Top panel with stats and refresh button
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Create main panel with soft background
+        JPanel mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Create soft gradient from light cream to very light blue
+                GradientPaint gradient = new GradientPaint(
+                    0, 0, new Color(248, 250, 252),  // Very light cream at top
+                    0, getHeight(), new Color(240, 248, 255)  // Very light blue at bottom
+                );
+                g2d.setPaint(gradient);
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        JPanel topLeftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        topLeftPanel.add(statsLabel);
+        // Statistics Section
+        JPanel statsSection = createSectionPanel("Statistics");
+        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        statsPanel.add(statsLabel);
+        statsPanel.add(Box.createHorizontalStrut(20));
+        statsPanel.add(refreshButton);
+        statsSection.add(statsPanel);
         
-        JPanel topRightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        topRightPanel.add(refreshButton);
-        
-        topPanel.add(topLeftPanel, BorderLayout.WEST);
-        topPanel.add(topRightPanel, BorderLayout.EAST);
-        
-        // Center panel with table
+        // Learned Words Table Section
+        JPanel tableSection = createSectionPanel("Learned Words and Expressions");
         JScrollPane tableScrollPane = new JScrollPane(learnedWordsTable);
-        tableScrollPane.setPreferredSize(new Dimension(750, 400));
+        tableScrollPane.setPreferredSize(new Dimension(900, 400));
         tableScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         tableScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        tableSection.add(tableScrollPane);
         
-        // Bottom panel with navigation buttons
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        bottomPanel.add(dataManagementButton);
-        bottomPanel.add(viewWordsButton);
-        bottomPanel.add(playGameButton);
-        bottomPanel.add(backToLandingButton);
+        // Navigation Section
+        JPanel navSection = createSectionPanel("Navigation");
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        navPanel.add(dataManagementButton);
+        navPanel.add(viewWordsButton);
+        navPanel.add(playGameButton);
+        navPanel.add(backToLandingButton);
+        navSection.add(navPanel);
         
-        add(topPanel, BorderLayout.NORTH);
-        add(tableScrollPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        // Add all sections to main panel
+        mainPanel.add(statsSection);
+        mainPanel.add(Box.createVerticalStrut(20));
+        mainPanel.add(tableSection);
+        mainPanel.add(Box.createVerticalStrut(20));
+        mainPanel.add(navSection);
+        
+        // Add to frame with scroll
+        JScrollPane mainScrollPane = new JScrollPane(mainPanel);
+        mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        add(mainScrollPane, BorderLayout.CENTER);
+    }
+
+    private JPanel createSectionPanel(String title) {
+        JPanel section = new JPanel();
+        section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 2), title));
+        section.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent white
+        section.setOpaque(true);
+        return section;
     }
 
     private void addListeners() {
