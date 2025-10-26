@@ -183,7 +183,6 @@ public class GameLogicServiceImpl implements GameLogicService {
         // This would need to be implemented based on how databases are stored
         // For now, return a placeholder
         List<String> databases = new ArrayList<>();
-        databases.add("default");
         databases.add(LEARNED_WORDS_DATABASE);
         return databases;
     }

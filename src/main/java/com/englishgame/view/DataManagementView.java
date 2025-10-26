@@ -28,7 +28,6 @@ public class DataManagementView extends JFrame {
 
     // Database management components
     private JComboBox<String> databaseSelector;
-    private JTextField newDatabaseField;
     private JButton createDatabaseButton;
     private JButton deleteDatabaseButton;
 
@@ -72,9 +71,6 @@ public class DataManagementView extends JFrame {
         // Database Management Section
         databaseSelector = new JComboBox<>();
         databaseSelector.setPreferredSize(new Dimension(200, 30));
-        
-        newDatabaseField = new JTextField(25);
-        newDatabaseField.setToolTipText("Enter name for new database");
         
         createDatabaseButton = createStyledButton("Create Database", "Create a new database");
         deleteDatabaseButton = createStyledButton("Delete Database", "Delete selected database");
@@ -197,19 +193,14 @@ public class DataManagementView extends JFrame {
         
         // Database Management Section
         JPanel dbSection = createSectionPanel("Database Management");
-        JPanel dbTopPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        dbTopPanel.add(new JLabel("Current Database:"));
-        dbTopPanel.add(databaseSelector);
-        dbTopPanel.add(Box.createHorizontalStrut(10));
-        dbTopPanel.add(createDatabaseButton);
-        dbTopPanel.add(deleteDatabaseButton);
+        JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        dbPanel.add(new JLabel("Current Database:"));
+        dbPanel.add(databaseSelector);
+        dbPanel.add(Box.createHorizontalStrut(10));
+        dbPanel.add(createDatabaseButton);
+        dbPanel.add(deleteDatabaseButton);
         
-        JPanel dbBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        dbBottomPanel.add(new JLabel("New Database Name:"));
-        dbBottomPanel.add(newDatabaseField);
-        
-        dbSection.add(dbTopPanel);
-        dbSection.add(dbBottomPanel);
+        dbSection.add(dbPanel);
         
         // Individual Entry Section
         JPanel individualSection = createSectionPanel("Individual Expression Entry");
@@ -309,20 +300,38 @@ public class DataManagementView extends JFrame {
     }
 
     private void createDatabase() {
-        String dbName = newDatabaseField.getText().trim();
-        if (dbName.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a database name", "Error", JOptionPane.ERROR_MESSAGE);
+        // Show input dialog to get database name
+        String dbName = JOptionPane.showInputDialog(
+            this,
+            "Enter the name for the new database:",
+            "Create New Database",
+            JOptionPane.QUESTION_MESSAGE
+        );
+        
+        // If user cancelled or entered empty string
+        if (dbName == null || dbName.trim().isEmpty()) {
             return;
         }
         
+        dbName = dbName.trim();
+        
+        // Create the database
         if (gameController.createNewDatabase(dbName)) {
-            JOptionPane.showMessageDialog(this, "Database '" + dbName + "' created successfully!");
-            newDatabaseField.setText("");
+            JOptionPane.showMessageDialog(
+                this, 
+                "Database '" + dbName + "' created successfully!",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+            );
             refreshDatabaseSelector();
             log.info("Database '{}' created successfully", dbName);
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to create database '" + dbName + "'. It might already exist.", 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this, 
+                "Failed to create database '" + dbName + "'. It might already exist.",
+                "Error", 
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
@@ -373,14 +382,18 @@ public class DataManagementView extends JFrame {
         spanishExpr.getTranslations().add(englishExpr);
         englishExpr.getTranslations().add(spanishExpr);
         
-        // TODO: Add to database through GameController
-        JOptionPane.showMessageDialog(this, "Individual expression added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-        
-        // Clear fields
-        spanishField.setText("");
-        englishField.setText("");
-        
-        log.info("Individual expression added: '{}' - '{}'", spanish, english);
+        // Add to database through GameController
+        if (gameController.addExpressionToDatabase(selectedDb, spanishExpr)) {
+            JOptionPane.showMessageDialog(this, "Individual expression added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            
+            // Clear fields
+            spanishField.setText("");
+            englishField.setText("");
+            
+            log.info("Individual expression added: '{}' - '{}'", spanish, english);
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to add expression to database", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
 

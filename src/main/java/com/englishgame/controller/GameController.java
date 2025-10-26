@@ -28,12 +28,22 @@ public class GameController {
         this.gameLogicService = gameLogicService;
         this.databaseService = databaseService;
         this.gameDataService = gameDataService;
+        
+        // Set database service reference in game data service
+        if (gameDataService instanceof com.englishgame.service.implementations.GameDataServiceImpl) {
+            ((com.englishgame.service.implementations.GameDataServiceImpl) gameDataService).setDatabaseService(databaseService);
+        }
+        
         initializeGame();
     }
 
     private void initializeGame() {
         log.info("Initializing game controller...");
         gameDataService.loadGameData(); // Load previous game state
+        
+        // Synchronize loaded data with database service
+        databaseService.synchronizeWithRepository();
+        
         log.info("Game initialized. Loaded {} databases.", databaseService.getAvailableDatabases().size());
     }
 

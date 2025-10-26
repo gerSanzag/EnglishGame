@@ -12,6 +12,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +28,7 @@ public class GameDataServiceImpl implements GameDataService {
     private final DBRepository repository;
     private final ObjectMapper objectMapper;
     private String dataDirectory;
+    private com.englishgame.service.interfaces.DatabaseService databaseService;
     private static final String DEFAULT_DATA_DIR = "data";
     private static final String GAME_DATA_FILE = "game_data.json";
     private static final String BACKUP_DIR = "backups";
@@ -32,8 +36,15 @@ public class GameDataServiceImpl implements GameDataService {
     public GameDataServiceImpl(DBRepository repository) {
         this.repository = repository;
         this.objectMapper = new ObjectMapper();
-        this.dataDirectory = DEFAULT_DATA_DIR;
+        this.dataDirectory = getAbsoluteDataDirectory();
         initializeDataDirectory();
+    }
+    
+    /**
+     * Sets the database service reference for building current state
+     */
+    public void setDatabaseService(com.englishgame.service.interfaces.DatabaseService databaseService) {
+        this.databaseService = databaseService;
     }
     
     @Override
@@ -54,8 +65,8 @@ public class GameDataServiceImpl implements GameDataService {
         }
         
         try {
-            // Get all data from repository
-            List<List<Map<String, Object>>> allData = repository.findAll();
+            // Get current state from database service instead of repository
+            List<List<Map<String, Object>>> currentState = buildCurrentStateFromDatabases();
             
             // Create data directory if it doesn't exist
             Path dataPath = Paths.get(dataDirectory);
@@ -66,9 +77,10 @@ public class GameDataServiceImpl implements GameDataService {
             
             // Save to JSON file
             Path filePath = dataPath.resolve(filename);
-            objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), allData);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(filePath.toFile(), currentState);
             
             log.debug("Game data saved successfully to: {}", filePath);
+            log.info("Saved {} records to JSON file", currentState.size());
             return true;
             
         } catch (IOException e) {
@@ -86,6 +98,7 @@ public class GameDataServiceImpl implements GameDataService {
         
         try {
             Path filePath = Paths.get(dataDirectory, filename);
+            log.info("Attempting to load game data from: {}", filePath.toAbsolutePath());
             
             if (!Files.exists(filePath)) {
                 log.warn("Game data file does not exist: {}", filePath);
@@ -107,6 +120,7 @@ public class GameDataServiceImpl implements GameDataService {
             }
             
             log.debug("Game data loaded successfully from: {}", filePath);
+            log.info("Loaded {} records from JSON file", loadedData.size());
             return true;
             
         } catch (IOException e) {
@@ -264,6 +278,49 @@ public class GameDataServiceImpl implements GameDataService {
         }
     }
     
+    @Override
+    public List<List<Map<String, Object>>> getAllData() {
+        return repository.findAll();
+    }
+    
+    @Override
+    public com.englishgame.repository.interfaces.DBRepository getRepository() {
+        return repository;
+    }
+    
+    /**
+     * Gets the absolute path to the data directory based on the JAR location
+     * This ensures the data directory is always relative to where the JAR is located
+     */
+    private String getAbsoluteDataDirectory() {
+        try {
+            // Get the path of the JAR file
+            String jarPath = GameDataServiceImpl.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath();
+            
+            // Get the directory containing the JAR
+            File jarFile = new File(jarPath);
+            File jarDirectory = jarFile.getParentFile();
+            
+            // If JAR is in target/ directory, go up one level to find the data directory
+            String absoluteDataDir;
+            if (jarDirectory.getName().equals("target")) {
+                // JAR is in target/, data directory is in parent directory
+                absoluteDataDir = new File(jarDirectory.getParentFile(), DEFAULT_DATA_DIR).getAbsolutePath();
+            } else {
+                // JAR is elsewhere, data directory is next to JAR
+                absoluteDataDir = new File(jarDirectory, DEFAULT_DATA_DIR).getAbsolutePath();
+            }
+            
+            log.info("Using absolute data directory: {}", absoluteDataDir);
+            return absoluteDataDir;
+            
+        } catch (Exception e) {
+            log.warn("Could not determine JAR location, using relative path: {}", e.getMessage());
+            return DEFAULT_DATA_DIR;
+        }
+    }
+    
     private void initializeDataDirectory() {
         try {
             Path dataPath = Paths.get(dataDirectory);
@@ -274,5 +331,53 @@ public class GameDataServiceImpl implements GameDataService {
         } catch (IOException e) {
             log.error("Error initializing data directory: {}", e.getMessage());
         }
+    }
+    
+    /**
+     * Builds current state from database service instead of repository
+     * This prevents duplicate records
+     */
+    private List<List<Map<String, Object>>> buildCurrentStateFromDatabases() {
+        List<List<Map<String, Object>>> currentState = new ArrayList<>();
+        
+        if (databaseService == null) {
+            log.warn("Database service not set, falling back to repository");
+            return repository.findAll();
+        }
+        
+        // Get all available databases
+        List<String> databases = databaseService.getAvailableDatabases();
+        
+        for (String databaseName : databases) {
+            // Add database metadata
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("type", "database_metadata");
+            metadata.put("database", databaseName);
+            metadata.put("created_at", System.currentTimeMillis());
+            currentState.add(Arrays.asList(metadata));
+            
+            // Add all Spanish expressions from this database
+            List<com.englishgame.model.SpanishExpression> spanishExpressions = databaseService.getSpanishExpressions(databaseName);
+            for (com.englishgame.model.SpanishExpression spanishExpr : spanishExpressions) {
+                Map<String, Object> expressionData = new HashMap<>();
+                expressionData.put("type", "spanish_expression");
+                expressionData.put("database", databaseName);
+                expressionData.put("language", "spanish");
+                expressionData.put("expression", spanishExpr.getExpression());
+                expressionData.put("score", spanishExpr.getScore());
+                
+                // Add translations
+                List<String> translations = new ArrayList<>();
+                for (com.englishgame.model.EnglishExpression translation : spanishExpr.getTranslations()) {
+                    translations.add(translation.getExpression());
+                }
+                expressionData.put("translations", translations);
+                
+                currentState.add(Arrays.asList(expressionData));
+            }
+        }
+        
+        log.debug("Built current state with {} records from {} databases", currentState.size(), databases.size());
+        return currentState;
     }
 }

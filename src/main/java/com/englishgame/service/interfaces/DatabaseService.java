@@ -151,4 +151,10 @@ public interface DatabaseService {
      * @return list of learned English expressions
      */
     java.util.List<EnglishExpression> getLearnedExpressions();
+    
+    /**
+     * Synchronizes database service with repository data
+     * Should be called after loading data from JSON
+     */
+    void synchronizeWithRepository();
 }

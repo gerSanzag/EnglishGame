@@ -83,4 +83,16 @@ public interface GameDataService {
      * @return true if imported successfully, false otherwise
      */
     boolean importFromJSON(String jsonData);
+    
+    /**
+     * Gets all data from the repository
+     * @return List<List<Map<String, Object>>> with all repository data
+     */
+    List<List<Map<String, Object>>> getAllData();
+    
+    /**
+     * Gets access to the repository for direct operations
+     * @return DBRepository instance
+     */
+    com.englishgame.repository.interfaces.DBRepository getRepository();
 }

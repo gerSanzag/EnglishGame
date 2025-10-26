@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -15,5 +16,5 @@ import java.util.List;
 public class SpanishExpression {
     private String expression;
     private int score;
-    private List<EnglishExpression> translations;
+    private List<EnglishExpression> translations = new ArrayList<>();
 }

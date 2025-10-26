@@ -45,7 +45,8 @@ class SpanishExpressionTest {
         assertNotNull(emptyExpression);
         assertNull(emptyExpression.getExpression());
         assertEquals(0, emptyExpression.getScore());
-        assertNull(emptyExpression.getTranslations());
+        assertNotNull(emptyExpression.getTranslations());
+        assertTrue(emptyExpression.getTranslations().isEmpty());
     }
 
     @Test

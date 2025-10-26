@@ -19,7 +19,6 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     private final GameDataService gameDataService;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
-    private static final String DEFAULT_DATABASE = "default";
     
     // In-memory storage for databases
     private final Map<String, List<SpanishExpression>> spanishDatabases;
@@ -38,8 +37,13 @@ public class DatabaseServiceImpl implements DatabaseService {
                 .filter(name -> !name.trim().isEmpty())
                 .filter(name -> !databaseExists(name))
                 .map(name -> {
+                    // Create in-memory databases
                     spanishDatabases.put(name, new ArrayList<>());
                     englishDatabases.put(name, new ArrayList<>());
+                    
+                    // Save database metadata to repository for persistence
+                    saveDatabaseMetadataToRepository(name);
+                    
                     log.info("Database '{}' created successfully", name);
                     return true;
                 })
@@ -119,7 +123,12 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         
+        // Add to in-memory database
         spanishDatabases.get(databaseName).add(spanishExpression);
+        
+        // Save expression to repository for persistence
+        saveExpressionToRepository(databaseName, spanishExpression);
+        
         log.debug("Added Spanish expression '{}' to database '{}'", 
                 spanishExpression.getExpression(), databaseName);
         
@@ -286,13 +295,147 @@ public class DatabaseServiceImpl implements DatabaseService {
         return getEnglishExpressions(LEARNED_WORDS_DATABASE);
     }
     
+    @Override
+    public void synchronizeWithRepository() {
+        log.info("Synchronizing database service with repository data...");
+        loadDataFromRepository();
+        log.info("Database synchronization completed. Available databases: {}", getAvailableDatabases());
+    }
+    
     private void initializeDefaultDatabases() {
-        // Create default database
-        createDatabase(DEFAULT_DATABASE);
-        
-        // Create learned words database
+        // Create learned words database (required for system functionality)
         createDatabase(LEARNED_WORDS_DATABASE);
         
-        log.info("Initialized default databases: {} and {}", DEFAULT_DATABASE, LEARNED_WORDS_DATABASE);
+        log.info("Initialized learned words database: {}", LEARNED_WORDS_DATABASE);
+    }
+    
+    /**
+     * Loads data from the GameDataService repository and creates corresponding databases
+     */
+    private void loadDataFromRepository() {
+        try {
+            // Get all data from repository
+            List<List<Map<String, Object>>> allData = gameDataService.getAllData();
+            
+            if (allData == null || allData.isEmpty()) {
+                log.debug("No data found in repository to load");
+                return;
+            }
+            
+            // Process each record
+            for (List<Map<String, Object>> record : allData) {
+                if (record == null || record.isEmpty()) {
+                    continue;
+                }
+                
+                // Check if this is a database metadata record
+                Map<String, Object> firstMap = record.get(0);
+                if ("database_metadata".equals(firstMap.get("type"))) {
+                    String databaseName = (String) firstMap.get("database");
+                    if (databaseName != null && !databaseName.trim().isEmpty()) {
+                        createDatabase(databaseName);
+                        log.debug("Created database '{}' from loaded data", databaseName);
+                    }
+                } else {
+                    // This is an expression record, find its database
+                    String databaseName = (String) firstMap.get("database");
+                    String language = (String) firstMap.get("language");
+                    String expression = (String) firstMap.get("expression");
+                    
+                    if (databaseName != null && language != null && expression != null) {
+                        // Ensure database exists
+                        if (!databaseExists(databaseName)) {
+                            createDatabase(databaseName);
+                        }
+                        
+                        if ("spanish".equals(language)) {
+                            // Create Spanish expression
+                            SpanishExpression spanishExpr = new SpanishExpression();
+                            spanishExpr.setExpression(expression);
+                            spanishExpr.setScore(getIntValue(firstMap, "score", 0));
+                            
+                            // Add translations if they exist
+                            Object translationsObj = firstMap.get("translations");
+                            if (translationsObj instanceof List) {
+                                @SuppressWarnings("unchecked")
+                                List<String> translations = (List<String>) translationsObj;
+                                for (String translation : translations) {
+                                    EnglishExpression englishExpr = new EnglishExpression();
+                                    englishExpr.setExpression(translation);
+                                    englishExpr.setScore(getIntValue(firstMap, "score", 0));
+                                    spanishExpr.getTranslations().add(englishExpr);
+                                }
+                            }
+                            
+                            addSpanishExpression(databaseName, spanishExpr);
+                            log.debug("Loaded Spanish expression '{}' into database '{}'", expression, databaseName);
+                        }
+                    }
+                }
+            }
+            
+            log.info("Successfully loaded {} records from repository", allData.size());
+            
+        } catch (Exception e) {
+            log.error("Error loading data from repository: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Helper method to safely get integer values from map
+     */
+    private int getIntValue(Map<String, Object> map, String key, int defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        return defaultValue;
+    }
+    
+    /**
+     * Saves database metadata to the repository for persistence
+     */
+    private void saveDatabaseMetadataToRepository(String databaseName) {
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("type", "database_metadata");
+            metadata.put("database", databaseName);
+            metadata.put("created_at", System.currentTimeMillis());
+            
+            List<Map<String, Object>> record = Arrays.asList(metadata);
+            gameDataService.getRepository().save(record);
+            
+            log.debug("Database metadata saved to repository for '{}'", databaseName);
+        } catch (Exception e) {
+            log.error("Error saving database metadata to repository: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Saves Spanish expression to the repository for persistence
+     */
+    private void saveExpressionToRepository(String databaseName, SpanishExpression spanishExpression) {
+        try {
+            Map<String, Object> expressionData = new HashMap<>();
+            expressionData.put("type", "spanish_expression");
+            expressionData.put("database", databaseName);
+            expressionData.put("language", "spanish");
+            expressionData.put("expression", spanishExpression.getExpression());
+            expressionData.put("score", spanishExpression.getScore());
+            
+            // Add translations
+            List<String> translations = new ArrayList<>();
+            for (EnglishExpression translation : spanishExpression.getTranslations()) {
+                translations.add(translation.getExpression());
+            }
+            expressionData.put("translations", translations);
+            
+            List<Map<String, Object>> record = Arrays.asList(expressionData);
+            gameDataService.getRepository().save(record);
+            
+            log.debug("Spanish expression '{}' saved to repository", spanishExpression.getExpression());
+        } catch (Exception e) {
+            log.error("Error saving Spanish expression to repository: {}", e.getMessage());
+        }
     }
 }
