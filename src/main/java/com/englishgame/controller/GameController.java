@@ -266,4 +266,39 @@ public class GameController {
                     return false;
                 });
     }
+    
+    /**
+     * Deletes an expression from a database
+     * @param databaseName name of the database
+     * @param expression the expression to delete
+     * @return true if deleted successfully, false otherwise
+     */
+    public boolean deleteExpression(String databaseName, String expression) {
+        return Optional.ofNullable(databaseName)
+                .filter(databaseService::databaseExists)
+                .map(dbName -> {
+                    // Try to delete as Spanish expression first
+                    boolean deleted = databaseService.removeSpanishExpression(dbName, expression);
+                    
+                    if (!deleted) {
+                        // If not found as Spanish, try as English expression
+                        deleted = databaseService.removeEnglishExpression(dbName, expression);
+                    }
+                    
+                    if (deleted) {
+                        // Save changes after successful deletion
+                        gameDataService.saveGameData();
+                        log.info("Expression '{}' deleted from database '{}' successfully", expression, dbName);
+                    } else {
+                        log.warn("Expression '{}' not found in database '{}'", expression, dbName);
+                    }
+                    
+                    return deleted;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot delete expression '{}' from '{}' - database does not exist", 
+                            expression, databaseName);
+                    return false;
+                });
+    }
 }

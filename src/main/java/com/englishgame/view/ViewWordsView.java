@@ -45,7 +45,7 @@ public class ViewWordsView extends JFrame {
         this.gameController = gameController;
         this.landingPage = landingPage;
         
-        setTitle("Saved Words - English Learning Game");
+        setTitle("Saved Words");
         setSize(1000, 800);
         setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -518,9 +518,27 @@ public class ViewWordsView extends JFrame {
             "Confirm Delete", JOptionPane.YES_NO_OPTION);
         
         if (result == JOptionPane.YES_OPTION) {
-            // TODO: Implement delete expression functionality
-            JOptionPane.showMessageDialog(this, 
-                "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+            try {
+                boolean deleted = gameController.deleteExpression(selectedDb, expression);
+                
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Expression '" + expression + "' deleted successfully!",
+                        "Delete Successful", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // Refresh the table to show updated data
+                    refreshWordsTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "Failed to delete expression '" + expression + "'. It may not exist in the database.",
+                        "Delete Failed", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                log.error("Error deleting expression", e);
+                JOptionPane.showMessageDialog(this, 
+                    "Error deleting expression: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

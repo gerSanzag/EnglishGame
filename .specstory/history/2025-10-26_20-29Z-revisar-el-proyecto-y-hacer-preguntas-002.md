@@ -18413,6 +18413,183 @@ java -jar target/english-game-1.0.0.jar
 
 ---
 
+## **✅ Funcionalidad del botón Move restaurada**
+
+**🔧 Problema solucionado:**
+
+### **❌ Lo que estaba roto:**
+- Los métodos `moveSpanishExpression` y `moveEnglishExpression` solo devolvían `false`
+- No había lógica real de movimiento
+- Los logs mostraban: `"Move Spanish expression functionality not implemented yet"`
+
+### **✅ Lo que restauré:**
+
+#### **1. Lógica completa de movimiento:**
+- **Búsqueda** de la expresión en la base de datos origen
+- **Eliminación** de la base de datos origen
+- **Adición** a la base de datos destino
+- **Actualización** del repositorio para persistencia
+
+#### **2. Métodos restaurados:**
+- `moveSpanishExpression()` - Funcionalidad completa
+- `moveEnglishExpression()` - Funcionalidad completa  
+- `updateRepositoryAfterMove()` - Actualización del repositorio
+- `saveEnglishExpressionToRepository()` - Persistencia de expresiones inglesas
+
+#### **3. Características mantenidas:**
+- **✅ Texto de botones siempre visible** (corrección anterior)
+- **✅ Detección individual de clics** (solo el botón específico)
+- **✅ Diálogo de selección** de base de datos destino
+- **✅ Confirmación** antes del traslado
+- **✅ Mensajes de éxito/error** específicos
+- **✅ Actualización automática** de la tabla
+
+### **🎯 Estado actual:**
+- **✅ Funcionalidad completa** del botón Move restaurada
+- **✅ Problema de texto invisible** solucionado
+- **✅ Aplicación ejecutándose** y lista para probar
+
+**¡Ahora el botón Move debería funcionar correctamente!** 🚀
+
+Puedes probar moviendo expresiones entre bases de datos y verás que funciona como esperabas.
+
+---
+
+_**User (2025-10-27 20:17Z)**_
+
+Haz un commit
+
+---
+
+_**Assistant (default)**_
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git add .
+```
+
+---
+
+
+
+
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git status
+```
+
+```
+En la rama main
+Tu rama está actualizada con 'origin/main'.
+
+Cambios a ser confirmados:
+  (usa "git restore --staged <archivo>..." para sacar del área de stage)
+	modificados:     .specstory/history/2025-10-26_20-29Z-revisar-el-proyecto-y-hacer-preguntas-002.md
+	modificados:     data/game_data.json
+	modificados:     src/main/java/com/englishgame/service/implementations/DatabaseServiceImpl.java
+	modificados:     src/main/java/com/englishgame/view/ViewWordsView.java
+
+
+```
+
+---
+
+Tool use: **run_terminal_cmd**
+
+```bash
+git commit -m "fix: Corregir problema de texto invisible en botones Move/Delete y restaurar funcionalidad completa
+
+- Solucionar problema de texto invisible en botones cuando se selecciona una fila
+- Modificar ButtonRenderer para mantener texto negro siempre visible
+- Agregar borde elevado para mejor visibilidad de botones
+- Restaurar implementación completa de métodos moveSpanishExpression y moveEnglishExpression
+- Implementar lógica robusta de movimiento entre bases de datos
+- Agregar método updateRepositoryAfterMove para sincronización del repositorio
+- Restaurar método saveEnglishExpressionToRepository para persistencia
+- Mantener funcionalidad de detección individual de clics en botones
+- Preservar diálogo de selección de base de datos destino
+- Conservar confirmación antes del traslado y mensajes de feedback
+- Actualización automática de tabla después del traslado exitoso
+
+Problemas solucionados:
+- Botones Move/Delete perdían texto al seleccionar fila
+- Funcionalidad de movimiento estaba rota (solo devolvía false)
+- Logs mostraban 'functionality not implemented yet'
+
+Mejoras implementadas:
+- Texto siempre visible independientemente de selección de fila
+- Apariencia consistente de botones con bordes mejorados
+- Funcionalidad completa de movimiento con persistencia
+- Manejo robusto de errores y logging detallado
+
+Incluye documentación SpecStory actualizada con correcciones."
+```
+
+```
+[main 87605e3] fix: Corregir problema de texto invisible en botones Move/Delete y restaurar funcionalidad completa
+ 4 files changed, 905 insertions(+), 15 deletions(-)
+
+```
+
+---
+
+## **✅ Commit realizado exitosamente**
+
+**🎉 Cambios confirmados:**
+
+### **📦 Commit creado:**
+**`87605e3`** - "fix: Corregir problema de texto invisible en botones Move/Delete y restaurar funcionalidad completa"
+
+### **📋 Archivos incluidos:**
+- ✅ `.specstory/history/2025-10-26_20-29Z-revisar-el-proyecto-y-hacer-preguntas-002.md` (documentación actualizada)
+- ✅ `data/game_data.json` (datos del juego)
+- ✅ `src/main/java/com/englishgame/service/implementations/DatabaseServiceImpl.java` (funcionalidad restaurada)
+- ✅ `src/main/java/com/englishgame/view/ViewWordsView.java` (corrección de renderer)
+
+### **🔧 Problemas solucionados:**
+
+#### **1. ✅ Texto invisible en botones:**
+- **Problema:** Botones perdían texto al seleccionar fila
+- **Solución:** Texto negro siempre visible + borde elevado
+
+#### **2. ✅ Funcionalidad rota del botón Move:**
+- **Problema:** Métodos solo devolvían `false`
+- **Solución:** Implementación completa restaurada
+
+### **🚀 Funcionalidades restauradas:**
+
+1. **✅ Movimiento completo** entre bases de datos
+2. **✅ Persistencia automática** en repositorio
+3. **✅ Texto siempre visible** en botones
+4. **✅ Apariencia mejorada** con bordes
+5. **✅ Manejo robusto** de errores
+6. **✅ Logging detallado** para debugging
+
+### **📚 Documentación incluida:**
+- ✅ **SpecStory actualizada** con todas las correcciones
+- ✅ **Mensaje completo en castellano** con detalles técnicos
+- ✅ **Problemas y soluciones** documentados
+- ✅ **Mejoras implementadas** detalladas
+
+**¡Commit completado! Los cambios están guardados localmente.** 🎯
+
+¿Quieres que haga push al repositorio remoto también?
+
+---
+
+_**User (2025-10-27 20:17Z)**_
+
+Si
+
+---
+
+_**Assistant (default)**_
+
 
 
 ---

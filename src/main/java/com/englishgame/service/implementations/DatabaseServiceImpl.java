@@ -140,7 +140,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                         }))
                 .orElseGet(() -> {
                     log.warn("Cannot add Spanish expression to database '{}'", databaseName);
-                    return false;
+            return false;
                 });
     }
     
@@ -170,11 +170,15 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         
-        boolean removed = spanishDatabases.get(databaseName)
-                .removeIf(spanishExpr -> spanishExpr.getExpression().equals(expression));
+        Set<SpanishExpression> expressions = spanishDatabases.get(databaseName);
+        log.debug("Before removal: {} expressions in database '{}'", expressions.size(), databaseName);
+        
+        boolean removed = expressions.removeIf(spanishExpr -> spanishExpr.getExpression().equals(expression));
+        
+        log.debug("After removal: {} expressions in database '{}'", expressions.size(), databaseName);
         
         if (removed) {
-            log.debug("Removed Spanish expression '{}' from database '{}'", expression, databaseName);
+            log.info("Successfully removed Spanish expression '{}' from database '{}'", expression, databaseName);
         } else {
             log.warn("Spanish expression '{}' not found in database '{}'", expression, databaseName);
         }
@@ -189,11 +193,15 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         
-        boolean removed = englishDatabases.get(databaseName)
-                .removeIf(englishExpr -> englishExpr.getExpression().equals(expression));
+        Set<EnglishExpression> expressions = englishDatabases.get(databaseName);
+        log.debug("Before removal: {} English expressions in database '{}'", expressions.size(), databaseName);
+        
+        boolean removed = expressions.removeIf(englishExpr -> englishExpr.getExpression().equals(expression));
+        
+        log.debug("After removal: {} English expressions in database '{}'", expressions.size(), databaseName);
         
         if (removed) {
-            log.debug("Removed English expression '{}' from database '{}'", expression, databaseName);
+            log.info("Successfully removed English expression '{}' from database '{}'", expression, databaseName);
         } else {
             log.warn("English expression '{}' not found in database '{}'", expression, databaseName);
         }
