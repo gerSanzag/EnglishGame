@@ -227,4 +227,43 @@ public class GameController {
     public List<EnglishExpression> getEnglishExpressionsFromDatabase(String databaseName) {
         return databaseService.getEnglishExpressions(databaseName);
     }
+    
+    /**
+     * Moves an expression from one database to another
+     * @param sourceDatabase source database name
+     * @param targetDatabase target database name
+     * @param expression the expression to move
+     * @return true if moved successfully, false otherwise
+     */
+    public boolean moveExpression(String sourceDatabase, String targetDatabase, String expression) {
+        return Optional.ofNullable(sourceDatabase)
+                .filter(databaseService::databaseExists)
+                .flatMap(sourceDb -> Optional.ofNullable(targetDatabase)
+                        .filter(databaseService::databaseExists)
+                        .filter(targetDb -> !sourceDb.equals(targetDb))
+                        .map(targetDb -> {
+                            // Try to move as Spanish expression first
+                            boolean moved = databaseService.moveSpanishExpression(sourceDb, targetDb, expression);
+                            
+                            if (!moved) {
+                                // If not found as Spanish, try as English expression
+                                moved = databaseService.moveEnglishExpression(sourceDb, targetDb, expression);
+                            }
+                            
+                            if (moved) {
+                                // Save changes after successful move
+                                gameDataService.saveGameData();
+                                log.info("Expression '{}' moved from '{}' to '{}' successfully", expression, sourceDb, targetDb);
+                            } else {
+                                log.warn("Expression '{}' not found in source database '{}'", expression, sourceDb);
+                            }
+                            
+                            return moved;
+                        }))
+                .orElseGet(() -> {
+                    log.warn("Cannot move expression '{}' from '{}' to '{}' - invalid databases", 
+                            expression, sourceDatabase, targetDatabase);
+                    return false;
+                });
+    }
 }

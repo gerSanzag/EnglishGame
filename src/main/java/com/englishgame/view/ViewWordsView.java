@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 /**
  * View Words Window
@@ -44,7 +45,7 @@ public class ViewWordsView extends JFrame {
         this.gameController = gameController;
         this.landingPage = landingPage;
         
-        setTitle("View Words - English Learning Game");
+        setTitle("Saved Words - English Learning Game");
         setSize(1000, 800);
         setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -79,9 +80,25 @@ public class ViewWordsView extends JFrame {
         
         // Set custom renderer for button columns
         wordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
-        wordsTable.getColumn("Move").setCellEditor(new ButtonEditor(new JCheckBox()));
         wordsTable.getColumn("Delete").setCellRenderer(new ButtonRenderer("Delete"));
-        wordsTable.getColumn("Delete").setCellEditor(new ButtonEditor(new JCheckBox()));
+        
+        // Add mouse listener for button clicks
+        wordsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int row = wordsTable.rowAtPoint(e.getPoint());
+                int col = wordsTable.columnAtPoint(e.getPoint());
+                
+                if (row >= 0 && col >= 0) {
+                    String columnName = wordsTable.getColumnName(col);
+                    if ("Move".equals(columnName)) {
+                        handleMoveExpression(row);
+                    } else if ("Delete".equals(columnName)) {
+                        handleDeleteExpression(row);
+                    }
+                }
+            }
+        });
         
         // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the words list");
@@ -420,6 +437,92 @@ public class ViewWordsView extends JFrame {
             }
         }
     }
+    
+    private void handleMoveExpression(int row) {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null) {
+            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String expression = (String) wordsTable.getValueAt(row, 0);
+        log.info("Move button clicked for expression: {}", expression);
+        
+        // Get available databases (excluding current and learned_words)
+        List<String> availableDatabases = gameController.getAvailableDatabases().stream()
+                .filter(db -> !db.equals(selectedDb))
+                .collect(java.util.stream.Collectors.toList());
+        
+        if (availableDatabases.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No other databases available to move the expression to.", 
+                "No Target Database", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        // Show database selection dialog
+        String targetDatabase = (String) JOptionPane.showInputDialog(
+            this,
+            "Select target database to move '" + expression + "' to:",
+            "Move Expression",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            availableDatabases.toArray(),
+            availableDatabases.get(0)
+        );
+        
+        if (targetDatabase != null && !targetDatabase.isEmpty()) {
+            // Confirm the move
+            int confirmResult = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to move '" + expression + "' from '" + selectedDb + "' to '" + targetDatabase + "'?",
+                "Confirm Move", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            
+            if (confirmResult == JOptionPane.YES_OPTION) {
+                try {
+                    boolean moved = gameController.moveExpression(selectedDb, targetDatabase, expression);
+                    
+                    if (moved) {
+                        JOptionPane.showMessageDialog(this, 
+                            "Expression '" + expression + "' moved successfully to '" + targetDatabase + "'!",
+                            "Move Successful", JOptionPane.INFORMATION_MESSAGE);
+                        
+                        // Refresh the table to show updated data
+                        refreshWordsTable();
+                    } else {
+                        JOptionPane.showMessageDialog(this, 
+                            "Failed to move expression '" + expression + "'. It may not exist in the source database.",
+                            "Move Failed", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    log.error("Error moving expression", e);
+                    JOptionPane.showMessageDialog(this, 
+                        "Error moving expression: " + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+    
+    private void handleDeleteExpression(int row) {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null) {
+            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String expression = (String) wordsTable.getValueAt(row, 0);
+        log.info("Delete button clicked for expression: {}", expression);
+        
+        int result = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete the expression: " + expression + "?",
+            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        
+        if (result == JOptionPane.YES_OPTION) {
+            // TODO: Implement delete expression functionality
+            JOptionPane.showMessageDialog(this, 
+                "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
 
     // Custom button renderer for table cells
     class ButtonRenderer extends JButton implements TableCellRenderer {
@@ -446,73 +549,4 @@ public class ViewWordsView extends JFrame {
         }
     }
 
-    // Custom button editor for table cells
-    class ButtonEditor extends DefaultCellEditor {
-        protected JButton button;
-        private String label;
-        private boolean isPushed;
-        private int row;
-        private String expression;
-
-        public ButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
-            button.addActionListener(e -> fireEditingStopped());
-        }
-
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int row, int column) {
-            label = (value == null) ? "" : value.toString();
-            button.setText(label);
-            isPushed = true;
-            this.row = row;
-            
-            // Get the expression from the first column
-            expression = (String) table.getValueAt(row, 0);
-            
-            return button;
-        }
-
-        public Object getCellEditorValue() {
-            if (isPushed) {
-                if ("Move".equals(label)) {
-                    handleMoveExpression();
-                } else if ("Delete".equals(label)) {
-                    handleDeleteExpression();
-                }
-            }
-            isPushed = false;
-            return label;
-        }
-
-        public boolean stopCellEditing() {
-            isPushed = false;
-            return super.stopCellEditing();
-        }
-
-        protected void fireEditingStopped() {
-            super.fireEditingStopped();
-        }
-
-        private void handleMoveExpression() {
-            log.info("Move button clicked for expression: {}", expression);
-            // TODO: Implement move to another database
-            JOptionPane.showMessageDialog(ViewWordsView.this, 
-                "Move functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        private void handleDeleteExpression() {
-            log.info("Delete button clicked for expression: {}", expression);
-            int result = JOptionPane.showConfirmDialog(ViewWordsView.this,
-                "Are you sure you want to delete the expression: " + expression + "?",
-                "Confirm Delete", JOptionPane.YES_NO_OPTION);
-            
-            if (result == JOptionPane.YES_OPTION) {
-                // TODO: Implement delete expression
-                JOptionPane.showMessageDialog(ViewWordsView.this, 
-                    "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-            }
-        }
-    }
 }

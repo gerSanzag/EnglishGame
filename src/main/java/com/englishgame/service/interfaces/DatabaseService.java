@@ -157,4 +157,22 @@ public interface DatabaseService {
      * Should be called after loading data from JSON
      */
     void synchronizeWithRepository();
+    
+    /**
+     * Moves a Spanish expression from one database to another
+     * @param sourceDatabase source database name
+     * @param targetDatabase target database name
+     * @param expression the Spanish expression to move
+     * @return true if moved successfully, false otherwise
+     */
+    boolean moveSpanishExpression(String sourceDatabase, String targetDatabase, String expression);
+    
+    /**
+     * Moves an English expression from one database to another
+     * @param sourceDatabase source database name
+     * @param targetDatabase target database name
+     * @param expression the English expression to move
+     * @return true if moved successfully, false otherwise
+     */
+    boolean moveEnglishExpression(String sourceDatabase, String targetDatabase, String expression);
 }
