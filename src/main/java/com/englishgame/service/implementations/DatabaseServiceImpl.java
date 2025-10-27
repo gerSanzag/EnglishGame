@@ -64,8 +64,13 @@ public class DatabaseServiceImpl implements DatabaseService {
                 .filter(name -> databaseExists(name))
                 .filter(name -> !LEARNED_WORDS_DATABASE.equals(name))
                 .map(name -> {
+                    // Remove from in-memory databases
                     spanishDatabases.remove(name);
                     englishDatabases.remove(name);
+                    
+                    // Remove from repository for persistence
+                    removeDatabaseFromRepository(name);
+                    
                     log.info("Database '{}' deleted successfully", name);
                     return true;
                 })
@@ -436,6 +441,65 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.debug("Spanish expression '{}' saved to repository", spanishExpression.getExpression());
         } catch (Exception e) {
             log.error("Error saving Spanish expression to repository: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Removes database and all its expressions from the repository
+     * Uses the same strategy as saveGameData() to ensure consistency
+     */
+    private void removeDatabaseFromRepository(String databaseName) {
+        try {
+            // Instead of manipulating repository directly, we let GameDataService
+            // rebuild the repository from current database state
+            // This ensures consistency and avoids data corruption
+            
+            // Clear the repository completely
+            gameDataService.getRepository().clear();
+            
+            // Rebuild repository from current database state (excluding deleted database)
+            List<String> databases = getAvailableDatabases();
+            
+            for (String dbName : databases) {
+                // Skip the database being deleted (it's already removed from memory)
+                if (databaseName.equals(dbName)) {
+                    continue;
+                }
+                
+                // Add database metadata
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("type", "database_metadata");
+                metadata.put("database", dbName);
+                metadata.put("created_at", System.currentTimeMillis());
+                
+                List<Map<String, Object>> record = Arrays.asList(metadata);
+                gameDataService.getRepository().save(record);
+                
+                // Add all Spanish expressions from this database
+                List<SpanishExpression> spanishExpressions = getSpanishExpressions(dbName);
+                for (SpanishExpression spanishExpr : spanishExpressions) {
+                    Map<String, Object> expressionData = new HashMap<>();
+                    expressionData.put("type", "spanish_expression");
+                    expressionData.put("database", dbName);
+                    expressionData.put("language", "spanish");
+                    expressionData.put("expression", spanishExpr.getExpression());
+                    expressionData.put("score", spanishExpr.getScore());
+                    
+                    // Add translations
+                    List<String> translations = new ArrayList<>();
+                    for (EnglishExpression translation : spanishExpr.getTranslations()) {
+                        translations.add(translation.getExpression());
+                    }
+                    expressionData.put("translations", translations);
+                    
+                    List<Map<String, Object>> exprRecord = Arrays.asList(expressionData);
+                    gameDataService.getRepository().save(exprRecord);
+                }
+            }
+            
+            log.debug("Database '{}' and all its expressions removed from repository", databaseName);
+        } catch (Exception e) {
+            log.error("Error removing database from repository: {}", e.getMessage());
         }
     }
 }

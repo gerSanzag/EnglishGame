@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller for orchestrating the game flow
@@ -48,7 +49,9 @@ public class GameController {
     }
 
     public List<String> getAvailableDatabases() {
-        return databaseService.getAvailableDatabases();
+        return databaseService.getAvailableDatabases().stream()
+                .filter(dbName -> !"learned_words".equals(dbName))
+                .collect(Collectors.toList());
     }
 
     public boolean selectDatabase(String databaseName) {
@@ -167,6 +170,32 @@ public class GameController {
                 })
                 .orElseGet(() -> {
                     log.warn("Database '{}' does not exist", databaseName);
+                    return false;
+                });
+    }
+
+    public boolean deleteDatabase(String databaseName) {
+        return Optional.ofNullable(databaseName)
+                .filter(name -> !name.trim().isEmpty())
+                .filter(databaseService::databaseExists)
+                .map(name -> {
+                    boolean deleted = databaseService.deleteDatabase(name);
+                    if (deleted) {
+                        gameDataService.saveGameData(); // Save changes after deleting database
+                        
+                        // If the deleted database was the current one, clear current database
+                        if (name.equals(currentDatabase)) {
+                            currentDatabase = null;
+                            currentSpanishExpression = null;
+                            log.info("Current database cleared after deletion of '{}'", name);
+                        }
+                        
+                        log.info("Database '{}' deleted successfully", name);
+                    }
+                    return deleted;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot delete database '{}' - it may not exist or be protected", databaseName);
                     return false;
                 });
     }

@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Data Management Window
@@ -87,7 +88,7 @@ public class DataManagementView extends JFrame {
         // Bulk Entry Section
         bulkTextArea = new JTextArea(10, 60);
         bulkTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        bulkTextArea.setToolTipText("Enter expressions in format: Spanish - English\\nCasa - house\\nCasa - home");
+        bulkTextArea.setToolTipText("Enter expressions in format: Spanish - English\\nSupported separators: -, =, ,\\nExample: Casa - house, home");
         
         loadFileButton = createStyledButton("Load File", "Load expressions from file");
         processBulkButton = createStyledButton("Add Expressions", "Add all entered expressions to database");
@@ -230,6 +231,8 @@ public class DataManagementView extends JFrame {
         JPanel bulkFormat = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         bulkFormat.add(new JLabel("Format: Spanish - English (one per line)"));
         bulkFormat.add(Box.createHorizontalStrut(10));
+        bulkFormat.add(new JLabel("Separators: -, =, ,"));
+        bulkFormat.add(Box.createHorizontalStrut(10));
         bulkFormat.add(new JLabel("Example: Casa - house, home"));
         
         bulkSection.add(bulkTopPanel);
@@ -347,14 +350,37 @@ public class DataManagementView extends JFrame {
             return;
         }
         
+        // Get expression count for confirmation message
+        int expressionCount = gameController.getSpanishExpressionsFromDatabase(selectedDb).size();
+        String confirmationMessage = String.format(
+            "Are you sure you want to delete database '%s'?\n\nThis will permanently remove %d expression(s) and cannot be undone.",
+            selectedDb, expressionCount
+        );
+        
         int result = JOptionPane.showConfirmDialog(this, 
-            "Are you sure you want to delete database '" + selectedDb + "'?", 
-            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+            confirmationMessage, 
+            "Confirm Delete Database", 
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
         
         if (result == JOptionPane.YES_OPTION) {
-            // TODO: Implement delete database functionality in GameController
-            JOptionPane.showMessageDialog(this, "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-            log.info("Delete database '{}' requested", selectedDb);
+            if (gameController.deleteDatabase(selectedDb)) {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Database '" + selectedDb + "' deleted successfully!",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+                refreshDatabaseSelector();
+                log.info("Database '{}' deleted successfully", selectedDb);
+            } else {
+                JOptionPane.showMessageDialog(
+                    this, 
+                    "Failed to delete database '" + selectedDb + "'. It may be protected or not exist.",
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
         }
     }
 
@@ -434,50 +460,138 @@ public class DataManagementView extends JFrame {
         }
         
         try {
-            List<String> lines = Arrays.asList(content.split("\n"));
+            // Split by lines
+            String[] lines = content.split("\n");
             int processedCount = 0;
+            int ignoredCount = 0;
+            List<String> ignoredLines = new ArrayList<>();
             
             for (String line : lines) {
                 line = line.trim();
                 if (line.isEmpty()) continue;
                 
-                // Parse format: Spanish - English, English2
-                if (line.contains(" - ")) {
-                    String[] parts = line.split(" - ");
-                    if (parts.length == 2) {
-                        String spanish = parts[0].trim();
-                        String[] englishTranslations = parts[1].split(",");
-                        
-                        // Create Spanish expression
-                        SpanishExpression spanishExpr = new SpanishExpression(spanish, 0, new ArrayList<>());
-                        
-                        // Create English expressions
-                        for (String english : englishTranslations) {
-                            english = english.trim();
-                            if (!english.isEmpty()) {
-                                EnglishExpression englishExpr = new EnglishExpression(english, 0, new ArrayList<>());
-                                
-                                // Add to each other's translations
-                                spanishExpr.getTranslations().add(englishExpr);
-                                englishExpr.getTranslations().add(spanishExpr);
-                                
+                // Check if line has a separator (-, =, ,)
+                if (!line.contains("-") && !line.contains("=") && !line.contains(",")) {
+                    ignoredLines.add(line);
+                    ignoredCount++;
+                    continue;
+                }
+                
+                // Find the separator
+                String separator = findSeparator(line);
+                if (separator == null) {
+                    ignoredLines.add(line);
+                    ignoredCount++;
+                    continue;
+                }
+                
+                // Split the line
+                String[] parts = line.split(Pattern.quote(separator), 2);
+                if (parts.length != 2) {
+                    ignoredLines.add(line);
+                    ignoredCount++;
+                    continue;
+                }
+                
+                String spanish = parts[0].trim();
+                String englishPart = parts[1].trim();
+                
+                if (spanish.isEmpty() || englishPart.isEmpty()) {
+                    ignoredLines.add(line);
+                    ignoredCount++;
+                    continue;
+                }
+                
+                // Split Spanish components by common separators (/, ,, _, etc.)
+                String[] spanishComponents = spanish.split("[/,_,\\s]+");
+                
+                // Split English translations by comma
+                String[] englishTranslations = englishPart.split(",");
+                
+                // Create individual pairs for each Spanish-English combination
+                for (String spanishComponent : spanishComponents) {
+                    spanishComponent = spanishComponent.trim();
+                    if (spanishComponent.isEmpty()) continue;
+                    
+                    for (String english : englishTranslations) {
+                        english = english.trim();
+                        if (!english.isEmpty()) {
+                            // Use the existing individual entry function
+                            if (addIndividualExpressionFromBulk(selectedDb, spanishComponent, english)) {
                                 processedCount++;
                             }
                         }
-                        
-                        // TODO: Add to database through GameController
                     }
                 }
             }
             
-            JOptionPane.showMessageDialog(this, "Processed " + processedCount + " expressions successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            // Show result message
+            StringBuilder message = new StringBuilder();
+            message.append("Successfully processed ").append(processedCount).append(" expressions!");
+            
+            if (ignoredCount > 0) {
+                message.append("\n\n").append(ignoredCount).append(" lines were ignored because they don't match the required format:");
+                message.append("\n\nFormat: Spanish - English");
+                message.append("\nExample: Casa - house, home");
+                message.append("\nSupported separators: -, =, ,");
+                
+                if (ignoredCount <= 5) {
+                    message.append("\n\nIgnored lines:");
+                    for (String ignoredLine : ignoredLines) {
+                        message.append("\n• ").append(ignoredLine);
+                    }
+                } else {
+                    message.append("\n\nFirst few ignored lines:");
+                    for (int i = 0; i < Math.min(3, ignoredLines.size()); i++) {
+                        message.append("\n• ").append(ignoredLines.get(i));
+                    }
+                    message.append("\n... and ").append(ignoredCount - 3).append(" more");
+                }
+            }
+            
+            JOptionPane.showMessageDialog(this, message.toString(), "Bulk Processing Complete", JOptionPane.INFORMATION_MESSAGE);
+            
+            // Clear the text area
             bulkTextArea.setText("");
-            log.info("Bulk data processed: {} expressions", processedCount);
+            log.info("Bulk data processed: {} expressions, {} lines ignored", processedCount, ignoredCount);
             
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error processing bulk data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             log.error("Error processing bulk data", e);
         }
+    }
+    
+    /**
+     * Finds the best separator in a line
+     */
+    private String findSeparator(String line) {
+        if (line.contains(" - ")) return " - ";
+        if (line.contains("-")) return "-";
+        if (line.contains(" = ")) return " = ";
+        if (line.contains("=")) return "=";
+        if (line.contains(" , ")) return " , ";
+        if (line.contains(",")) return ",";
+        return null;
+    }
+    
+    /**
+     * Adds an individual expression from bulk processing (reuses individual entry logic)
+     */
+    private boolean addIndividualExpressionFromBulk(String databaseName, String spanish, String english) {
+        // Create entities
+        SpanishExpression spanishExpr = new SpanishExpression(spanish, 0, new ArrayList<>());
+        EnglishExpression englishExpr = new EnglishExpression(english, 0, new ArrayList<>());
+        
+        // Add to each other's translations
+        spanishExpr.getTranslations().add(englishExpr);
+        englishExpr.getTranslations().add(spanishExpr);
+        
+        // Add to database through GameController (reusing individual entry logic)
+        boolean success = gameController.addExpressionToDatabase(databaseName, spanishExpr);
+        if (success) {
+            log.debug("Bulk expression added: '{}' - '{}'", spanish, english);
+        }
+        return success;
     }
 
     private void openViewWords() {
