@@ -11314,7 +11314,38 @@ public boolean addSpanishExpression(String databaseName, SpanishExpression spani
             .flatMap(db -> Optional.ofNullable(spanishExpression)
                     .filter(expr -> expr.getExpression() != null && !expr.getExpression().trim().isEmpty())
                     .map(expr -> {
-                        // HashSet.add() automáticamente retorna false si dupl
+                        // HashSet.add() automáticamente retorna false si duplicado
+                        boolean added = spanishDatabases.get(db).add(expr);
+                        
+                        if (added) {
+                            saveExpressionToRepository(db, expr);
+                            log.debug("Added Spanish expression '{}' to database '{}'", expr.getExpression(), db);
+                        } else {
+                            log.warn("Spanish expression '{}' already exists in database '{}'", expr.getExpression(), db);
+                        }
+                        
+                        return added;
+                    }))
+            .orElseGet(() -> {
+                log.warn("Cannot add Spanish expression to database '{}'", databaseName);
+                return false;
+            });
+}
+```
+
+### **🚀 Beneficios obtenidos:**
+
+1. **✅ Sin duplicados**: HashSet automáticamente evita duplicados
+2. **✅ Performance O(1)**: Acceso constante en lugar de O(n)
+3. **✅ Código más limpio**: Enfoque funcional con Optional
+4. **✅ Menos código**: Eliminamos validación manual
+5. **✅ Más elegante**: Solución moderna de Java
+
+### **🎯 Resultado:**
+
+**¡La aplicación ahora rechaza automáticamente los duplicados!** Cuando intentes agregar "Entrar - Get in" dos veces, la segunda vez será rechazada silenciosamente y aparecerá un mensaje de advertencia en los logs.
+
+**¡La solución con HashSet es definitivamente la mejor práctica!** 🚀
 
 ---
 
