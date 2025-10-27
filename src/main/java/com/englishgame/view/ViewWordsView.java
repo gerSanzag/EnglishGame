@@ -537,13 +537,13 @@ public class ViewWordsView extends JFrame {
 
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
-            if (isSelected) {
-                setForeground(table.getSelectionForeground());
-                setBackground(table.getSelectionBackground());
-            } else {
-                setForeground(table.getForeground());
-                setBackground(UIManager.getColor("Button.background"));
-            }
+            // Always maintain button appearance regardless of row selection
+            setForeground(Color.BLACK); // Always black text for visibility
+            setBackground(UIManager.getColor("Button.background"));
+            
+            // Add subtle border to make buttons more visible
+            setBorder(BorderFactory.createRaisedBevelBorder());
+            
             setText((value == null) ? "" : value.toString());
             return this;
         }

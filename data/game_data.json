@@ -1,21 +1,21 @@
 [ [ {
   "database" : "Lolo",
-  "created_at" : 1761598164024,
+  "created_at" : 1761598587724,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
   "database" : "Lolo",
-  "expression" : "Sonar",
-  "translations" : [ "Go off" ],
+  "expression" : "recuperarse",
+  "translations" : [ "Get over" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "database" : "learned_words",
-  "created_at" : 1761598164024,
+  "created_at" : 1761598587724,
   "type" : "database_metadata"
 } ], [ {
   "database" : "llila",
-  "created_at" : 1761598164024,
+  "created_at" : 1761598587724,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
@@ -27,13 +27,13 @@
 } ], [ {
   "score" : 0,
   "database" : "llila",
-  "expression" : "recuperarse",
-  "translations" : [ "Get over" ],
+  "expression" : "Sonar",
+  "translations" : [ "Go off" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "database" : "pepe",
-  "created_at" : 1761598164024,
+  "created_at" : 1761598587724,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,

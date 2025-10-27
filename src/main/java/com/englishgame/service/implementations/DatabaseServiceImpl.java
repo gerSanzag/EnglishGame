@@ -506,4 +506,148 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.error("Error removing database from repository: {}", e.getMessage());
         }
     }
+    
+    @Override
+    public boolean moveSpanishExpression(String sourceDatabase, String targetDatabase, String expression) {
+        return Optional.ofNullable(sourceDatabase)
+                .filter(this::databaseExists)
+                .flatMap(sourceDb -> Optional.ofNullable(targetDatabase)
+                        .filter(this::databaseExists)
+                        .filter(targetDb -> !sourceDb.equals(targetDb))
+                        .map(targetDb -> {
+                            // Find the Spanish expression in source database
+                            Optional<SpanishExpression> spanishExpr = spanishDatabases.get(sourceDb)
+                                    .stream()
+                                    .filter(expr -> expr.getExpression().equals(expression))
+                                    .findFirst();
+                            
+                            if (spanishExpr.isPresent()) {
+                                // Remove from source database
+                                spanishDatabases.get(sourceDb).remove(spanishExpr.get());
+                                
+                                // Add to target database
+                                spanishDatabases.get(targetDb).add(spanishExpr.get());
+                                
+                                // Update repository
+                                updateRepositoryAfterMove(sourceDb, targetDb, spanishExpr.get(), "spanish");
+                                
+                                log.info("Spanish expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
+                                return true;
+                            } else {
+                                log.warn("Spanish expression '{}' not found in source database '{}'", expression, sourceDb);
+                                return false;
+                            }
+                        }))
+                .orElseGet(() -> {
+                    log.warn("Cannot move Spanish expression '{}' from '{}' to '{}' - invalid databases", 
+                            expression, sourceDatabase, targetDatabase);
+                    return false;
+                });
+    }
+    
+    @Override
+    public boolean moveEnglishExpression(String sourceDatabase, String targetDatabase, String expression) {
+        return Optional.ofNullable(sourceDatabase)
+                .filter(this::databaseExists)
+                .flatMap(sourceDb -> Optional.ofNullable(targetDatabase)
+                        .filter(this::databaseExists)
+                        .filter(targetDb -> !sourceDb.equals(targetDb))
+                        .map(targetDb -> {
+                            // Find the English expression in source database
+                            Optional<EnglishExpression> englishExpr = englishDatabases.get(sourceDb)
+                                    .stream()
+                                    .filter(expr -> expr.getExpression().equals(expression))
+                                    .findFirst();
+                            
+                            if (englishExpr.isPresent()) {
+                                // Remove from source database
+                                englishDatabases.get(sourceDb).remove(englishExpr.get());
+                                
+                                // Add to target database
+                                englishDatabases.get(targetDb).add(englishExpr.get());
+                                
+                                // Update repository
+                                updateRepositoryAfterMove(sourceDb, targetDb, englishExpr.get(), "english");
+                                
+                                log.info("English expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
+                                return true;
+                            } else {
+                                log.warn("English expression '{}' not found in source database '{}'", expression, sourceDb);
+                                return false;
+                            }
+                        }))
+                .orElseGet(() -> {
+                    log.warn("Cannot move English expression '{}' from '{}' to '{}' - invalid databases", 
+                            expression, sourceDatabase, targetDatabase);
+                    return false;
+                });
+    }
+    
+    /**
+     * Updates repository after moving an expression between databases
+     */
+    private void updateRepositoryAfterMove(String sourceDb, String targetDb, Object expression, String type) {
+        try {
+            // Clear repository and rebuild from current state
+            gameDataService.getRepository().clear();
+            
+            // Rebuild repository from current database state
+            List<String> databases = getAvailableDatabases();
+            
+            for (String dbName : databases) {
+                // Add database metadata
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("type", "database_metadata");
+                metadata.put("database", dbName);
+                metadata.put("created_at", System.currentTimeMillis());
+                
+                List<Map<String, Object>> record = Arrays.asList(metadata);
+                gameDataService.getRepository().save(record);
+                
+                // Add all Spanish expressions from this database
+                List<SpanishExpression> spanishExpressions = getSpanishExpressions(dbName);
+                for (SpanishExpression spanishExpr : spanishExpressions) {
+                    saveExpressionToRepository(dbName, spanishExpr);
+                }
+                
+                // Add all English expressions from this database
+                List<EnglishExpression> englishExpressions = getEnglishExpressions(dbName);
+                for (EnglishExpression englishExpr : englishExpressions) {
+                    saveEnglishExpressionToRepository(dbName, englishExpr);
+                }
+            }
+            
+            log.debug("Repository updated after moving {} expression from '{}' to '{}'", type, sourceDb, targetDb);
+        } catch (Exception e) {
+            log.error("Error updating repository after move: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Saves English expression to the repository for persistence
+     */
+    private void saveEnglishExpressionToRepository(String databaseName, EnglishExpression englishExpression) {
+        try {
+            Map<String, Object> expressionData = new HashMap<>();
+            expressionData.put("type", "english_expression");
+            expressionData.put("database", databaseName);
+            expressionData.put("language", "english");
+            expressionData.put("expression", englishExpression.getExpression());
+            expressionData.put("score", englishExpression.getScore());
+            
+            // Add translations
+            List<String> translations = new ArrayList<>();
+            for (SpanishExpression translation : englishExpression.getTranslations()) {
+                translations.add(translation.getExpression());
+            }
+            expressionData.put("translations", translations);
+            
+            List<Map<String, Object>> record = Arrays.asList(expressionData);
+            gameDataService.getRepository().save(record);
+            
+            log.debug("English expression '{}' saved to repository", englishExpression.getExpression());
+        } catch (Exception e) {
+            log.error("Error saving English expression to repository: {}", e.getMessage());
+        }
+    }
 }
