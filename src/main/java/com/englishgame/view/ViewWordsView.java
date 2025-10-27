@@ -411,7 +411,10 @@ public class ViewWordsView extends JFrame {
 
     private void deleteAllExpressions() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
+        log.info("DeleteAllExpressions method called with database: {}", selectedDb);
+        
         if (selectedDb == null) {
+            log.warn("No database selected for delete all operation");
             JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -420,21 +423,34 @@ public class ViewWordsView extends JFrame {
             "Are you sure you want to delete ALL expressions from database '" + selectedDb + "'?\n\nThis action cannot be undone!",
             "Confirm Delete All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         
+        log.info("User confirmation result: {}", result);
+        
         if (result == JOptionPane.YES_OPTION) {
+            log.info("User confirmed deletion, calling gameController.deleteAllExpressions");
             try {
-                // TODO: Implement delete all functionality through controller
-                log.info("Delete all expressions requested for database: {}", selectedDb);
-                JOptionPane.showMessageDialog(this, 
-                    "Delete all functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+                boolean deleted = gameController.deleteAllExpressions(selectedDb);
+                log.info("DeleteAllExpressions result: {}", deleted);
                 
-                // Refresh table after deletion
-                refreshWordsTable();
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this, 
+                        "All expressions deleted successfully from database '" + selectedDb + "'!",
+                        "Delete All Successful", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    // Refresh the table to show updated data
+                    refreshWordsTable();
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "No expressions found in database '" + selectedDb + "' to delete.",
+                        "No Expressions Found", JOptionPane.INFORMATION_MESSAGE);
+                }
                 
             } catch (Exception e) {
                 log.error("Error deleting all expressions", e);
                 JOptionPane.showMessageDialog(this, "Error deleting expressions: " + e.getMessage(), 
                     "Error", JOptionPane.ERROR_MESSAGE);
             }
+        } else {
+            log.info("User cancelled delete all operation");
         }
     }
     

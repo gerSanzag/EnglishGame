@@ -301,4 +301,43 @@ public class GameController {
                     return false;
                 });
     }
+    
+    /**
+     * Deletes all expressions from a database
+     * @param databaseName name of the database
+     * @return true if deleted successfully, false otherwise
+     */
+    public boolean deleteAllExpressions(String databaseName) {
+        log.info("DeleteAllExpressions called for database: {}", databaseName);
+        
+        return Optional.ofNullable(databaseName)
+                .filter(databaseService::databaseExists)
+                .map(dbName -> {
+                    log.info("Database '{}' exists, proceeding with deletion", dbName);
+                    
+                    // Delete all Spanish expressions
+                    boolean spanishDeleted = databaseService.deleteAllSpanishExpressions(dbName);
+                    log.info("Spanish expressions deletion result: {}", spanishDeleted);
+                    
+                    // Delete all English expressions
+                    boolean englishDeleted = databaseService.deleteAllEnglishExpressions(dbName);
+                    log.info("English expressions deletion result: {}", englishDeleted);
+                    
+                    boolean anyDeleted = spanishDeleted || englishDeleted;
+                    
+                    if (anyDeleted) {
+                        // Save changes after successful deletion
+                        gameDataService.saveGameData();
+                        log.info("All expressions deleted from database '{}' successfully", dbName);
+                    } else {
+                        log.warn("No expressions found in database '{}' to delete", dbName);
+                    }
+                    
+                    return anyDeleted;
+                })
+                .orElseGet(() -> {
+                    log.warn("Cannot delete all expressions from '{}' - database does not exist", databaseName);
+                    return false;
+                });
+    }
 }

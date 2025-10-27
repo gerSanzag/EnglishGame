@@ -210,6 +210,38 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
     
     @Override
+    public boolean deleteAllSpanishExpressions(String databaseName) {
+        if (!databaseExists(databaseName)) {
+            log.warn("Database '{}' does not exist", databaseName);
+            return false;
+        }
+        
+        Set<SpanishExpression> expressions = spanishDatabases.get(databaseName);
+        int countBefore = expressions.size();
+        
+        expressions.clear();
+        
+        log.info("Deleted all {} Spanish expressions from database '{}'", countBefore, databaseName);
+        return countBefore > 0;
+    }
+    
+    @Override
+    public boolean deleteAllEnglishExpressions(String databaseName) {
+        if (!databaseExists(databaseName)) {
+            log.warn("Database '{}' does not exist", databaseName);
+            return false;
+        }
+        
+        Set<EnglishExpression> expressions = englishDatabases.get(databaseName);
+        int countBefore = expressions.size();
+        
+        expressions.clear();
+        
+        log.info("Deleted all {} English expressions from database '{}'", countBefore, databaseName);
+        return countBefore > 0;
+    }
+    
+    @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
         List<SpanishExpression> expressions = getSpanishExpressions(databaseName);
         if (expressions.isEmpty()) {

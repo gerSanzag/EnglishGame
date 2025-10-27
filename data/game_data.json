@@ -1,52 +1,87 @@
 [ [ {
   "database" : "Lolo",
-  "created_at" : 1761600606549,
-  "type" : "database_metadata"
-} ], [ {
-  "database" : "learned_words",
-  "created_at" : 1761600606549,
-  "type" : "database_metadata"
-} ], [ {
-  "database" : "llila",
-  "created_at" : 1761600606549,
+  "created_at" : 1761601186734,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
-  "database" : "llila",
-  "expression" : "Sonar",
-  "translations" : [ "Go off" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "llila",
-  "expression" : "recuperarse",
-  "translations" : [ "Get over" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "database" : "pepe",
-  "created_at" : 1761600606549,
-  "type" : "database_metadata"
-} ], [ {
-  "score" : 0,
-  "database" : "pepe",
+  "database" : "Lolo",
   "expression" : "Entrar",
   "translations" : [ "Get in" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
-  "database" : "pepe",
+  "database" : "Lolo",
   "expression" : "Superar",
   "translations" : [ "Get over" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
-  "database" : "pepe",
-  "expression" : "Perro",
-  "translations" : [ "dog" ],
+  "database" : "Lolo",
+  "expression" : "llegar",
+  "translations" : [ "Get in" ],
   "language" : "spanish",
   "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Lolo",
+  "expression" : "apagarse",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Lolo",
+  "expression" : "Sonar",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Lolo",
+  "expression" : "recuperarse",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "learned_words",
+  "created_at" : 1761601186734,
+  "type" : "database_metadata"
+} ], [ {
+  "database" : "llila",
+  "created_at" : 1761601186734,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 0,
+  "database" : "llila",
+  "expression" : "Entrar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "llila",
+  "expression" : "Superar",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "llila",
+  "expression" : "llegar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "llila",
+  "expression" : "apagarse",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "pepe",
+  "created_at" : 1761601186734,
+  "type" : "database_metadata"
 } ] ]

@@ -175,4 +175,18 @@ public interface DatabaseService {
      * @return true if moved successfully, false otherwise
      */
     boolean moveEnglishExpression(String sourceDatabase, String targetDatabase, String expression);
+    
+    /**
+     * Deletes all Spanish expressions from a database
+     * @param databaseName name of the database
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteAllSpanishExpressions(String databaseName);
+    
+    /**
+     * Deletes all English expressions from a database
+     * @param databaseName name of the database
+     * @return true if deleted successfully, false otherwise
+     */
+    boolean deleteAllEnglishExpressions(String databaseName);
 }
