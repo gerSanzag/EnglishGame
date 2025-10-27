@@ -1,1 +1,97 @@
-[ ]
+[ [ {
+  "database" : "lolo",
+  "created_at" : 1761565480290,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "Entrar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "Superar",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "llegar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "apagarse",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "Sonar",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lolo",
+  "expression" : "recuperarse",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "lili",
+  "created_at" : 1761565480290,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "Entrar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "Superar",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "llegar",
+  "translations" : [ "Get in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "apagarse",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "Sonar",
+  "translations" : [ "Go off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "lili",
+  "expression" : "recuperarse",
+  "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "learned_words",
+  "created_at" : 1761565480290,
+  "type" : "database_metadata"
+} ] ]

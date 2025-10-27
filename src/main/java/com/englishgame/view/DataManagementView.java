@@ -425,23 +425,75 @@ public class DataManagementView extends JFrame {
 
     private void loadFromFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Text Files", "txt"));
-        fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("All Files", "*"));
+        
+        // Configure file filters properly
+        javax.swing.filechooser.FileNameExtensionFilter textFilter = 
+            new javax.swing.filechooser.FileNameExtensionFilter("Text Files (*.txt)", "txt");
+        javax.swing.filechooser.FileNameExtensionFilter allFilter = 
+            new javax.swing.filechooser.FileNameExtensionFilter("All Files (*.*)", "*");
+        
+        // Add filters in order (most specific first)
+        fileChooser.addChoosableFileFilter(textFilter);
+        fileChooser.addChoosableFileFilter(allFilter);
+        
+        // Set default filter to text files
+        fileChooser.setFileFilter(textFilter);
+        
+        // Set dialog title
+        fileChooser.setDialogTitle("Select File to Load Expressions");
+        
+        // Set current directory to user's home or desktop
+        fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
         
         int result = fileChooser.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
             File selectedFile = fileChooser.getSelectedFile();
+            
+            // Validate file exists and is readable
+            if (!selectedFile.exists()) {
+                JOptionPane.showMessageDialog(this, 
+                    "File does not exist: " + selectedFile.getName(), 
+                    "File Not Found", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if (!selectedFile.canRead()) {
+                JOptionPane.showMessageDialog(this, 
+                    "Cannot read file: " + selectedFile.getName(), 
+                    "Access Denied", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
             try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
                 StringBuilder content = new StringBuilder();
                 String line;
+                int lineCount = 0;
+                
                 while ((line = reader.readLine()) != null) {
                     content.append(line).append("\n");
+                    lineCount++;
                 }
+                
+                // Set content in text area
                 bulkTextArea.setText(content.toString());
-                log.info("File loaded: {}", selectedFile.getName());
+                
+                // Show success message
+                JOptionPane.showMessageDialog(this, 
+                    String.format("File loaded successfully!\n\nFile: %s\nLines: %d", 
+                        selectedFile.getName(), lineCount), 
+                    "File Loaded", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                
+                log.info("File loaded successfully: {} ({} lines)", selectedFile.getName(), lineCount);
+                
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Failed to load file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                log.error("Failed to load file", e);
+                JOptionPane.showMessageDialog(this, 
+                    "Failed to load file: " + e.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                log.error("Failed to load file: {}", selectedFile.getName(), e);
             }
         }
     }

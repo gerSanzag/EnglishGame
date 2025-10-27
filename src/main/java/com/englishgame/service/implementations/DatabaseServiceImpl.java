@@ -21,8 +21,8 @@ public class DatabaseServiceImpl implements DatabaseService {
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
     
     // In-memory storage for databases
-    private final Map<String, List<SpanishExpression>> spanishDatabases;
-    private final Map<String, List<EnglishExpression>> englishDatabases;
+    private final Map<String, Set<SpanishExpression>> spanishDatabases;
+    private final Map<String, Set<EnglishExpression>> englishDatabases;
     
     public DatabaseServiceImpl(GameDataService gameDataService) {
         this.gameDataService = gameDataService;
@@ -37,9 +37,9 @@ public class DatabaseServiceImpl implements DatabaseService {
                 .filter(name -> !name.trim().isEmpty())
                 .filter(name -> !databaseExists(name))
                 .map(name -> {
-                    // Create in-memory databases
-                    spanishDatabases.put(name, new ArrayList<>());
-                    englishDatabases.put(name, new ArrayList<>());
+                       // Create in-memory databases
+                       spanishDatabases.put(name, new HashSet<>());
+                       englishDatabases.put(name, new HashSet<>());
                     
                     // Save database metadata to repository for persistence
                     saveDatabaseMetadataToRepository(name);
@@ -118,26 +118,30 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public boolean addSpanishExpression(String databaseName, SpanishExpression spanishExpression) {
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return false;
-        }
-        
-        if (spanishExpression == null) {
-            log.warn("Cannot add null Spanish expression");
-            return false;
-        }
-        
-        // Add to in-memory database
-        spanishDatabases.get(databaseName).add(spanishExpression);
-        
-        // Save expression to repository for persistence
-        saveExpressionToRepository(databaseName, spanishExpression);
-        
-        log.debug("Added Spanish expression '{}' to database '{}'", 
-                spanishExpression.getExpression(), databaseName);
-        
-        return true;
+        return Optional.ofNullable(databaseName)
+                .filter(this::databaseExists)
+                .flatMap(db -> Optional.ofNullable(spanishExpression)
+                        .filter(expr -> expr.getExpression() != null && !expr.getExpression().trim().isEmpty())
+                        .map(expr -> {
+                            // HashSet.add() automatically returns false if duplicate
+                            boolean added = spanishDatabases.get(db).add(expr);
+                            
+                            if (added) {
+                                // Save expression to repository for persistence
+                                saveExpressionToRepository(db, expr);
+                                log.debug("Added Spanish expression '{}' to database '{}'", 
+                                        expr.getExpression(), db);
+                            } else {
+                                log.warn("Spanish expression '{}' already exists in database '{}'", 
+                                        expr.getExpression(), db);
+                            }
+                            
+                            return added;
+                        }))
+                .orElseGet(() -> {
+                    log.warn("Cannot add Spanish expression to database '{}'", databaseName);
+                    return false;
+                });
     }
     
     @Override
