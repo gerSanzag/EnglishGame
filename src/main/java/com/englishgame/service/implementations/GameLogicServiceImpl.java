@@ -4,6 +4,7 @@ import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.service.interfaces.GameLogicService;
 import com.englishgame.service.interfaces.GameDataService;
+import com.englishgame.service.interfaces.DatabaseService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -18,18 +19,28 @@ import java.util.Optional;
 public class GameLogicServiceImpl implements GameLogicService {
     
     private final GameDataService gameDataService;
+    private final DatabaseService databaseService;
     private static final int LEARNED_THRESHOLD = 15;
     private static final int PENALTY_POINTS = 5;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
     
     public GameLogicServiceImpl(GameDataService gameDataService) {
         this.gameDataService = gameDataService;
+        this.databaseService = null; // Backward compatibility if constructed without DatabaseService
+    }
+
+    public GameLogicServiceImpl(GameDataService gameDataService, DatabaseService databaseService) {
+        this.gameDataService = gameDataService;
+        this.databaseService = databaseService;
     }
     
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
         log.debug("Getting random Spanish expression from database: {}", databaseName);
-        
+        if (databaseService != null) {
+            return databaseService.getRandomSpanishExpression(databaseName);
+        }
+        // Fallback to previous behavior if databaseService is not provided
         return Optional.ofNullable(databaseName)
                 .map(this::getSpanishExpressionsFromDatabase)
                 .filter(expressions -> !expressions.isEmpty())
@@ -147,24 +158,11 @@ public class GameLogicServiceImpl implements GameLogicService {
     public boolean moveToLearnedWords(EnglishExpression englishExpression) {
         log.debug("Moving English expression '{}' to learned words database", 
                 englishExpression.getExpression());
-        
-        try {
-            // Ensure learned words database exists
-            if (!getAvailableDatabases().contains(LEARNED_WORDS_DATABASE)) {
-                createDatabase(LEARNED_WORDS_DATABASE);
-            }
-            
-            // Add to learned words database
-            // This would require additional implementation in GameDataService
-            // For now, we'll log the action
-            log.info("English expression '{}' moved to learned words database", 
-                    englishExpression.getExpression());
-            
-            return true;
-        } catch (Exception e) {
-            log.error("Error moving expression to learned words: {}", e.getMessage());
+        if (databaseService == null) {
+            log.warn("DatabaseService not available to move learned words");
             return false;
         }
+        return databaseService.moveToLearnedWords(englishExpression);
     }
     
     @Override
@@ -180,8 +178,9 @@ public class GameLogicServiceImpl implements GameLogicService {
     @Override
     public List<String> getAvailableDatabases() {
         log.debug("Getting available databases");
-        // This would need to be implemented based on how databases are stored
-        // For now, return a placeholder
+        if (databaseService != null) {
+            return databaseService.getAvailableDatabases();
+        }
         List<String> databases = new ArrayList<>();
         databases.add(LEARNED_WORDS_DATABASE);
         return databases;
@@ -190,66 +189,39 @@ public class GameLogicServiceImpl implements GameLogicService {
     @Override
     public boolean createDatabase(String databaseName) {
         log.debug("Creating new database: {}", databaseName);
-        
-        if (getAvailableDatabases().contains(databaseName)) {
-            log.warn("Database '{}' already exists", databaseName);
+        if (databaseService == null) {
+            log.warn("DatabaseService not available to create database");
             return false;
         }
-        
-        // This would need to be implemented based on how databases are stored
-        // For now, we'll log the action
-        log.info("Database '{}' created successfully", databaseName);
-        return true;
+        return databaseService.createDatabase(databaseName);
     }
     
     @Override
     public List<SpanishExpression> getSpanishExpressionsFromDatabase(String databaseName) {
         log.debug("Getting Spanish expressions from database: {}", databaseName);
-        
-        // Get data from GameDataService which has access to DatabaseService
-        return gameDataService.getRepository().findAll().stream()
-                .filter(record -> record.size() > 0)
-                .map(record -> record.get(0))
-                .filter(data -> data instanceof Map)
-                .map(data -> (Map<String, Object>) data)
-                .filter(data -> "spanish_expression".equals(data.get("type")))
-                .filter(data -> databaseName.equals(data.get("database")))
-                .map(this::mapToSpanishExpression)
-                .collect(java.util.stream.Collectors.toList());
+        if (databaseService != null) {
+            return databaseService.getSpanishExpressions(databaseName);
+        }
+        return new ArrayList<>();
     }
     
     /**
      * Maps repository data to SpanishExpression object
      */
     private SpanishExpression mapToSpanishExpression(Map<String, Object> data) {
+        // Deprecated: repository mapping removed in favor of DatabaseService delegation
         SpanishExpression expression = new SpanishExpression();
         expression.setExpression((String) data.get("expression"));
         expression.setScore(((Number) data.get("score")).intValue());
-        
-        // Map translations
-        @SuppressWarnings("unchecked")
-        List<String> translations = (List<String>) data.get("translations");
-        if (translations != null) {
-            List<EnglishExpression> englishTranslations = translations.stream()
-                    .map(translation -> {
-                        EnglishExpression englishExpr = new EnglishExpression();
-                        englishExpr.setExpression(translation);
-                        englishExpr.setScore(0); // Default score
-                        return englishExpr;
-                    })
-                    .collect(java.util.stream.Collectors.toList());
-            expression.setTranslations(englishTranslations);
-        }
-        
         return expression;
     }
     
     @Override
     public List<EnglishExpression> getEnglishExpressionsFromDatabase(String databaseName) {
         log.debug("Getting English expressions from database: {}", databaseName);
-        
-        // This would need to be implemented based on how data is stored
-        // For now, return empty list
+        if (databaseService != null) {
+            return databaseService.getEnglishExpressions(databaseName);
+        }
         return new ArrayList<>();
     }
 }

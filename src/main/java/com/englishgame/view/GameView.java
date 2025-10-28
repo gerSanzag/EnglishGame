@@ -25,7 +25,8 @@ public class GameView extends JFrame {
     private JComboBox<String> databaseSelector;
     private JLabel spanishExpressionLabel;
     private JTextField englishTranslationField;
-    private JButton startGameButton;
+    private JButton submitButton;
+    private JButton newRoundButton;
     private JLabel feedbackLabel;
     private JLabel scoreLabel;
     private JLabel progressLabel;
@@ -74,7 +75,8 @@ public class GameView extends JFrame {
         englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 16));
         englishTranslationField.setToolTipText("Enter your English translation here");
         
-        startGameButton = createStyledButton("Start Game", "Start the interactive game");
+        submitButton = createStyledButton("Submit Answer", "Submit your translation");
+        newRoundButton = createStyledButton("New Round", "Get a new Spanish expression");
         
         feedbackLabel = new JLabel("", SwingConstants.CENTER);
         feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 16));
@@ -147,8 +149,10 @@ public class GameView extends JFrame {
 
     private Color getButtonColor(String buttonText) {
         // Assign colors based on button function
-        if (buttonText.contains("Start") || buttonText.contains("Game")) {
-            return new Color(16, 185, 129); // Vibrant green for start game
+        if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
+            return new Color(16, 185, 129); // Vibrant green for submit actions
+        } else if (buttonText.contains("New") || buttonText.contains("Round")) {
+            return new Color(59, 130, 246); // Vibrant blue for new actions
         } else if (buttonText.contains("Manage") || buttonText.contains("Data")) {
             return new Color(37, 99, 235); // Vibrant blue for data management
         } else if (buttonText.contains("View") || buttonText.contains("Words")) {
@@ -210,10 +214,11 @@ public class GameView extends JFrame {
         gamePanel.add(englishTranslationField);
         gamePanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
-        // Game button
+        // Game buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        buttonPanel.add(startGameButton);
+        buttonPanel.add(submitButton);
+        buttonPanel.add(newRoundButton);
         gamePanel.add(buttonPanel);
         gamePanel.add(Box.createRigidArea(new Dimension(0, 15)));
         
@@ -274,8 +279,9 @@ public class GameView extends JFrame {
             }
         });
         
-        // Game button
-        startGameButton.addActionListener(e -> startGame());
+        // Game buttons
+        newRoundButton.addActionListener(e -> startNewRound());
+        submitButton.addActionListener(e -> processAnswer());
         
         // Enter key for answer submission
         englishTranslationField.addActionListener(e -> processAnswer());
@@ -293,22 +299,6 @@ public class GameView extends JFrame {
         log.debug("Database selector refreshed with {} databases", databaseSelector.getItemCount());
     }
 
-    private void startGame() {
-        String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // If no current expression, start a new round
-        if (currentSpanishExpression == null) {
-            startNewRound();
-        } else {
-            // If there's a current expression, process the answer
-            processAnswer();
-        }
-    }
-    
     private void startNewRound() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (selectedDb == null) {

@@ -45,7 +45,7 @@ public class Main {
             GameDataServiceImpl gameDataService = new GameDataServiceImpl(dbRepository);
             DatabaseServiceImpl databaseService = new DatabaseServiceImpl(gameDataService);
             ScoreServiceImpl scoreService = new ScoreServiceImpl();
-            GameLogicServiceImpl gameLogicService = new GameLogicServiceImpl(gameDataService);
+            GameLogicServiceImpl gameLogicService = new GameLogicServiceImpl(gameDataService, databaseService);
             
             // Initialize controller
             GameController gameController = new GameController(gameLogicService, databaseService, gameDataService);

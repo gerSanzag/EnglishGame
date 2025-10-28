@@ -43,6 +43,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                     
                     // Save database metadata to repository for persistence
                     saveDatabaseMetadataToRepository(name);
+                    // Persist to JSON
+                    gameDataService.saveGameData();
                     
                     log.info("Database '{}' created successfully", name);
                     return true;
@@ -70,6 +72,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                     
                     // Remove from repository for persistence
                     removeDatabaseFromRepository(name);
+                    // Persist to JSON
+                    gameDataService.saveGameData();
                     
                     log.info("Database '{}' deleted successfully", name);
                     return true;
@@ -129,6 +133,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                             if (added) {
                                 // Save expression to repository for persistence
                                 saveExpressionToRepository(db, expr);
+                                // Persist to JSON
+                                gameDataService.saveGameData();
                                 log.debug("Added Spanish expression '{}' to database '{}'", 
                                         expr.getExpression(), db);
                             } else {
@@ -159,6 +165,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         englishDatabases.get(databaseName).add(englishExpression);
         log.debug("Added English expression '{}' to database '{}'", 
                 englishExpression.getExpression(), databaseName);
+        // Persist to JSON
+        gameDataService.saveGameData();
         
         return true;
     }
@@ -179,6 +187,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         
         if (removed) {
             log.info("Successfully removed Spanish expression '{}' from database '{}'", expression, databaseName);
+            // Persist to JSON
+            gameDataService.saveGameData();
         } else {
             log.warn("Spanish expression '{}' not found in database '{}'", expression, databaseName);
         }
@@ -202,6 +212,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         
         if (removed) {
             log.info("Successfully removed English expression '{}' from database '{}'", expression, databaseName);
+            // Persist to JSON
+            gameDataService.saveGameData();
         } else {
             log.warn("English expression '{}' not found in database '{}'", expression, databaseName);
         }
@@ -222,6 +234,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         expressions.clear();
         
         log.info("Deleted all {} Spanish expressions from database '{}'", countBefore, databaseName);
+        // Persist to JSON
+        gameDataService.saveGameData();
         return countBefore > 0;
     }
     
@@ -238,6 +252,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         expressions.clear();
         
         log.info("Deleted all {} English expressions from database '{}'", countBefore, databaseName);
+        // Persist to JSON
+        gameDataService.saveGameData();
         return countBefore > 0;
     }
     
@@ -334,6 +350,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         if (added) {
             log.info("Moved English expression '{}' to learned words database", 
                     englishExpression.getExpression());
+            // Persist to JSON
+            gameDataService.saveGameData();
         }
         
         return added;
@@ -570,6 +588,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                                 
                                 // Update repository
                                 updateRepositoryAfterMove(sourceDb, targetDb, spanishExpr.get(), "spanish");
+                                // Persist to JSON
+                                gameDataService.saveGameData();
                                 
                                 log.info("Spanish expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
                                 return true;
@@ -608,6 +628,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                                 
                                 // Update repository
                                 updateRepositoryAfterMove(sourceDb, targetDb, englishExpr.get(), "english");
+                                // Persist to JSON
+                                gameDataService.saveGameData();
                                 
                                 log.info("English expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
                                 return true;
