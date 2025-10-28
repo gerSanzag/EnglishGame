@@ -206,9 +206,42 @@ public class GameLogicServiceImpl implements GameLogicService {
     public List<SpanishExpression> getSpanishExpressionsFromDatabase(String databaseName) {
         log.debug("Getting Spanish expressions from database: {}", databaseName);
         
-        // This would need to be implemented based on how data is stored
-        // For now, return empty list
-        return new ArrayList<>();
+        // Get data from GameDataService which has access to DatabaseService
+        return gameDataService.getRepository().findAll().stream()
+                .filter(record -> record.size() > 0)
+                .map(record -> record.get(0))
+                .filter(data -> data instanceof Map)
+                .map(data -> (Map<String, Object>) data)
+                .filter(data -> "spanish_expression".equals(data.get("type")))
+                .filter(data -> databaseName.equals(data.get("database")))
+                .map(this::mapToSpanishExpression)
+                .collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * Maps repository data to SpanishExpression object
+     */
+    private SpanishExpression mapToSpanishExpression(Map<String, Object> data) {
+        SpanishExpression expression = new SpanishExpression();
+        expression.setExpression((String) data.get("expression"));
+        expression.setScore(((Number) data.get("score")).intValue());
+        
+        // Map translations
+        @SuppressWarnings("unchecked")
+        List<String> translations = (List<String>) data.get("translations");
+        if (translations != null) {
+            List<EnglishExpression> englishTranslations = translations.stream()
+                    .map(translation -> {
+                        EnglishExpression englishExpr = new EnglishExpression();
+                        englishExpr.setExpression(translation);
+                        englishExpr.setScore(0); // Default score
+                        return englishExpr;
+                    })
+                    .collect(java.util.stream.Collectors.toList());
+            expression.setTranslations(englishTranslations);
+        }
+        
+        return expression;
     }
     
     @Override
