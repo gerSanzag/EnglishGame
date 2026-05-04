@@ -90,18 +90,20 @@ public class GameController {
     }
 
     public boolean processAnswer(String userTranslation) {
-        return Optional.ofNullable(currentSpanishExpression)
-                .map(expr -> {
-                    log.debug("Processing answer '{}' for Spanish expression '{}'", userTranslation, expr.getExpression());
-                    
-                    return gameLogicService.validateTranslation(expr, userTranslation)
-                            ? processCorrectAnswer(expr, userTranslation)
-                            : processIncorrectAnswer(expr, userTranslation);
-                })
-                .orElseGet(() -> {
-                    log.error("No current Spanish expression to process answer for.");
-                    return false;
-                });
+        if (currentSpanishExpression == null) {
+            log.error("No current Spanish expression to process answer for.");
+            return false;
+        }
+
+        SpanishExpression expr = currentSpanishExpression;
+        log.debug("Processing answer '{}' for Spanish expression '{}'", userTranslation, expr.getExpression());
+
+        boolean correct = gameLogicService.validateTranslation(expr, userTranslation)
+                ? processCorrectAnswer(expr, userTranslation)
+                : processIncorrectAnswer(expr, userTranslation);
+
+        saveGameState();
+        return correct;
     }
 
     private boolean processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
@@ -113,12 +115,6 @@ public class GameController {
                     
                     log.info("Correct answer! English expression '{}' score updated to {}.", 
                             updatedEnglishExpression.getExpression(), updatedEnglishExpression.getScore());
-
-                    if (gameLogicService.isExpressionLearned(updatedEnglishExpression)) {
-                        gameLogicService.moveToLearnedWords(updatedEnglishExpression);
-                        log.info("English expression '{}' moved to learned words!", updatedEnglishExpression.getExpression());
-                    }
-                    
                     return true;
                 })
                 .orElse(false);

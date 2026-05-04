@@ -370,9 +370,14 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
     
     private void initializeDefaultDatabases() {
-        // Create learned words database (required for system functionality)
-        createDatabase(LEARNED_WORDS_DATABASE);
-        
+        /*
+         * In-memory only: do not call createDatabase() here. That method writes JSON, but Main
+         * constructs DatabaseServiceImpl before GameController runs loadGameData(), and until then
+         * GameDataServiceImpl has no databaseService, so saveGameData falls back to a nearly
+         * empty repository and overwrites game_data.json.
+         */
+        spanishDatabases.put(LEARNED_WORDS_DATABASE, new HashSet<>());
+        englishDatabases.put(LEARNED_WORDS_DATABASE, new HashSet<>());
         log.info("Initialized learned words database: {}", LEARNED_WORDS_DATABASE);
     }
     

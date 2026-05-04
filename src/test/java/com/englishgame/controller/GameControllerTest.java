@@ -45,9 +45,10 @@ class GameControllerTest {
         // When
         List<String> databases = gameController.getAvailableDatabases();
         
-        // Then
+        // learned_words is omitted from selectable game databases in the controller
         assertNotNull(databases);
-        assertEquals(2, databases.size());
+        assertEquals(1, databases.size());
+        assertEquals("test_db", databases.get(0));
         verify(gameDataService).loadGameData();
     }
 
@@ -130,7 +131,6 @@ class GameControllerTest {
         
         when(gameLogicService.validateTranslation(spanishExpression, "house")).thenReturn(true);
         when(gameLogicService.processCorrectAnswer(spanishExpression, "house")).thenReturn(updatedEnglishExpression);
-        when(gameLogicService.isExpressionLearned(updatedEnglishExpression)).thenReturn(false);
         
         // When
         boolean result = gameController.processAnswer("house");
@@ -138,6 +138,7 @@ class GameControllerTest {
         // Then
         assertTrue(result);
         verify(gameLogicService).processCorrectAnswer(spanishExpression, "house");
+        verify(gameDataService).saveGameData();
     }
 
     @Test
@@ -165,6 +166,7 @@ class GameControllerTest {
         // Then
         assertFalse(result);
         verify(gameLogicService).processIncorrectAnswer(spanishExpression, "wrong");
+        verify(gameDataService).saveGameData();
     }
 
     @Test
@@ -176,6 +178,7 @@ class GameControllerTest {
         // Then
         assertFalse(result);
         verify(gameLogicService, never()).validateTranslation(any(), anyString());
+        verify(gameDataService, never()).saveGameData();
     }
 
     @Test
