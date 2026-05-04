@@ -9,6 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Optional;
@@ -41,7 +43,7 @@ public class GameView extends JFrame {
     private int revealCharIndex;
     private boolean revealCommittedThisRound;
 
-    private static final int REVEAL_CHAR_INTERVAL_MS = 42;
+    private static final int REVEAL_CHAR_INTERVAL_MS = 380;
 
     // Navigation components
     private JButton backToLandingButton;
@@ -117,9 +119,11 @@ public class GameView extends JFrame {
         practiceModeCheckBox.setToolTipText(
                 "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\".");
 
-        revealAnswerButton = createStyledButton("Mostrar respuesta", "Revela la respuesta escrita gradualmente");
-        revealAnswerButton.setPreferredSize(new Dimension(160, 36));
+        revealAnswerButton = createStyledButton("Mostrar respuesta",
+                "Revela la respuesta escrita gradualmente", false);
+        revealAnswerButton.setPreferredSize(new Dimension(200, 36));
         revealAnswerButton.setEnabled(false);
+        wireRevealToggleButtonAdaptiveHover();
 
         revealAllButton = createStyledButton("Mostrar todo", "Muestra la respuesta completa de golpe");
         revealAllButton.setPreferredSize(new Dimension(130, 36));
@@ -139,6 +143,14 @@ public class GameView extends JFrame {
     }
 
     private JButton createStyledButton(String text, String tooltip) {
+        return createStyledButton(text, tooltip, true);
+    }
+
+    /**
+     * @param hoverGlow when false, no custom mouse listener is added (use for buttons where the LAF
+     *                  must keep its own {@code MouseListener}s, e.g. reveal toggle with adaptive hover).
+     */
+    private JButton createStyledButton(String text, String tooltip, boolean hoverGlow) {
         JButton button = new JButton(text);
         button.setFont(new Font("Arial", Font.BOLD, 14));
         button.setToolTipText(tooltip);
@@ -163,28 +175,30 @@ public class GameView extends JFrame {
         );
         button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
         
-        // Enhanced hover effect with subtle glow
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                Color hoverColor = new Color(
-                    Math.min(255, buttonColor.getRed() + 25),
-                    Math.min(255, buttonColor.getGreen() + 25),
-                    Math.min(255, buttonColor.getBlue() + 25)
-                );
-                button.setBackground(hoverColor);
-                // Create a subtle glow effect with lighter border
-                Color glowBorder = new Color(
-                    Math.min(255, buttonColor.getRed() + 50),
-                    Math.min(255, buttonColor.getGreen() + 50),
-                    Math.min(255, buttonColor.getBlue() + 50)
-                );
-                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(buttonColor);
-                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
-            }
-        });
+        if (hoverGlow) {
+            // Enhanced hover effect with subtle glow
+            button.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    Color hoverColor = new Color(
+                        Math.min(255, buttonColor.getRed() + 25),
+                        Math.min(255, buttonColor.getGreen() + 25),
+                        Math.min(255, buttonColor.getBlue() + 25)
+                    );
+                    button.setBackground(hoverColor);
+                    // Create a subtle glow effect with lighter border
+                    Color glowBorder = new Color(
+                        Math.min(255, buttonColor.getRed() + 50),
+                        Math.min(255, buttonColor.getGreen() + 50),
+                        Math.min(255, buttonColor.getBlue() + 50)
+                    );
+                    button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    button.setBackground(buttonColor);
+                    button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+                }
+            });
+        }
         
         return button;
     }
@@ -201,8 +215,10 @@ public class GameView extends JFrame {
             return new Color(37, 99, 235); // Vibrant blue for data management
         } else if (buttonText.contains("View") || buttonText.contains("Words")) {
             return new Color(16, 185, 129); // Vibrant green for view actions
-        } else         if (buttonText.contains("Learned")) {
+        } else if (buttonText.contains("Learned")) {
             return new Color(124, 58, 237); // Vibrant purple for learned words
+        } else if (buttonText.contains("Detener")) {
+            return new Color(249, 115, 22);
         } else if (buttonText.contains("Mostrar todo")) {
             return new Color(100, 116, 139);
         } else if (buttonText.contains("Mostrar")) {
@@ -371,7 +387,13 @@ public class GameView extends JFrame {
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         });
-        revealAnswerButton.addActionListener(e -> startProgressiveReveal());
+        revealAnswerButton.addActionListener(e -> {
+            if (revealCharTimer != null) {
+                stopProgressiveRevealByUser();
+            } else {
+                startProgressiveReveal();
+            }
+        });
         revealAllButton.addActionListener(e -> revealAllAnswersAtOnce());
         
         // Navigation buttons
@@ -573,6 +595,65 @@ public class GameView extends JFrame {
         }
     }
 
+    /**
+     * Hover uses {@link #getButtonColor(String)} so it stays correct when the label switches
+     * between "Mostrar respuesta" and "Detener revelación".
+     * <p>Never remove all {@code MouseListener}s from this button: the LAF installs listeners
+     * (e.g. {@code BasicButtonListener}) required for clicks to fire {@code ActionListener}s.
+     */
+    private void wireRevealToggleButtonAdaptiveHover() {
+        revealAnswerButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent evt) {
+                Color base = getButtonColor(revealAnswerButton.getText());
+                Color hover = new Color(
+                        Math.min(255, base.getRed() + 25),
+                        Math.min(255, base.getGreen() + 25),
+                        Math.min(255, base.getBlue() + 25));
+                revealAnswerButton.setBackground(hover);
+                Color glowBorder = new Color(
+                        Math.min(255, base.getRed() + 50),
+                        Math.min(255, base.getGreen() + 50),
+                        Math.min(255, base.getBlue() + 50));
+                revealAnswerButton.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent evt) {
+                applyRevealToggleButtonChrome();
+            }
+        });
+    }
+
+    private void applyRevealToggleButtonChrome() {
+        boolean revealing = revealCharTimer != null;
+        if (revealing) {
+            revealAnswerButton.setText("Detener revelación");
+            revealAnswerButton.setToolTipText(
+                    "Detiene la animación; puedes seguir intentando (sin puntaje esta ronda).");
+        } else {
+            revealAnswerButton.setText("Mostrar respuesta");
+            revealAnswerButton.setToolTipText("Revela la respuesta de referencia gradualmente.");
+        }
+        Color base = getButtonColor(revealAnswerButton.getText());
+        revealAnswerButton.setBackground(base);
+        Color borderColor = new Color(
+                Math.max(0, base.getRed() - 30),
+                Math.max(0, base.getGreen() - 30),
+                Math.max(0, base.getBlue() - 30));
+        revealAnswerButton.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+    }
+
+    private void stopProgressiveRevealByUser() {
+        if (revealCharTimer == null) {
+            return;
+        }
+        stopRevealCharTimer();
+        log.info("Progressive reveal suspended by user (practice mode)");
+        updatePracticeDependentUi();
+        refreshCurrentWordScores();
+    }
+
     private void startProgressiveReveal() {
         if (!practiceModeCheckBox.isSelected()) {
             return;
@@ -598,11 +679,13 @@ public class GameView extends JFrame {
                 revealAnswerArea.setText(revealFullText.substring(0, revealCharIndex));
             } else {
                 stopRevealCharTimer();
+                applyRevealToggleButtonChrome();
                 updatePracticeDependentUi();
             }
         });
         revealCharTimer.setRepeats(true);
         revealCharTimer.start();
+        applyRevealToggleButtonChrome();
         updatePracticeDependentUi();
         refreshCurrentWordScores();
         log.info("Progressive reveal started (practice mode)");
@@ -626,6 +709,7 @@ public class GameView extends JFrame {
         stopRevealCharTimer();
         revealCharIndex = revealFullText.length();
         revealAnswerArea.setText(revealFullText);
+        applyRevealToggleButtonChrome();
         updatePracticeDependentUi();
         refreshCurrentWordScores();
         log.info("Full reveal displayed (practice mode)");
@@ -637,8 +721,9 @@ public class GameView extends JFrame {
         boolean hasRevealTarget = gameController.getRevealAnswersLine().isPresent();
         boolean timerRunning = revealCharTimer != null;
 
-        revealAnswerButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget && !timerRunning);
-        revealAllButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget);
+        revealAnswerButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget);
+        applyRevealToggleButtonChrome();
+        revealAllButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget && !timerRunning);
 
         boolean neutral = isNeutralScoringRound();
         submitButton.setText(neutral ? "Comprobar (sin puntos)" : "Submit Answer");
