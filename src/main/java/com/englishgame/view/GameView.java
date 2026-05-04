@@ -11,6 +11,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Optional;
 
 /**
  * Interactive Game Window
@@ -30,6 +31,17 @@ public class GameView extends JFrame {
     private JButton newRoundButton;
     private JLabel feedbackLabel;
     private JLabel scoreLabel;
+
+    private JCheckBox practiceModeCheckBox;
+    private JButton revealAnswerButton;
+    private JButton revealAllButton;
+    private JTextArea revealAnswerArea;
+    private javax.swing.Timer revealCharTimer;
+    private String revealFullText = "";
+    private int revealCharIndex;
+    private boolean revealCommittedThisRound;
+
+    private static final int REVEAL_CHAR_INTERVAL_MS = 42;
 
     // Navigation components
     private JButton backToLandingButton;
@@ -58,6 +70,7 @@ public class GameView extends JFrame {
         setupLayout();
         addListeners();
         refreshDatabaseSelector();
+        updatePracticeDependentUi();
 
         addWindowListener(new WindowAdapter() {
             @Override
@@ -98,6 +111,31 @@ public class GameView extends JFrame {
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
         viewWordsButton = createStyledButton("View Words", "View saved words");
         learnedWordsButton = createStyledButton("Learned Words", "View learned words");
+
+        practiceModeCheckBox = new JCheckBox("Modo práctica (sin puntuación)");
+        practiceModeCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
+        practiceModeCheckBox.setToolTipText(
+                "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\".");
+
+        revealAnswerButton = createStyledButton("Mostrar respuesta", "Revela la respuesta escrita gradualmente");
+        revealAnswerButton.setPreferredSize(new Dimension(160, 36));
+        revealAnswerButton.setEnabled(false);
+
+        revealAllButton = createStyledButton("Mostrar todo", "Muestra la respuesta completa de golpe");
+        revealAllButton.setPreferredSize(new Dimension(130, 36));
+        revealAllButton.setEnabled(false);
+
+        revealAnswerArea = new JTextArea(3, 40);
+        revealAnswerArea.setEditable(false);
+        revealAnswerArea.setLineWrap(true);
+        revealAnswerArea.setWrapStyleWord(true);
+        revealAnswerArea.setFont(new Font("Arial", Font.PLAIN, 16));
+        revealAnswerArea.setForeground(new Color(40, 40, 40));
+        revealAnswerArea.setBackground(new Color(250, 250, 255));
+        revealAnswerArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(180, 180, 200)),
+                BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+        revealAnswerArea.setToolTipText("Aquí aparece la respuesta de referencia cuando usas modo práctica");
     }
 
     private JButton createStyledButton(String text, String tooltip) {
@@ -153,7 +191,9 @@ public class GameView extends JFrame {
 
     private Color getButtonColor(String buttonText) {
         // Assign colors based on button function
-        if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
+        if (buttonText.contains("Comprobar")) {
+            return new Color(56, 189, 248);
+        } else if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
             return new Color(16, 185, 129); // Vibrant green for submit actions
         } else if (buttonText.contains("New") || buttonText.contains("Round")) {
             return new Color(59, 130, 246); // Vibrant blue for new actions
@@ -161,8 +201,12 @@ public class GameView extends JFrame {
             return new Color(37, 99, 235); // Vibrant blue for data management
         } else if (buttonText.contains("View") || buttonText.contains("Words")) {
             return new Color(16, 185, 129); // Vibrant green for view actions
-        } else if (buttonText.contains("Learned")) {
+        } else         if (buttonText.contains("Learned")) {
             return new Color(124, 58, 237); // Vibrant purple for learned words
+        } else if (buttonText.contains("Mostrar todo")) {
+            return new Color(100, 116, 139);
+        } else if (buttonText.contains("Mostrar")) {
+            return new Color(14, 165, 233);
         } else if (buttonText.contains("Back") || buttonText.contains("Main")) {
             return new Color(220, 38, 127); // Vibrant pink for return actions
         } else {
@@ -216,7 +260,34 @@ public class GameView extends JFrame {
         englishTranslationField.setAlignmentX(Component.CENTER_ALIGNMENT);
         englishTranslationField.setMaximumSize(new Dimension(300, 35));
         gamePanel.add(englishTranslationField);
-        gamePanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 12)));
+
+        JPanel practiceBanner = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
+        practiceBanner.setOpaque(false);
+        practiceBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
+        practiceBanner.add(practiceModeCheckBox);
+        gamePanel.add(practiceBanner);
+
+        JPanel revealButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 4));
+        revealButtons.setOpaque(false);
+        revealButtons.setAlignmentX(Component.CENTER_ALIGNMENT);
+        revealButtons.add(revealAnswerButton);
+        revealButtons.add(revealAllButton);
+        gamePanel.add(revealButtons);
+
+        JLabel revealHint = new JLabel("Respuesta de referencia (modo práctica):", SwingConstants.CENTER);
+        revealHint.setAlignmentX(Component.CENTER_ALIGNMENT);
+        revealHint.setFont(new Font("Arial", Font.PLAIN, 13));
+        revealHint.setForeground(new Color(80, 80, 90));
+        gamePanel.add(revealHint);
+
+        JScrollPane revealScroll = new JScrollPane(revealAnswerArea);
+        revealScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
+        revealScroll.setPreferredSize(new Dimension(520, 90));
+        revealScroll.setMaximumSize(new Dimension(700, 160));
+        gamePanel.add(revealScroll);
+
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 12)));
         
         // Game buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -285,6 +356,23 @@ public class GameView extends JFrame {
         
         // Enter key for answer submission
         englishTranslationField.addActionListener(e -> processAnswer());
+
+        practiceModeCheckBox.addActionListener(e -> {
+            if (!practiceModeCheckBox.isSelected()) {
+                stopRevealCharTimer();
+                if (!revealCommittedThisRound) {
+                    revealAnswerArea.setText("");
+                    revealFullText = "";
+                    revealCharIndex = 0;
+                } else if (!revealFullText.isEmpty()) {
+                    revealAnswerArea.setText(revealFullText);
+                }
+            }
+            updatePracticeDependentUi();
+            refreshCurrentWordScores();
+        });
+        revealAnswerButton.addActionListener(e -> startProgressiveReveal());
+        revealAllButton.addActionListener(e -> revealAllAnswersAtOnce());
         
         // Navigation buttons
         backToLandingButton.addActionListener(e -> returnToLanding());
@@ -320,11 +408,12 @@ public class GameView extends JFrame {
     }
 
     private void startNewRound() {
-        cancelPendingAutoNextRound();
         beginNewRoundCore();
     }
 
     private void beginNewRoundCore() {
+        preparePracticeRevealStateForNewRound();
+        cancelPendingAutoNextRound();
         syncControllerWithComboSelection(false);
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (selectedDb == null) {
@@ -339,10 +428,12 @@ public class GameView extends JFrame {
             feedbackLabel.setText("");
             englishTranslationField.requestFocus();
             log.info("New round started with Spanish expression: '{}'", currentSpanishExpression.getExpression());
+            updatePracticeDependentUi();
             refreshCurrentWordScores();
         } else {
             spanishExpressionLabel.setText("No expressions available. Add some words or select another database.");
             feedbackLabel.setText("Please add expressions to this database or select another one.");
+            updatePracticeDependentUi();
             refreshCurrentWordScores();
         }
     }
@@ -352,14 +443,21 @@ public class GameView extends JFrame {
         englishTranslationField.setEnabled(enabled);
         submitButton.setEnabled(enabled);
         newRoundButton.setEnabled(enabled);
+        practiceModeCheckBox.setEnabled(enabled);
+        if (!enabled) {
+            revealAnswerButton.setEnabled(false);
+            revealAllButton.setEnabled(false);
+        }
     }
 
     private void cancelPendingAutoNextRound() {
+        stopRevealCharTimer();
         if (correctAnswerNextRoundTimer != null) {
             correctAnswerNextRoundTimer.stop();
             correctAnswerNextRoundTimer = null;
         }
         setRoundInteractionEnabled(true);
+        updatePracticeDependentUi();
     }
 
     private void scheduleAutoAdvanceAfterCorrect() {
@@ -371,6 +469,7 @@ public class GameView extends JFrame {
         });
         correctAnswerNextRoundTimer.setRepeats(false);
         setRoundInteractionEnabled(false);
+        updatePracticeDependentUi();
         correctAnswerNextRoundTimer.start();
     }
 
@@ -384,6 +483,30 @@ public class GameView extends JFrame {
         if (userTranslation.isEmpty()) {
             feedbackLabel.setText("Please enter a translation.");
             feedbackLabel.setForeground(Color.RED);
+            return;
+        }
+
+        if (isNeutralScoringRound()) {
+            Optional<Boolean> probe = gameController.checkAnswerWithoutScoring(userTranslation);
+            if (probe.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Empieza una ronda nueva antes de comprobar.",
+                        "Sin frase actual",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            boolean correctPractice = probe.get();
+            if (correctPractice) {
+                feedbackLabel.setText("Correcto — solo comprobación, sin cambiar puntajes.");
+                feedbackLabel.setForeground(new Color(0, 130, 60));
+            } else {
+                feedbackLabel.setText("Incorrecto — sin penalización en esta ronda.");
+                feedbackLabel.setForeground(new Color(200, 80, 0));
+            }
+            refreshCurrentWordScores();
+            englishTranslationField.setText("");
+            log.info("Practice-only check {} for '{}'",
+                    correctPractice ? "PASS" : "FAIL", userTranslation);
             return;
         }
         
@@ -421,8 +544,108 @@ public class GameView extends JFrame {
         }
 
         int phraseScore = currentSpanishExpression.getScore();
-        scoreLabel.setText("Phrase score (this word): " + phraseScore);
-        scoreLabel.setForeground(new Color(0, 130, 50));
+        if (isNeutralScoringRound()) {
+            scoreLabel.setText("Phrase score (reference): " + phraseScore
+                    + " — esta ronda no cuenta para puntaje");
+            scoreLabel.setForeground(new Color(105, 105, 115));
+        } else {
+            scoreLabel.setText("Phrase score (this word): " + phraseScore);
+            scoreLabel.setForeground(new Color(0, 130, 50));
+        }
+    }
+
+    private boolean isNeutralScoringRound() {
+        return practiceModeCheckBox.isSelected() || revealCommittedThisRound;
+    }
+
+    private void preparePracticeRevealStateForNewRound() {
+        stopRevealCharTimer();
+        revealCommittedThisRound = false;
+        revealFullText = "";
+        revealCharIndex = 0;
+        revealAnswerArea.setText("");
+    }
+
+    private void stopRevealCharTimer() {
+        if (revealCharTimer != null) {
+            revealCharTimer.stop();
+            revealCharTimer = null;
+        }
+    }
+
+    private void startProgressiveReveal() {
+        if (!practiceModeCheckBox.isSelected()) {
+            return;
+        }
+        Optional<String> line = gameController.getRevealAnswersLine();
+        if (line.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Esta tarjeta no tiene traducciones para mostrar.",
+                    "Sin respuesta",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        revealCommittedThisRound = true;
+        revealFullText = line.get();
+        stopRevealCharTimer();
+        revealCharIndex = 0;
+        revealAnswerArea.setText("");
+
+        revealCharTimer = new javax.swing.Timer(REVEAL_CHAR_INTERVAL_MS, e -> {
+            if (revealCharIndex < revealFullText.length()) {
+                revealCharIndex++;
+                revealAnswerArea.setText(revealFullText.substring(0, revealCharIndex));
+            } else {
+                stopRevealCharTimer();
+                updatePracticeDependentUi();
+            }
+        });
+        revealCharTimer.setRepeats(true);
+        revealCharTimer.start();
+        updatePracticeDependentUi();
+        refreshCurrentWordScores();
+        log.info("Progressive reveal started (practice mode)");
+    }
+
+    private void revealAllAnswersAtOnce() {
+        if (!practiceModeCheckBox.isSelected()) {
+            return;
+        }
+        Optional<String> line = gameController.getRevealAnswersLine();
+        if (line.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Esta tarjeta no tiene traducciones para mostrar.",
+                    "Sin respuesta",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        revealCommittedThisRound = true;
+        revealFullText = line.get();
+        stopRevealCharTimer();
+        revealCharIndex = revealFullText.length();
+        revealAnswerArea.setText(revealFullText);
+        updatePracticeDependentUi();
+        refreshCurrentWordScores();
+        log.info("Full reveal displayed (practice mode)");
+    }
+
+    private void updatePracticeDependentUi() {
+        boolean hasPhrase = currentSpanishExpression != null;
+        boolean practiceOn = practiceModeCheckBox.isSelected();
+        boolean hasRevealTarget = gameController.getRevealAnswersLine().isPresent();
+        boolean timerRunning = revealCharTimer != null;
+
+        revealAnswerButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget && !timerRunning);
+        revealAllButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget);
+
+        boolean neutral = isNeutralScoringRound();
+        submitButton.setText(neutral ? "Comprobar (sin puntos)" : "Submit Answer");
+        submitButton.setBackground(getButtonColor(submitButton.getText()));
+        submitButton.setToolTipText(neutral
+                ? "Comprueba la traducción sin modificar puntajes."
+                : "Submit your translation for scoring.");
     }
 
     private void resetGameDisplay() {
@@ -430,7 +653,9 @@ public class GameView extends JFrame {
         spanishExpressionLabel.setText("Select a database and start a new round!");
         englishTranslationField.setText("");
         feedbackLabel.setText("");
+        preparePracticeRevealStateForNewRound();
         currentSpanishExpression = null;
+        updatePracticeDependentUi();
         refreshCurrentWordScores();
     }
 

@@ -193,6 +193,54 @@ class GameControllerTest {
     }
 
     @Test
+    @DisplayName("Should check translation without scoring or altering expressions")
+    void shouldCheckAnswerWithoutScoring() {
+        String databaseName = "test_db";
+        SpanishExpression spanishExpression = new SpanishExpression("casa", 0,
+                Arrays.asList(new EnglishExpression("house", 0, Collections.emptyList())));
+
+        when(databaseService.databaseExists(databaseName)).thenReturn(true);
+        when(gameLogicService.getRandomSpanishExpression(eq(databaseName), any())).thenReturn(spanishExpression);
+        gameController.selectDatabase(databaseName);
+        gameController.startNewRound();
+
+        when(gameLogicService.validateTranslation(spanishExpression, "house")).thenReturn(true);
+
+        Optional<Boolean> res = gameController.checkAnswerWithoutScoring("house");
+        assertTrue(res.isPresent());
+        assertTrue(res.get());
+        verify(gameLogicService).validateTranslation(spanishExpression, "house");
+        verify(gameLogicService, never()).processCorrectAnswer(any(), anyString(), anyString());
+        verify(gameLogicService, never()).processIncorrectAnswer(any(), anyString());
+    }
+
+    @Test
+    @DisplayName("Should expose joined reveal answers for current round")
+    void shouldExposeRevealAnswersLine() {
+        String databaseName = "test_db";
+        SpanishExpression spanishExpression = new SpanishExpression("casa", 0,
+                Arrays.asList(
+                        new EnglishExpression("house", 0, Collections.emptyList()),
+                        new EnglishExpression("home", 0, Collections.emptyList())));
+
+        when(databaseService.databaseExists(databaseName)).thenReturn(true);
+        when(gameLogicService.getRandomSpanishExpression(eq(databaseName), any())).thenReturn(spanishExpression);
+        gameController.selectDatabase(databaseName);
+        gameController.startNewRound();
+
+        Optional<String> line = gameController.getRevealAnswersLine();
+        assertTrue(line.isPresent());
+        assertEquals("house | home", line.get());
+    }
+
+    @Test
+    @DisplayName("Practice check and reveal text should be empty without active round")
+    void shouldReturnEmptyOptionalForPracticeHelpersWithoutRound() {
+        assertEquals(Optional.empty(), gameController.checkAnswerWithoutScoring("anything"));
+        assertEquals(Optional.empty(), gameController.getRevealAnswersLine());
+    }
+
+    @Test
     @DisplayName("Should create new database successfully")
     void shouldCreateNewDatabaseSuccessfully() {
         // Given

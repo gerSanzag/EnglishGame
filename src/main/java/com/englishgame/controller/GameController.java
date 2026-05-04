@@ -150,6 +150,38 @@ public class GameController {
         return gameLogicService.getLearnedScoreThreshold();
     }
 
+    /**
+     * English answer(s) to display in practice mode reveal (translations joined with {@code  | }).
+     */
+    public Optional<String> getRevealAnswersLine() {
+        return Optional.ofNullable(currentSpanishExpression)
+                .map(SpanishExpression::getTranslations)
+                .filter(list -> list != null && !list.isEmpty())
+                .map(list -> list.stream()
+                        .map(EnglishExpression::getExpression)
+                        .filter(s -> s != null && !s.trim().isEmpty())
+                        .map(String::trim)
+                        .distinct()
+                        .collect(Collectors.joining(" | ")))
+                .filter(line -> !line.isEmpty());
+    }
+
+    /**
+     * Validates the translation without modifying scores or persisting.
+     */
+    public Optional<Boolean> checkAnswerWithoutScoring(String userTranslation) {
+        if (currentSpanishExpression == null) {
+            log.debug("Practice check skipped: no current expression");
+            return Optional.empty();
+        }
+        if (userTranslation == null || userTranslation.trim().isEmpty()) {
+            return Optional.of(false);
+        }
+        boolean ok = gameLogicService.validateTranslation(currentSpanishExpression, userTranslation);
+        log.debug("Practice-only check for '{}': {}", userTranslation, ok);
+        return Optional.of(ok);
+    }
+
     public boolean createNewDatabase(String databaseName) {
         return Optional.ofNullable(databaseName)
                 .filter(name -> !name.trim().isEmpty())
