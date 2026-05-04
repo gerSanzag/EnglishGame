@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,6 +36,11 @@ class GameControllerTest {
         gameLogicService = Mockito.mock(GameLogicService.class);
         databaseService = Mockito.mock(DatabaseService.class);
         gameDataService = Mockito.mock(GameDataService.class);
+
+        when(databaseService.getCanonicalDatabaseName(anyString())).thenAnswer(invocation -> {
+            String s = invocation.getArgument(0);
+            return s == null ? Optional.empty() : Optional.of(s);
+        });
         
         gameController = new GameController(gameLogicService, databaseService, gameDataService);
     }

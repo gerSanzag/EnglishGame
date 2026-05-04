@@ -3,6 +3,8 @@ package com.englishgame.service.interfaces;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
 
+import java.util.Optional;
+
 /**
  * Service interface for managing game databases
  * Handles creation, management, and operations on game databases
@@ -35,7 +37,13 @@ public interface DatabaseService {
      * @return true if exists, false otherwise
      */
     boolean databaseExists(String databaseName);
-    
+
+    /**
+     * Returns the canonical key used in memory for this database name (matches listing),
+     * or empty if it does not exist. Names are matched ignoring leading/trailing spaces and case.
+     */
+    Optional<String> getCanonicalDatabaseName(String databaseName);
+
     /**
      * Gets all Spanish expressions from a specific database
      * @param databaseName name of the database

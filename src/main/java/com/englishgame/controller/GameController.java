@@ -60,8 +60,8 @@ public class GameController {
         return Optional.ofNullable(databaseName)
                 .filter(databaseService::databaseExists)
                 .map(name -> {
-                    this.currentDatabase = name;
-                    log.info("Database selected: {}", name);
+                    this.currentDatabase = databaseService.getCanonicalDatabaseName(name).orElse(name);
+                    log.info("Database selected: {}", this.currentDatabase);
                     return true;
                 })
                 .orElseGet(() -> {

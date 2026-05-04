@@ -554,8 +554,8 @@ public class DataManagementView extends JFrame {
                     continue;
                 }
                 
-                // Split Spanish components by common separators (/, ,, _, etc.)
-                String[] spanishComponents = spanish.split("[/,_,\\s]+");
+                // Full Spanish phrases may contain spaces; only split synonyms separated by "/" or "|"
+                String[] spanishComponents = splitSpanishSynonymsFromBulk(spanish);
                 
                 // Split English translations by comma
                 String[] englishTranslations = englishPart.split(",");
@@ -613,6 +613,28 @@ public class DataManagementView extends JFrame {
         }
     }
     
+    /**
+     * Turns one bulk Spanish side into one or more synonyms. Spaces are preserved inside each phrase.
+     * Example: {@code casa / hogar - house} yields two Spanish entries for the same English side logic.
+     */
+    private static String[] splitSpanishSynonymsFromBulk(String spanish) {
+        if (spanish == null || spanish.isEmpty()) {
+            return new String[0];
+        }
+        if (!spanish.contains("/") && !spanish.contains("|")) {
+            return new String[] { spanish };
+        }
+        String[] chunks = spanish.split("\\s*[|/]\\s*");
+        List<String> out = new ArrayList<>(chunks.length);
+        for (String chunk : chunks) {
+            String t = chunk.trim();
+            if (!t.isEmpty()) {
+                out.add(t);
+            }
+        }
+        return out.toArray(new String[0]);
+    }
+
     /**
      * Finds the best separator in a line
      */

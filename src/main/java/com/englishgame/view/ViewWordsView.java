@@ -67,7 +67,7 @@ public class ViewWordsView extends JFrame {
         databaseSelector.setPreferredSize(new Dimension(200, 30));
         
         // Words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Move", "Delete"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Move"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -78,11 +78,8 @@ public class ViewWordsView extends JFrame {
         wordsTable.setRowHeight(35);
         wordsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
-        // Set custom renderer for button columns
         wordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
-        wordsTable.getColumn("Delete").setCellRenderer(new ButtonRenderer("Delete"));
         
-        // Add mouse listener for button clicks
         wordsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -93,16 +90,14 @@ public class ViewWordsView extends JFrame {
                     String columnName = wordsTable.getColumnName(col);
                     if ("Move".equals(columnName)) {
                         handleMoveExpression(row);
-                    } else if ("Delete".equals(columnName)) {
-                        handleDeleteExpression(row);
                     }
                 }
             }
         });
         
-        // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the words list");
-        deleteAllButton = createStyledButton("Delete All", "Delete all expressions from current database");
+        deleteAllButton = createStyledButton("Delete All",
+                "Remove every expression from the database currently selected above");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
         playGameButton = createStyledButton("Play Game", "Start interactive game");
@@ -170,7 +165,8 @@ public class ViewWordsView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Refresh")) {
             return new Color(59, 130, 246); // Vibrant blue for refresh
-        } else if (buttonText.contains("Delete") && buttonText.contains("All")) {
+        } else if (buttonText.contains("Borrar todo")
+                || (buttonText.contains("Delete") && buttonText.contains("All"))) {
             return new Color(220, 38, 127); // Vibrant pink for delete all
         } else if (buttonText.contains("Manage") || buttonText.contains("Data")) {
             return new Color(37, 99, 235); // Vibrant blue for data management
@@ -285,7 +281,15 @@ public class ViewWordsView extends JFrame {
         
         // Buttons
         refreshButton.addActionListener(e -> refreshWordsTable());
-        deleteAllButton.addActionListener(e -> deleteAllExpressions());
+        deleteAllButton.addActionListener(e -> {
+            String db = (String) databaseSelector.getSelectedItem();
+            if (db == null) {
+                JOptionPane.showMessageDialog(this, "Please select a database first", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            deleteAllExpressionsForDatabase(db);
+        });
         backToLandingButton.addActionListener(e -> returnToLanding());
         dataManagementButton.addActionListener(e -> openDataManagement());
         playGameButton.addActionListener(e -> openGame());
@@ -321,8 +325,7 @@ public class ViewWordsView extends JFrame {
                     spanish.getExpression(),
                     translations,
                     spanish.getScore(),
-                    "Move",
-                    "Delete"
+                    "Move"
                 };
                 allData.add(rowData);
                 model.addRow(rowData);
@@ -340,8 +343,7 @@ public class ViewWordsView extends JFrame {
                     english.getExpression(),
                     translations,
                     english.getScore(),
-                    "Move",
-                    "Delete"
+                    "Move"
                 };
                 allData.add(rowData);
                 model.addRow(rowData);
@@ -409,48 +411,49 @@ public class ViewWordsView extends JFrame {
         log.debug("Table filtered with search text: '{}', showing {} rows", searchText, model.getRowCount());
     }
 
-    private void deleteAllExpressions() {
-        String selectedDb = (String) databaseSelector.getSelectedItem();
-        log.info("DeleteAllExpressions method called with database: {}", selectedDb);
-        
-        if (selectedDb == null) {
-            log.warn("No database selected for delete all operation");
-            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
+    private void deleteAllExpressionsForDatabase(String databaseName) {
+        log.info("deleteAllExpressionsForDatabase called for database: {}", databaseName);
+
+        if (databaseName == null || databaseName.isBlank()) {
+            log.warn("No database name for delete all operation");
+            JOptionPane.showMessageDialog(this, "Base de datos no válida.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         int result = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete ALL expressions from database '" + selectedDb + "'?\n\nThis action cannot be undone!",
-            "Confirm Delete All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-        
+                "¿Seguro de borrar TODAS las expresiones de la base \"" + databaseName + "\"?\n\nEsta acción no se puede deshacer.",
+                "Confirmar borrar todo", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
         log.info("User confirmation result: {}", result);
-        
-        if (result == JOptionPane.YES_OPTION) {
-            log.info("User confirmed deletion, calling gameController.deleteAllExpressions");
-            try {
-                boolean deleted = gameController.deleteAllExpressions(selectedDb);
-                log.info("DeleteAllExpressions result: {}", deleted);
-                
-                if (deleted) {
-                    JOptionPane.showMessageDialog(this, 
-                        "All expressions deleted successfully from database '" + selectedDb + "'!",
-                        "Delete All Successful", JOptionPane.INFORMATION_MESSAGE);
-                    
-                    // Refresh the table to show updated data
+
+        if (result != JOptionPane.YES_OPTION) {
+            log.info("User cancelled delete all operation for {}", databaseName);
+            return;
+        }
+
+        try {
+            boolean deleted = gameController.deleteAllExpressions(databaseName);
+            log.info("deleteAllExpressions result for {}: {}", databaseName, deleted);
+
+            if (deleted) {
+                JOptionPane.showMessageDialog(this,
+                        "Se eliminaron todas las expresiones de la base \"" + databaseName + "\".",
+                        "Borrado completado", JOptionPane.INFORMATION_MESSAGE);
+
+                String selectedDb = (String) databaseSelector.getSelectedItem();
+                if (databaseName.equals(selectedDb)) {
                     refreshWordsTable();
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "No expressions found in database '" + selectedDb + "' to delete.",
-                        "No Expressions Found", JOptionPane.INFORMATION_MESSAGE);
                 }
-                
-            } catch (Exception e) {
-                log.error("Error deleting all expressions", e);
-                JOptionPane.showMessageDialog(this, "Error deleting expressions: " + e.getMessage(), 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "No había expresiones que borrar en \"" + databaseName + "\".",
+                        "Sin datos", JOptionPane.INFORMATION_MESSAGE);
             }
-        } else {
-            log.info("User cancelled delete all operation");
+
+        } catch (Exception e) {
+            log.error("Error deleting all expressions", e);
+            JOptionPane.showMessageDialog(this, "Error al borrar: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -519,45 +522,6 @@ public class ViewWordsView extends JFrame {
         }
     }
     
-    private void handleDeleteExpression(int row) {
-        String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        String expression = (String) wordsTable.getValueAt(row, 0);
-        log.info("Delete button clicked for expression: {}", expression);
-        
-        int result = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete the expression: " + expression + "?",
-            "Confirm Delete", JOptionPane.YES_NO_OPTION);
-        
-        if (result == JOptionPane.YES_OPTION) {
-            try {
-                boolean deleted = gameController.deleteExpression(selectedDb, expression);
-                
-                if (deleted) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Expression '" + expression + "' deleted successfully!",
-                        "Delete Successful", JOptionPane.INFORMATION_MESSAGE);
-                    
-                    // Refresh the table to show updated data
-                    refreshWordsTable();
-                } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "Failed to delete expression '" + expression + "'. It may not exist in the database.",
-                        "Delete Failed", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception e) {
-                log.error("Error deleting expression", e);
-                JOptionPane.showMessageDialog(this, 
-                    "Error deleting expression: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
     // Custom button renderer for table cells
     class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer(String text) {

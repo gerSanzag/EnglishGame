@@ -30,12 +30,54 @@ public class DatabaseServiceImpl implements DatabaseService {
         this.englishDatabases = new HashMap<>();
         initializeDefaultDatabases();
     }
+
+    /**
+     * Resolves the canonical map key for a database (case- and outer-space insensitive).
+     */
+    private Optional<String> resolveCanonicalDatabaseKey(String databaseName) {
+        if (databaseName == null) {
+            return Optional.empty();
+        }
+        String trimmed = databaseName.trim();
+        if (trimmed.isEmpty()) {
+            return Optional.empty();
+        }
+        return spanishDatabases.keySet().stream()
+                .filter(k -> k.equalsIgnoreCase(trimmed))
+                .findFirst();
+    }
+
+    private static boolean expressionsEqualNormalized(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.trim().equalsIgnoreCase(b.trim());
+    }
+
+    /** True if trimmed phrase conflicts with any Spanish anchor or lone English expression in DB. */
+    private boolean occupiesPhraseCrossSets(String canonicalDbKey, String phraseTrimmedNormalized) {
+        if (canonicalDbKey == null || phraseTrimmedNormalized.isEmpty()) {
+            return false;
+        }
+        for (SpanishExpression s : spanishDatabases.get(canonicalDbKey)) {
+            if (s.getExpression() != null && expressionsEqualNormalized(phraseTrimmedNormalized, s.getExpression())) {
+                return true;
+            }
+        }
+        for (EnglishExpression e : englishDatabases.get(canonicalDbKey)) {
+            if (e.getExpression() != null && expressionsEqualNormalized(phraseTrimmedNormalized, e.getExpression())) {
+                return true;
+            }
+        }
+        return false;
+    }
     
     @Override
     public boolean createDatabase(String databaseName) {
         return Optional.ofNullable(databaseName)
-                .filter(name -> !name.trim().isEmpty())
-                .filter(name -> !databaseExists(name))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .filter(name -> resolveCanonicalDatabaseKey(name).isEmpty())
                 .map(name -> {
                        // Create in-memory databases
                        spanishDatabases.put(name, new HashSet<>());
@@ -53,29 +95,32 @@ public class DatabaseServiceImpl implements DatabaseService {
                     if (databaseName == null || databaseName.trim().isEmpty()) {
                         log.warn("Cannot create database with null or empty name");
                     } else {
-                        log.warn("Database '{}' already exists", databaseName);
+                        log.warn("Database '{}' already exists (comparison ignores case/spaces)", databaseName.trim());
                     }
                     return false;
                 });
     }
     
     @Override
+    public Optional<String> getCanonicalDatabaseName(String databaseName) {
+        return resolveCanonicalDatabaseKey(databaseName);
+    }
+
+    @Override
     public boolean deleteDatabase(String databaseName) {
-        return Optional.ofNullable(databaseName)
-                .filter(name -> !name.trim().isEmpty())
-                .filter(name -> databaseExists(name))
-                .filter(name -> !LEARNED_WORDS_DATABASE.equals(name))
-                .map(name -> {
+        return resolveCanonicalDatabaseKey(databaseName)
+                .filter(canonical -> !LEARNED_WORDS_DATABASE.equalsIgnoreCase(canonical))
+                .map(canonical -> {
                     // Remove from in-memory databases
-                    spanishDatabases.remove(name);
-                    englishDatabases.remove(name);
+                    spanishDatabases.remove(canonical);
+                    englishDatabases.remove(canonical);
                     
                     // Remove from repository for persistence
-                    removeDatabaseFromRepository(name);
+                    removeDatabaseFromRepository(canonical);
                     // Persist to JSON
                     gameDataService.saveGameData();
                     
-                    log.info("Database '{}' deleted successfully", name);
+                    log.info("Database '{}' deleted successfully", canonical);
                     return true;
                 })
                 .orElseGet(() -> {
@@ -83,7 +128,9 @@ public class DatabaseServiceImpl implements DatabaseService {
                         log.warn("Cannot delete database with null or empty name");
                     } else if (!databaseExists(databaseName)) {
                         log.warn("Database '{}' does not exist", databaseName);
-                    } else if (LEARNED_WORDS_DATABASE.equals(databaseName)) {
+                    } else if (resolveCanonicalDatabaseKey(databaseName)
+                            .filter(LEARNED_WORDS_DATABASE::equalsIgnoreCase)
+                            .isPresent()) {
                         log.warn("Cannot delete the learned words database");
                     }
                     return false;
@@ -92,67 +139,73 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public List<String> getAvailableDatabases() {
-        return new ArrayList<>(spanishDatabases.keySet());
+        return spanishDatabases.keySet().stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
     
     @Override
     public boolean databaseExists(String databaseName) {
-        return spanishDatabases.containsKey(databaseName);
+        return resolveCanonicalDatabaseKey(databaseName).isPresent();
     }
     
     @Override
     public List<SpanishExpression> getSpanishExpressions(String databaseName) {
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return new ArrayList<>();
-        }
-        
-        return new ArrayList<>(spanishDatabases.get(databaseName));
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(key -> new ArrayList<>(spanishDatabases.get(key)))
+                .orElseGet(() -> {
+                    log.warn("Database '{}' does not exist", databaseName);
+                    return new ArrayList<>();
+                });
     }
     
     @Override
     public List<EnglishExpression> getEnglishExpressions(String databaseName) {
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return new ArrayList<>();
-        }
-        
-        return new ArrayList<>(englishDatabases.get(databaseName));
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(key -> new ArrayList<>(englishDatabases.get(key)))
+                .orElseGet(() -> {
+                    log.warn("Database '{}' does not exist", databaseName);
+                    return new ArrayList<>();
+                });
     }
     
     @Override
     public boolean addSpanishExpression(String databaseName, SpanishExpression spanishExpression) {
-        return Optional.ofNullable(databaseName)
-                .filter(this::databaseExists)
-                .flatMap(db -> Optional.ofNullable(spanishExpression)
+        return resolveCanonicalDatabaseKey(databaseName)
+                .flatMap(dbKey -> Optional.ofNullable(spanishExpression)
                         .filter(expr -> expr.getExpression() != null && !expr.getExpression().trim().isEmpty())
                         .map(expr -> {
-                            // HashSet.add() automatically returns false if duplicate
-                            boolean added = spanishDatabases.get(db).add(expr);
+                            String trimmedPhrase = expr.getExpression().trim();
+                            expr.setExpression(trimmedPhrase);
+                            if (occupiesPhraseCrossSets(dbKey, trimmedPhrase)) {
+                                log.warn("Expression '{}' already exists in '{}' (Spanish or English row); rejected",
+                                        trimmedPhrase, dbKey);
+                                return false;
+                            }
+                            boolean added = spanishDatabases.get(dbKey).add(expr);
                             
                             if (added) {
-                                // Save expression to repository for persistence
-                                saveExpressionToRepository(db, expr);
-                                // Persist to JSON
+                                saveExpressionToRepository(dbKey, expr);
                                 gameDataService.saveGameData();
-                                log.debug("Added Spanish expression '{}' to database '{}'", 
-                                        expr.getExpression(), db);
+                                log.debug("Added Spanish expression '{}' to database '{}'",
+                                        trimmedPhrase, dbKey);
                             } else {
-                                log.warn("Spanish expression '{}' already exists in database '{}'", 
-                                        expr.getExpression(), db);
+                                log.warn("Spanish expression '{}' could not be added to database '{}'",
+                                        trimmedPhrase, dbKey);
                             }
                             
                             return added;
                         }))
                 .orElseGet(() -> {
                     log.warn("Cannot add Spanish expression to database '{}'", databaseName);
-            return false;
+                    return false;
                 });
     }
     
     @Override
     public boolean addEnglishExpression(String databaseName, EnglishExpression englishExpression) {
-        if (!databaseExists(databaseName)) {
+        Optional<String> dbKeyOpt = resolveCanonicalDatabaseKey(databaseName);
+        if (dbKeyOpt.isEmpty()) {
             log.warn("Database '{}' does not exist", databaseName);
             return false;
         }
@@ -162,78 +215,101 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         
-        englishDatabases.get(databaseName).add(englishExpression);
-        log.debug("Added English expression '{}' to database '{}'", 
-                englishExpression.getExpression(), databaseName);
-        // Persist to JSON
-        gameDataService.saveGameData();
+        String dbKey = dbKeyOpt.get();
+        String trimmed = englishExpression.getExpression().trim();
+        if (trimmed.isEmpty()) {
+            log.warn("Cannot add English expression with empty text");
+            return false;
+        }
+        englishExpression.setExpression(trimmed);
         
-        return true;
+        if (occupiesPhraseCrossSets(dbKey, trimmed)) {
+            log.warn("Expression '{}' already exists in '{}' (Spanish or English row); rejected",
+                    trimmed, dbKey);
+            return false;
+        }
+        
+        boolean added = englishDatabases.get(dbKey).add(englishExpression);
+        if (added) {
+            log.debug("Added English expression '{}' to database '{}'", trimmed, dbKey);
+            gameDataService.saveGameData();
+        } else {
+            log.warn("English expression '{}' already present in '{}' (set duplicate)", trimmed, dbKey);
+        }
+        
+        return added;
     }
     
     @Override
     public boolean removeSpanishExpression(String databaseName, String expression) {
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return false;
-        }
-        
-        Set<SpanishExpression> expressions = spanishDatabases.get(databaseName);
-        log.debug("Before removal: {} expressions in database '{}'", expressions.size(), databaseName);
-        
-        boolean removed = expressions.removeIf(spanishExpr -> spanishExpr.getExpression().equals(expression));
-        
-        log.debug("After removal: {} expressions in database '{}'", expressions.size(), databaseName);
-        
-        if (removed) {
-            log.info("Successfully removed Spanish expression '{}' from database '{}'", expression, databaseName);
-            // Persist to JSON
-            gameDataService.saveGameData();
-        } else {
-            log.warn("Spanish expression '{}' not found in database '{}'", expression, databaseName);
-        }
-        
-        return removed;
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(canonical -> {
+                    Set<SpanishExpression> expressions = spanishDatabases.get(canonical);
+                    log.debug("Before removal: {} expressions in database '{}'", expressions.size(), canonical);
+
+                    boolean removed = expressions.removeIf(spanishExpr ->
+                            expressionsEqualNormalized(spanishExpr.getExpression(), expression));
+
+                    log.debug("After removal: {} expressions in database '{}'", expressions.size(), canonical);
+
+                    if (removed) {
+                        log.info("Successfully removed Spanish expression '{}' from database '{}'",
+                                expression, canonical);
+                        gameDataService.saveGameData();
+                    } else {
+                        log.warn("Spanish expression '{}' not found in database '{}'", expression, canonical);
+                    }
+                    return removed;
+                })
+                .orElseGet(() -> {
+                    log.warn("Database '{}' does not exist", databaseName);
+                    return false;
+                });
     }
     
     @Override
     public boolean removeEnglishExpression(String databaseName, String expression) {
-        if (!databaseExists(databaseName)) {
-            log.warn("Database '{}' does not exist", databaseName);
-            return false;
-        }
-        
-        Set<EnglishExpression> expressions = englishDatabases.get(databaseName);
-        log.debug("Before removal: {} English expressions in database '{}'", expressions.size(), databaseName);
-        
-        boolean removed = expressions.removeIf(englishExpr -> englishExpr.getExpression().equals(expression));
-        
-        log.debug("After removal: {} English expressions in database '{}'", expressions.size(), databaseName);
-        
-        if (removed) {
-            log.info("Successfully removed English expression '{}' from database '{}'", expression, databaseName);
-            // Persist to JSON
-            gameDataService.saveGameData();
-        } else {
-            log.warn("English expression '{}' not found in database '{}'", expression, databaseName);
-        }
-        
-        return removed;
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(canonical -> {
+                    Set<EnglishExpression> expressions = englishDatabases.get(canonical);
+                    log.debug("Before removal: {} English expressions in database '{}'", expressions.size(),
+                            canonical);
+
+                    boolean removed = expressions.removeIf(englishExpr ->
+                            expressionsEqualNormalized(englishExpr.getExpression(), expression));
+
+                    log.debug("After removal: {} English expressions in database '{}'", expressions.size(),
+                            canonical);
+
+                    if (removed) {
+                        log.info("Successfully removed English expression '{}' from database '{}'",
+                                expression, canonical);
+                        gameDataService.saveGameData();
+                    } else {
+                        log.warn("English expression '{}' not found in database '{}'", expression, canonical);
+                    }
+                    return removed;
+                })
+                .orElseGet(() -> {
+                    log.warn("Database '{}' does not exist", databaseName);
+                    return false;
+                });
     }
     
     @Override
     public boolean deleteAllSpanishExpressions(String databaseName) {
-        if (!databaseExists(databaseName)) {
+        Optional<String> key = resolveCanonicalDatabaseKey(databaseName);
+        if (key.isEmpty()) {
             log.warn("Database '{}' does not exist", databaseName);
             return false;
         }
-        
-        Set<SpanishExpression> expressions = spanishDatabases.get(databaseName);
+
+        Set<SpanishExpression> expressions = spanishDatabases.get(key.get());
         int countBefore = expressions.size();
         
         expressions.clear();
         
-        log.info("Deleted all {} Spanish expressions from database '{}'", countBefore, databaseName);
+        log.info("Deleted all {} Spanish expressions from database '{}'", countBefore, key.get());
         // Persist to JSON
         gameDataService.saveGameData();
         return countBefore > 0;
@@ -241,17 +317,18 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public boolean deleteAllEnglishExpressions(String databaseName) {
-        if (!databaseExists(databaseName)) {
+        Optional<String> key = resolveCanonicalDatabaseKey(databaseName);
+        if (key.isEmpty()) {
             log.warn("Database '{}' does not exist", databaseName);
             return false;
         }
-        
-        Set<EnglishExpression> expressions = englishDatabases.get(databaseName);
+
+        Set<EnglishExpression> expressions = englishDatabases.get(key.get());
         int countBefore = expressions.size();
         
         expressions.clear();
         
-        log.info("Deleted all {} English expressions from database '{}'", countBefore, databaseName);
+        log.info("Deleted all {} English expressions from database '{}'", countBefore, key.get());
         // Persist to JSON
         gameDataService.saveGameData();
         return countBefore > 0;
@@ -273,7 +350,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         List<SpanishExpression> pool = new ArrayList<>(expressions);
         if (excludePreviousRound != null && excludePreviousRound.getExpression() != null && pool.size() > 1) {
             pool.removeIf(e ->
-                    Objects.equals(e.getExpression(), excludePreviousRound.getExpression()));
+                    expressionsEqualNormalized(e.getExpression(), excludePreviousRound.getExpression()));
         }
         if (pool.isEmpty()) {
             pool = new ArrayList<>(expressions);
@@ -305,18 +382,16 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public int getSpanishExpressionCount(String databaseName) {
-        if (!databaseExists(databaseName)) {
-            return 0;
-        }
-        return spanishDatabases.get(databaseName).size();
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(k -> spanishDatabases.get(k).size())
+                .orElse(0);
     }
     
     @Override
     public int getEnglishExpressionCount(String databaseName) {
-        if (!databaseExists(databaseName)) {
-            return 0;
-        }
-        return englishDatabases.get(databaseName).size();
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(k -> englishDatabases.get(k).size())
+                .orElse(0);
     }
     
     @Override
@@ -326,26 +401,22 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public List<SpanishExpression> searchSpanishExpressions(String databaseName, String searchText) {
-        if (!databaseExists(databaseName)) {
-            return new ArrayList<>();
-        }
-        
-        return spanishDatabases.get(databaseName).stream()
-                .filter(spanishExpr -> spanishExpr.getExpression().toLowerCase()
-                        .contains(searchText.toLowerCase()))
-                .collect(Collectors.toList());
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(canonical -> spanishDatabases.get(canonical).stream()
+                        .filter(spanishExpr -> spanishExpr.getExpression().toLowerCase()
+                                .contains(searchText.toLowerCase()))
+                        .collect(Collectors.toList()))
+                .orElseGet(ArrayList::new);
     }
     
     @Override
     public List<EnglishExpression> searchEnglishExpressions(String databaseName, String searchText) {
-        if (!databaseExists(databaseName)) {
-            return new ArrayList<>();
-        }
-        
-        return englishDatabases.get(databaseName).stream()
-                .filter(englishExpr -> englishExpr.getExpression().toLowerCase()
-                        .contains(searchText.toLowerCase()))
-                .collect(Collectors.toList());
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(canonical -> englishDatabases.get(canonical).stream()
+                        .filter(englishExpr -> englishExpr.getExpression().toLowerCase()
+                                .contains(searchText.toLowerCase()))
+                        .collect(Collectors.toList()))
+                .orElseGet(ArrayList::new);
     }
     
     @Override
@@ -379,19 +450,21 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.warn("promoteTranslationToLearned: invalid arguments");
             return false;
         }
-        if (LEARNED_WORDS_DATABASE.equals(practiceDatabaseName)) {
-            log.warn("Cannot promote from learned_words");
-            return false;
-        }
-        if (!databaseExists(practiceDatabaseName)) {
+        Optional<String> practiceKey = resolveCanonicalDatabaseKey(practiceDatabaseName);
+        if (practiceKey.isEmpty()) {
             log.warn("Practice database '{}' does not exist", practiceDatabaseName);
             return false;
         }
+        if (LEARNED_WORDS_DATABASE.equalsIgnoreCase(practiceKey.get())) {
+            log.warn("Cannot promote from learned_words");
+            return false;
+        }
         
-        Set<SpanishExpression> practicePhrases = spanishDatabases.get(practiceDatabaseName);
+        String practiceDb = practiceKey.get();
+        Set<SpanishExpression> practicePhrases = spanishDatabases.get(practiceDb);
         if (!practicePhrases.contains(hostPhrase)) {
             log.warn("Host phrase '{}' not found in practice database '{}'",
-                    hostPhrase.getExpression(), practiceDatabaseName);
+                    hostPhrase.getExpression(), practiceDb);
             return false;
         }
         
@@ -409,13 +482,13 @@ public class DatabaseServiceImpl implements DatabaseService {
         
         if (hostPhrase.getTranslations().isEmpty()) {
             practicePhrases.remove(hostPhrase);
-            log.debug("Removed emptied Spanish '{}' from '{}'", hostPhrase.getExpression(), practiceDatabaseName);
+            log.debug("Removed emptied Spanish '{}' from '{}'", hostPhrase.getExpression(), practiceDb);
         }
         
         gameDataService.saveGameData();
         log.info("Learned '{}' added to '{}' and detached from '{}' (phrase '{}')",
                 englishTranslation.getExpression(), LEARNED_WORDS_DATABASE,
-                practiceDatabaseName, hostPhrase.getExpression());
+                practiceDb, hostPhrase.getExpression());
         return true;
     }
     
@@ -634,82 +707,80 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public boolean moveSpanishExpression(String sourceDatabase, String targetDatabase, String expression) {
-        return Optional.ofNullable(sourceDatabase)
-                .filter(this::databaseExists)
-                .flatMap(sourceDb -> Optional.ofNullable(targetDatabase)
-                        .filter(this::databaseExists)
-                        .filter(targetDb -> !sourceDb.equals(targetDb))
-                        .map(targetDb -> {
-                            // Find the Spanish expression in source database
-                            Optional<SpanishExpression> spanishExpr = spanishDatabases.get(sourceDb)
-                                    .stream()
-                                    .filter(expr -> expr.getExpression().equals(expression))
-                                    .findFirst();
-                            
-                            if (spanishExpr.isPresent()) {
-                                // Remove from source database
-                                spanishDatabases.get(sourceDb).remove(spanishExpr.get());
-                                
-                                // Add to target database
-                                spanishDatabases.get(targetDb).add(spanishExpr.get());
-                                
-                                // Update repository
-                                updateRepositoryAfterMove(sourceDb, targetDb, spanishExpr.get(), "spanish");
-                                // Persist to JSON
-                                gameDataService.saveGameData();
-                                
-                                log.info("Spanish expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
-                                return true;
-                            } else {
-                                log.warn("Spanish expression '{}' not found in source database '{}'", expression, sourceDb);
-                                return false;
-                            }
-                        }))
-                .orElseGet(() -> {
-                    log.warn("Cannot move Spanish expression '{}' from '{}' to '{}' - invalid databases", 
-                            expression, sourceDatabase, targetDatabase);
-                    return false;
-                });
+        Optional<String> sourceOpt = resolveCanonicalDatabaseKey(sourceDatabase);
+        Optional<String> targetOpt = resolveCanonicalDatabaseKey(targetDatabase);
+        if (sourceOpt.isEmpty() || targetOpt.isEmpty() || sourceOpt.get().equals(targetOpt.get())) {
+            log.warn("Cannot move Spanish expression '{}' from '{}' to '{}' - invalid databases",
+                    expression, sourceDatabase, targetDatabase);
+            return false;
+        }
+        String sourceDb = sourceOpt.get();
+        String targetDb = targetOpt.get();
+
+        Optional<SpanishExpression> spanishExpr = spanishDatabases.get(sourceDb).stream()
+                .filter(expr -> expressionsEqualNormalized(expr.getExpression(), expression))
+                .findFirst();
+
+        if (spanishExpr.isEmpty()) {
+            log.warn("Spanish expression '{}' not found in source database '{}'", expression, sourceDb);
+            return false;
+        }
+
+        SpanishExpression moved = spanishExpr.get();
+        String phrase = moved.getExpression() != null ? moved.getExpression().trim() : "";
+        if (occupiesPhraseCrossSets(targetDb, phrase)) {
+            log.warn("Target database '{}' already has '{}' (Spanish or English row); move cancelled",
+                    targetDb, phrase);
+            return false;
+        }
+
+        spanishDatabases.get(sourceDb).remove(moved);
+        spanishDatabases.get(targetDb).add(moved);
+
+        updateRepositoryAfterMove(sourceDb, targetDb, moved, "spanish");
+        gameDataService.saveGameData();
+
+        log.info("Spanish expression '{}' moved from '{}' to '{}'", phrase, sourceDb, targetDb);
+        return true;
     }
     
     @Override
     public boolean moveEnglishExpression(String sourceDatabase, String targetDatabase, String expression) {
-        return Optional.ofNullable(sourceDatabase)
-                .filter(this::databaseExists)
-                .flatMap(sourceDb -> Optional.ofNullable(targetDatabase)
-                        .filter(this::databaseExists)
-                        .filter(targetDb -> !sourceDb.equals(targetDb))
-                        .map(targetDb -> {
-                            // Find the English expression in source database
-                            Optional<EnglishExpression> englishExpr = englishDatabases.get(sourceDb)
-                                    .stream()
-                                    .filter(expr -> expr.getExpression().equals(expression))
-                                    .findFirst();
-                            
-                            if (englishExpr.isPresent()) {
-                                // Remove from source database
-                                englishDatabases.get(sourceDb).remove(englishExpr.get());
-                                
-                                // Add to target database
-                                englishDatabases.get(targetDb).add(englishExpr.get());
-                                
-                                // Update repository
-                                updateRepositoryAfterMove(sourceDb, targetDb, englishExpr.get(), "english");
-                                // Persist to JSON
-                                gameDataService.saveGameData();
-                                
-                                log.info("English expression '{}' moved from '{}' to '{}'", expression, sourceDb, targetDb);
-                                return true;
-                            } else {
-                                log.warn("English expression '{}' not found in source database '{}'", expression, sourceDb);
-                                return false;
-                            }
-                        }))
-                .orElseGet(() -> {
-                    log.warn("Cannot move English expression '{}' from '{}' to '{}' - invalid databases", 
-                            expression, sourceDatabase, targetDatabase);
-                    return false;
-                });
+        Optional<String> sourceOpt = resolveCanonicalDatabaseKey(sourceDatabase);
+        Optional<String> targetOpt = resolveCanonicalDatabaseKey(targetDatabase);
+        if (sourceOpt.isEmpty() || targetOpt.isEmpty() || sourceOpt.get().equals(targetOpt.get())) {
+            log.warn("Cannot move English expression '{}' from '{}' to '{}' - invalid databases",
+                    expression, sourceDatabase, targetDatabase);
+            return false;
+        }
+        String sourceDb = sourceOpt.get();
+        String targetDb = targetOpt.get();
+
+        Optional<EnglishExpression> englishExpr = englishDatabases.get(sourceDb).stream()
+                .filter(expr -> expressionsEqualNormalized(expr.getExpression(), expression))
+                .findFirst();
+
+        if (englishExpr.isEmpty()) {
+            log.warn("English expression '{}' not found in source database '{}'", expression, sourceDb);
+            return false;
+        }
+
+        EnglishExpression moved = englishExpr.get();
+        String phrase = moved.getExpression() != null ? moved.getExpression().trim() : "";
+        if (occupiesPhraseCrossSets(targetDb, phrase)) {
+            log.warn("Target database '{}' already has '{}' (Spanish or English row); move cancelled",
+                    targetDb, phrase);
+            return false;
+        }
+
+        englishDatabases.get(sourceDb).remove(moved);
+        englishDatabases.get(targetDb).add(moved);
+
+        updateRepositoryAfterMove(sourceDb, targetDb, moved, "english");
+        gameDataService.saveGameData();
+
+        log.info("English expression '{}' moved from '{}' to '{}'", phrase, sourceDb, targetDb);
+        return true;
     }
     
     /**
