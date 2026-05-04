@@ -259,15 +259,29 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
+        return getRandomSpanishExpression(databaseName, null);
+    }
+    
+    @Override
+    public SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound) {
         List<SpanishExpression> expressions = getSpanishExpressions(databaseName);
         if (expressions.isEmpty()) {
             log.warn("Database '{}' is empty", databaseName);
             return null;
         }
         
+        List<SpanishExpression> pool = new ArrayList<>(expressions);
+        if (excludePreviousRound != null && excludePreviousRound.getExpression() != null && pool.size() > 1) {
+            pool.removeIf(e ->
+                    Objects.equals(e.getExpression(), excludePreviousRound.getExpression()));
+        }
+        if (pool.isEmpty()) {
+            pool = new ArrayList<>(expressions);
+        }
+        
         Random random = new Random();
-        SpanishExpression selected = expressions.get(random.nextInt(expressions.size()));
-        log.debug("Selected random Spanish expression '{}' from database '{}'", 
+        SpanishExpression selected = pool.get(random.nextInt(pool.size()));
+        log.debug("Selected random Spanish expression '{}' from database '{}'",
                 selected.getExpression(), databaseName);
         
         return selected;
@@ -355,6 +369,54 @@ public class DatabaseServiceImpl implements DatabaseService {
         }
         
         return added;
+    }
+    
+    @Override
+    public boolean promoteTranslationToLearned(String practiceDatabaseName, SpanishExpression hostPhrase,
+                                              EnglishExpression englishTranslation) {
+        if (englishTranslation == null || hostPhrase == null || practiceDatabaseName == null
+                || practiceDatabaseName.isBlank()) {
+            log.warn("promoteTranslationToLearned: invalid arguments");
+            return false;
+        }
+        if (LEARNED_WORDS_DATABASE.equals(practiceDatabaseName)) {
+            log.warn("Cannot promote from learned_words");
+            return false;
+        }
+        if (!databaseExists(practiceDatabaseName)) {
+            log.warn("Practice database '{}' does not exist", practiceDatabaseName);
+            return false;
+        }
+        
+        Set<SpanishExpression> practicePhrases = spanishDatabases.get(practiceDatabaseName);
+        if (!practicePhrases.contains(hostPhrase)) {
+            log.warn("Host phrase '{}' not found in practice database '{}'",
+                    hostPhrase.getExpression(), practiceDatabaseName);
+            return false;
+        }
+        
+        boolean detached = hostPhrase.getTranslations().removeIf(en ->
+                en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
+        if (!detached) {
+            log.warn("English '{}' not found on host phrase '{}'",
+                    englishTranslation.getExpression(), hostPhrase.getExpression());
+            return false;
+        }
+        
+        Set<EnglishExpression> learned = englishDatabases.get(LEARNED_WORDS_DATABASE);
+        learned.removeIf(en -> en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
+        learned.add(englishTranslation);
+        
+        if (hostPhrase.getTranslations().isEmpty()) {
+            practicePhrases.remove(hostPhrase);
+            log.debug("Removed emptied Spanish '{}' from '{}'", hostPhrase.getExpression(), practiceDatabaseName);
+        }
+        
+        gameDataService.saveGameData();
+        log.info("Learned '{}' added to '{}' and detached from '{}' (phrase '{}')",
+                englishTranslation.getExpression(), LEARNED_WORDS_DATABASE,
+                practiceDatabaseName, hostPhrase.getExpression());
+        return true;
     }
     
     @Override

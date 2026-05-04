@@ -1,6 +1,7 @@
 package com.englishgame.view;
 
 import com.englishgame.controller.GameController;
+import com.englishgame.model.AnswerResult;
 import com.englishgame.model.SpanishExpression;
 import lombok.extern.slf4j.Slf4j;
 
@@ -335,8 +336,16 @@ public class MainGameView extends JFrame {
                 .filter(answer -> !answer.trim().isEmpty())
                 .ifPresentOrElse(
                     answer -> {
-                        boolean isCorrect = gameController.processAnswer(answer.trim());
+                        AnswerResult answerResult = gameController.processAnswer(answer.trim());
+                        boolean isCorrect = answerResult.correct();
                         if (isCorrect) {
+                            if (answerResult.isNewlyLearned()) {
+                                JOptionPane.showMessageDialog(this,
+                                        "Congratulations! \"" + answerResult.newlyLearnedEnglishWord()
+                                                + "\" reached the threshold and is now in Learned Words.\nKeep it up!",
+                                        "Word learned",
+                                        JOptionPane.INFORMATION_MESSAGE);
+                            }
                             resultLabel.setText("✓ Correct! Well done!");
                             resultLabel.setForeground(new Color(39, 174, 96));
                         } else {

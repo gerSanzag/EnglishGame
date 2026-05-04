@@ -22,6 +22,8 @@ import java.util.ArrayList;
 @Slf4j
 public class LearnedWordsView extends JFrame {
 
+    private static final String LEARNED_WORDS_DB = "learned_words";
+
     private final GameController gameController;
     private final LandingPageView landingPage;
     
@@ -64,7 +66,7 @@ public class LearnedWordsView extends JFrame {
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Make table read-only
+                return column == 3 || column == 4;
             }
         };
         learnedWordsTable = new JTable(tableModel);
@@ -274,7 +276,7 @@ public class LearnedWordsView extends JFrame {
         
         try {
             // Get learned words from the learned_words database
-            List<EnglishExpression> learnedWords = gameController.getEnglishExpressionsFromDatabase("learned_words");
+            List<EnglishExpression> learnedWords = gameController.getEnglishExpressionsFromDatabase(LEARNED_WORDS_DB);
             
             for (EnglishExpression learnedWord : learnedWords) {
                 String spanishTranslations = learnedWord.getTranslations().stream()
@@ -384,6 +386,80 @@ public class LearnedWordsView extends JFrame {
             "Review functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private void moveLearnedWordToPractice(String englishExpression) {
+        if (englishExpression == null || englishExpression.isBlank()) {
+            return;
+        }
+        List<String> targets = new ArrayList<>(gameController.getAvailableDatabases());
+        if (targets.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No other vocabulary database is available to move this word into.",
+                    "No Target Database", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String targetDatabase = (String) JOptionPane.showInputDialog(
+                this,
+                "Move English expression '" + englishExpression + "' from learned words to:",
+                "Move to Vocabulary",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                targets.toArray(),
+                targets.get(0));
+        if (targetDatabase == null || targetDatabase.isEmpty()) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Move '" + englishExpression + "' from learned words to '" + targetDatabase + "'?",
+                "Confirm Move", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            boolean moved = gameController.moveExpression(LEARNED_WORDS_DB, targetDatabase, englishExpression);
+            if (moved) {
+                JOptionPane.showMessageDialog(this,
+                        "Moved '" + englishExpression + "' to '" + targetDatabase + "'.",
+                        "Move Successful", JOptionPane.INFORMATION_MESSAGE);
+                refreshLearnedWordsTable();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Could not move '" + englishExpression + "'. It may no longer be in learned words.",
+                        "Move Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            log.error("Error moving learned word", e);
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteLearnedWord(String englishExpression) {
+        if (englishExpression == null || englishExpression.isBlank()) {
+            return;
+        }
+        int result = JOptionPane.showConfirmDialog(this,
+                "Delete learned word '" + englishExpression + "' permanently?",
+                "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (result != JOptionPane.YES_OPTION) {
+            return;
+        }
+        try {
+            boolean deleted = gameController.deleteExpression(LEARNED_WORDS_DB, englishExpression);
+            if (deleted) {
+                JOptionPane.showMessageDialog(this,
+                        "Deleted '" + englishExpression + "' from learned words.",
+                        "Delete Successful", JOptionPane.INFORMATION_MESSAGE);
+                refreshLearnedWordsTable();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Could not delete '" + englishExpression + "'.",
+                        "Delete Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            log.error("Error deleting learned word", e);
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     // Custom button renderer for table cells
     class ButtonRenderer extends JButton implements TableCellRenderer {
         public ButtonRenderer(String text) {
@@ -411,71 +487,41 @@ public class LearnedWordsView extends JFrame {
 
     // Custom button editor for table cells
     class ButtonEditor extends DefaultCellEditor {
-        protected JButton button;
+        private final JButton button;
         private String label;
-        private boolean isPushed;
-        private int row;
-        private String expression;
+        private int editedColumn;
+        private String englishExpression;
 
         public ButtonEditor(JCheckBox checkBox) {
             super(checkBox);
             button = new JButton();
             button.setOpaque(true);
-            button.addActionListener(e -> fireEditingStopped());
+            button.addActionListener(e -> {
+                String expr = englishExpression;
+                int col = editedColumn;
+                fireEditingStopped();
+                if (col == 3) {
+                    log.info("Move learned word: {}", expr);
+                    moveLearnedWordToPractice(expr);
+                } else if (col == 4) {
+                    log.info("Delete learned word: {}", expr);
+                    deleteLearnedWord(expr);
+                }
+            });
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value,
                 boolean isSelected, int row, int column) {
             label = (value == null) ? "" : value.toString();
             button.setText(label);
-            isPushed = true;
-            this.row = row;
-            
-            // Get the expression from the first column
-            expression = (String) table.getValueAt(row, 0);
-            
+            editedColumn = column;
+            englishExpression = (String) table.getValueAt(row, 0);
             return button;
         }
 
+        @Override
         public Object getCellEditorValue() {
-            if (isPushed) {
-                if ("Move".equals(label)) {
-                    handleMoveExpression();
-                } else if ("Delete".equals(label)) {
-                    handleDeleteExpression();
-                }
-            }
-            isPushed = false;
             return label;
-        }
-
-        public boolean stopCellEditing() {
-            isPushed = false;
-            return super.stopCellEditing();
-        }
-
-        protected void fireEditingStopped() {
-            super.fireEditingStopped();
-        }
-
-        private void handleMoveExpression() {
-            log.info("Move button clicked for expression: {}", expression);
-            // TODO: Implement move to another database
-            JOptionPane.showMessageDialog(LearnedWordsView.this, 
-                "Move functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        private void handleDeleteExpression() {
-            log.info("Delete button clicked for expression: {}", expression);
-            int result = JOptionPane.showConfirmDialog(LearnedWordsView.this,
-                "Are you sure you want to delete the learned word: " + expression + "?",
-                "Confirm Delete", JOptionPane.YES_NO_OPTION);
-            
-            if (result == JOptionPane.YES_OPTION) {
-                // TODO: Implement delete expression
-                JOptionPane.showMessageDialog(LearnedWordsView.this, 
-                    "Delete functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-            }
         }
     }
 }

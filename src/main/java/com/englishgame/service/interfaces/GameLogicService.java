@@ -2,6 +2,7 @@ package com.englishgame.service.interfaces;
 
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
+import com.englishgame.model.CorrectAnswerOutcome;
 
 /**
  * Service interface for managing game logic
@@ -17,6 +18,11 @@ public interface GameLogicService {
     SpanishExpression getRandomSpanishExpression(String databaseName);
     
     /**
+     * Same as {@link #getRandomSpanishExpression(String)} but avoids repeating the previous round's phrase when possible.
+     */
+    SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound);
+    
+    /**
      * Validates user's English translation against the Spanish expression
      * @param spanishExpression the Spanish expression being translated
      * @param userTranslation the user's English translation
@@ -28,9 +34,11 @@ public interface GameLogicService {
      * Processes correct answer - adds points to matching English expression
      * @param spanishExpression the Spanish expression
      * @param userTranslation the correct English translation
-     * @return the updated English expression with new score
+     * @param practiceDatabase vocabulary where {@code spanishExpression} belongs (needed to retire learned translations)
+     * @return outcome with the updated English expression and whether it was promoted to learned words; null if no matching translation
      */
-    EnglishExpression processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation);
+    CorrectAnswerOutcome processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation,
+                                              String practiceDatabase);
     
     /**
      * Processes incorrect answer - subtracts points from all English expressions
@@ -53,6 +61,12 @@ public interface GameLogicService {
      * @return true if moved successfully, false otherwise
      */
     boolean moveToLearnedWords(EnglishExpression englishExpression);
+    
+    /**
+     * Minimum score required on each English translation to count as learned (aligned with persisted rules).
+     * Used so the phrase score progress bar matches game logic.
+     */
+    int getLearnedScoreThreshold();
     
     /**
      * Gets the current score of a Spanish expression

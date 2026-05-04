@@ -90,6 +90,15 @@ public interface DatabaseService {
     SpanishExpression getRandomSpanishExpression(String databaseName);
     
     /**
+     * Gets a random Spanish expression, avoiding the same phrase as the previous round when possible.
+     *
+     * @param databaseName name of the database
+     * @param excludePreviousRound expression to skip if other options exist; null = no exclusion
+     * @return random Spanish expression or null if database is empty
+     */
+    SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound);
+    
+    /**
      * Gets a random English expression from a database
      * @param databaseName name of the database
      * @return random English expression or null if database is empty
@@ -145,6 +154,17 @@ public interface DatabaseService {
      * @return true if moved successfully, false otherwise
      */
     boolean moveToLearnedWords(EnglishExpression englishExpression);
+    
+    /**
+     * Detaches {@code englishTranslation} from {@code hostPhrase} in the practice vocabulary and stores it under
+     * {@link #getLearnedWordsDatabaseName()}, persisting afterward. Drops the Spanish host from practice when it runs
+     * out of translations.
+     *
+     * @param practiceDatabaseName user vocabulary containing {@code hostPhrase} (never {@link #getLearnedWordsDatabaseName()})
+     * @return false if inputs are invalid or the translation was not found on {@code hostPhrase}
+     */
+    boolean promoteTranslationToLearned(String practiceDatabaseName, SpanishExpression hostPhrase,
+                                         EnglishExpression englishTranslation);
     
     /**
      * Gets all learned expressions

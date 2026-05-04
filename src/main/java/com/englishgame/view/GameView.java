@@ -1,6 +1,7 @@
 package com.englishgame.view;
 
 import com.englishgame.controller.GameController;
+import com.englishgame.model.AnswerResult;
 import com.englishgame.model.SpanishExpression;
 import lombok.extern.slf4j.Slf4j;
 
@@ -8,8 +9,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Interactive Game Window
@@ -29,7 +30,6 @@ public class GameView extends JFrame {
     private JButton newRoundButton;
     private JLabel feedbackLabel;
     private JLabel scoreLabel;
-    private JLabel progressLabel;
 
     // Navigation components
     private JButton backToLandingButton;
@@ -39,8 +39,9 @@ public class GameView extends JFrame {
 
     // Game state
     private SpanishExpression currentSpanishExpression;
-    private int correctAnswers = 0;
-    private int totalAnswers = 0;
+
+    private static final int CORRECT_ANSWER_NEXT_ROUND_DELAY_MS = 2000;
+    private Timer correctAnswerNextRoundTimer;
 
     public GameView(GameController gameController, LandingPageView landingPage) {
         this.gameController = gameController;
@@ -57,6 +58,13 @@ public class GameView extends JFrame {
         setupLayout();
         addListeners();
         refreshDatabaseSelector();
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                cancelPendingAutoNextRound();
+            }
+        });
         
         log.info("Game window initialized");
     }
@@ -81,13 +89,9 @@ public class GameView extends JFrame {
         feedbackLabel = new JLabel("", SwingConstants.CENTER);
         feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 16));
         
-        scoreLabel = new JLabel("Score: 0/0", SwingConstants.CENTER);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        scoreLabel.setForeground(new Color(0, 150, 0));
-        
-        progressLabel = new JLabel("Progress: 0%", SwingConstants.CENTER);
-        progressLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        progressLabel.setForeground(new Color(255, 140, 0));
+        scoreLabel = new JLabel("Phrase score (this word): -", SwingConstants.CENTER);
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        scoreLabel.setForeground(new Color(0, 130, 50));
         
         // Navigation buttons
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
@@ -227,11 +231,14 @@ public class GameView extends JFrame {
         gamePanel.add(feedbackLabel);
         gamePanel.add(Box.createRigidArea(new Dimension(0, 20)));
         
-        // Score and progress
-        JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 5));
+        JPanel statsPanel = new JPanel();
+        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
         statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        statsPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(16, 12, 8, 12)));
+        scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         statsPanel.add(scoreLabel);
-        statsPanel.add(progressLabel);
         gamePanel.add(statsPanel);
         
         gameSection.add(gamePanel);
@@ -270,14 +277,7 @@ public class GameView extends JFrame {
 
     private void addListeners() {
         // Database selection
-        databaseSelector.addActionListener(e -> {
-            String selectedDb = (String) databaseSelector.getSelectedItem();
-            if (selectedDb != null) {
-                gameController.selectDatabase(selectedDb);
-                resetGameDisplay();
-                log.info("Database selected: {}", selectedDb);
-            }
-        });
+        databaseSelector.addActionListener(e -> syncControllerWithComboSelection(true));
         
         // Game buttons
         newRoundButton.addActionListener(e -> startNewRound());
@@ -297,15 +297,41 @@ public class GameView extends JFrame {
         databaseSelector.removeAllItems();
         gameController.getAvailableDatabases().forEach(databaseSelector::addItem);
         log.debug("Database selector refreshed with {} databases", databaseSelector.getItemCount());
+        /*
+         * One shared GameController for all frames: combo selection must sync currentDatabase after repopulating,
+         * because ActionListener firing is not guaranteed for every LAF once removeAllItems() ran.
+         */
+        syncControllerWithComboSelection(false);
+    }
+
+    /**
+     * Keeps GameController.currentDatabase aligned with this window's combo.
+     *
+     * @param resetDisplay when true and a DB is selected, clears round UI text (same behavior as manual DB change).
+     */
+    private void syncControllerWithComboSelection(boolean resetDisplay) {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb != null && gameController.selectDatabase(selectedDb)) {
+            if (resetDisplay) {
+                resetGameDisplay();
+            }
+            log.info("Database selected: {}", selectedDb);
+        }
     }
 
     private void startNewRound() {
+        cancelPendingAutoNextRound();
+        beginNewRoundCore();
+    }
+
+    private void beginNewRoundCore() {
+        syncControllerWithComboSelection(false);
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (selectedDb == null) {
             JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        
+
         currentSpanishExpression = gameController.startNewRound();
         if (currentSpanishExpression != null) {
             spanishExpressionLabel.setText("Translate: \"" + currentSpanishExpression.getExpression() + "\"");
@@ -313,10 +339,39 @@ public class GameView extends JFrame {
             feedbackLabel.setText("");
             englishTranslationField.requestFocus();
             log.info("New round started with Spanish expression: '{}'", currentSpanishExpression.getExpression());
+            refreshCurrentWordScores();
         } else {
             spanishExpressionLabel.setText("No expressions available. Add some words or select another database.");
             feedbackLabel.setText("Please add expressions to this database or select another one.");
+            refreshCurrentWordScores();
         }
+    }
+
+    private void setRoundInteractionEnabled(boolean enabled) {
+        databaseSelector.setEnabled(enabled);
+        englishTranslationField.setEnabled(enabled);
+        submitButton.setEnabled(enabled);
+        newRoundButton.setEnabled(enabled);
+    }
+
+    private void cancelPendingAutoNextRound() {
+        if (correctAnswerNextRoundTimer != null) {
+            correctAnswerNextRoundTimer.stop();
+            correctAnswerNextRoundTimer = null;
+        }
+        setRoundInteractionEnabled(true);
+    }
+
+    private void scheduleAutoAdvanceAfterCorrect() {
+        cancelPendingAutoNextRound();
+        correctAnswerNextRoundTimer = new Timer(CORRECT_ANSWER_NEXT_ROUND_DELAY_MS, e -> {
+            correctAnswerNextRoundTimer = null;
+            setRoundInteractionEnabled(true);
+            beginNewRoundCore();
+        });
+        correctAnswerNextRoundTimer.setRepeats(false);
+        setRoundInteractionEnabled(false);
+        correctAnswerNextRoundTimer.start();
     }
 
     private void processAnswer() {
@@ -332,47 +387,55 @@ public class GameView extends JFrame {
             return;
         }
         
-        boolean isCorrect = gameController.processAnswer(userTranslation);
-        totalAnswers++;
+        AnswerResult answerResult = gameController.processAnswer(userTranslation);
+        boolean isCorrect = answerResult.correct();
         
         if (isCorrect) {
-            correctAnswers++;
-            feedbackLabel.setText("✅ Correct! Well done!");
+            if (answerResult.isNewlyLearned()) {
+                JOptionPane.showMessageDialog(this,
+                        "Congratulations! \"" + answerResult.newlyLearnedEnglishWord()
+                                + "\" reached the threshold and is now in Learned Words.\nKeep it up!",
+                        "Word learned",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+            int seconds = Math.max(1, CORRECT_ANSWER_NEXT_ROUND_DELAY_MS / 1000);
+            feedbackLabel.setText("Correct! Well done. Next round in " + seconds + " seconds...");
             feedbackLabel.setForeground(new Color(0, 150, 0));
             log.info("Correct answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
+            scheduleAutoAdvanceAfterCorrect();
         } else {
-            feedbackLabel.setText("❌ Incorrect. Try again or start a new round.");
+            feedbackLabel.setText("Incorrect. Try again or start a new round.");
             feedbackLabel.setForeground(Color.RED);
             log.info("Incorrect answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
         }
         
-        updateStats();
+        refreshCurrentWordScores();
         englishTranslationField.setText("");
     }
 
-    private void updateStats() {
-        scoreLabel.setText("Score: " + correctAnswers + "/" + totalAnswers);
-        int progress = totalAnswers > 0 ? (correctAnswers * 100) / totalAnswers : 0;
-        progressLabel.setText("Progress: " + progress + "%");
-        
-        // Color coding for progress
-        if (progress >= 80) {
-            progressLabel.setForeground(new Color(0, 150, 0)); // Green
-        } else if (progress >= 60) {
-            progressLabel.setForeground(new Color(255, 140, 0)); // Orange
-        } else {
-            progressLabel.setForeground(Color.RED); // Red
+    private void refreshCurrentWordScores() {
+        if (currentSpanishExpression == null) {
+            scoreLabel.setText("Phrase score (this word): -");
+            scoreLabel.setForeground(new Color(90, 90, 90));
+            return;
         }
+
+        int phraseScore = currentSpanishExpression.getScore();
+        scoreLabel.setText("Phrase score (this word): " + phraseScore);
+        scoreLabel.setForeground(new Color(0, 130, 50));
     }
 
     private void resetGameDisplay() {
+        cancelPendingAutoNextRound();
         spanishExpressionLabel.setText("Select a database and start a new round!");
         englishTranslationField.setText("");
         feedbackLabel.setText("");
         currentSpanishExpression = null;
+        refreshCurrentWordScores();
     }
 
     private void openDataManagement() {
+        cancelPendingAutoNextRound();
         log.info("Opening data management window");
         this.setVisible(false);
         DataManagementView dataManagementView = new DataManagementView(gameController, landingPage);
@@ -380,6 +443,7 @@ public class GameView extends JFrame {
     }
 
     private void openViewWords() {
+        cancelPendingAutoNextRound();
         log.info("Opening view words window");
         this.setVisible(false);
         ViewWordsView viewWordsView = new ViewWordsView(gameController, landingPage);
@@ -387,6 +451,7 @@ public class GameView extends JFrame {
     }
 
     private void openLearnedWords() {
+        cancelPendingAutoNextRound();
         log.info("Opening learned words window");
         this.setVisible(false);
         LearnedWordsView learnedWordsView = new LearnedWordsView(gameController, landingPage);
@@ -394,6 +459,7 @@ public class GameView extends JFrame {
     }
 
     private void returnToLanding() {
+        cancelPendingAutoNextRound();
         log.info("Returning to landing page");
         this.setVisible(false);
         landingPage.returnToLanding();

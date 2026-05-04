@@ -1,7 +1,9 @@
 package com.englishgame.controller;
 
+import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
+import com.englishgame.model.AnswerResult;
 import com.englishgame.service.interfaces.DatabaseService;
 import com.englishgame.service.interfaces.GameDataService;
 import com.englishgame.service.interfaces.GameLogicService;
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @DisplayName("GameController Tests")
@@ -92,7 +95,7 @@ class GameControllerTest {
         
         when(databaseService.databaseExists(databaseName)).thenReturn(true);
         gameController.selectDatabase(databaseName);
-        when(gameLogicService.getRandomSpanishExpression(databaseName)).thenReturn(spanishExpression);
+        when(gameLogicService.getRandomSpanishExpression(eq(databaseName), any())).thenReturn(spanishExpression);
         
         // When
         SpanishExpression result = gameController.startNewRound();
@@ -124,20 +127,22 @@ class GameControllerTest {
         EnglishExpression updatedEnglishExpression = new EnglishExpression("house", 6, Collections.emptyList());
         
         when(databaseService.databaseExists(databaseName)).thenReturn(true);
-        when(gameLogicService.getRandomSpanishExpression(databaseName)).thenReturn(spanishExpression);
+        when(gameLogicService.getRandomSpanishExpression(eq(databaseName), any())).thenReturn(spanishExpression);
         
         gameController.selectDatabase(databaseName);
         gameController.startNewRound();
         
         when(gameLogicService.validateTranslation(spanishExpression, "house")).thenReturn(true);
-        when(gameLogicService.processCorrectAnswer(spanishExpression, "house")).thenReturn(updatedEnglishExpression);
+        when(gameLogicService.processCorrectAnswer(spanishExpression, "house", databaseName))
+                .thenReturn(new CorrectAnswerOutcome(updatedEnglishExpression, false));
         
         // When
-        boolean result = gameController.processAnswer("house");
+        AnswerResult result = gameController.processAnswer("house");
         
         // Then
-        assertTrue(result);
-        verify(gameLogicService).processCorrectAnswer(spanishExpression, "house");
+        assertTrue(result.correct());
+        assertFalse(result.isNewlyLearned());
+        verify(gameLogicService).processCorrectAnswer(spanishExpression, "house", databaseName);
         verify(gameDataService).saveGameData();
     }
 
@@ -152,7 +157,7 @@ class GameControllerTest {
                 new EnglishExpression("house", 2, Collections.emptyList()));
         
         when(databaseService.databaseExists(databaseName)).thenReturn(true);
-        when(gameLogicService.getRandomSpanishExpression(databaseName)).thenReturn(spanishExpression);
+        when(gameLogicService.getRandomSpanishExpression(eq(databaseName), any())).thenReturn(spanishExpression);
         
         gameController.selectDatabase(databaseName);
         gameController.startNewRound();
@@ -161,10 +166,10 @@ class GameControllerTest {
         when(gameLogicService.processIncorrectAnswer(spanishExpression, "wrong")).thenReturn(penalizedTranslations);
         
         // When
-        boolean result = gameController.processAnswer("wrong");
+        AnswerResult result = gameController.processAnswer("wrong");
         
         // Then
-        assertFalse(result);
+        assertFalse(result.correct());
         verify(gameLogicService).processIncorrectAnswer(spanishExpression, "wrong");
         verify(gameDataService).saveGameData();
     }
@@ -173,10 +178,10 @@ class GameControllerTest {
     @DisplayName("Should not process answer without current expression")
     void shouldNotProcessAnswerWithoutCurrentExpression() {
         // When
-        boolean result = gameController.processAnswer("house");
+        AnswerResult result = gameController.processAnswer("house");
         
         // Then
-        assertFalse(result);
+        assertFalse(result.correct());
         verify(gameLogicService, never()).validateTranslation(any(), anyString());
         verify(gameDataService, never()).saveGameData();
     }

@@ -1,5 +1,7 @@
 package com.englishgame.controller;
 
+import com.englishgame.model.AnswerResult;
+import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.service.interfaces.DatabaseService;
@@ -72,7 +74,7 @@ public class GameController {
         return Optional.ofNullable(currentDatabase)
                 .map(databaseName -> {
                     log.debug("Starting new round with database: {}", databaseName);
-                    return gameLogicService.getRandomSpanishExpression(databaseName);
+                    return gameLogicService.getRandomSpanishExpression(databaseName, currentSpanishExpression);
                 })
                 .map(expression -> {
                     this.currentSpanishExpression = expression;
@@ -89,42 +91,51 @@ public class GameController {
                 });
     }
 
-    public boolean processAnswer(String userTranslation) {
+    public AnswerResult processAnswer(String userTranslation) {
         if (currentSpanishExpression == null) {
             log.error("No current Spanish expression to process answer for.");
-            return false;
+            return AnswerResult.incorrect();
         }
 
         SpanishExpression expr = currentSpanishExpression;
         log.debug("Processing answer '{}' for Spanish expression '{}'", userTranslation, expr.getExpression());
 
-        boolean correct = gameLogicService.validateTranslation(expr, userTranslation)
-                ? processCorrectAnswer(expr, userTranslation)
-                : processIncorrectAnswer(expr, userTranslation);
+        AnswerResult result;
+        if (gameLogicService.validateTranslation(expr, userTranslation)) {
+            result = processCorrectAnswerOutcome(expr, userTranslation);
+        } else {
+            processIncorrectAnswer(expr, userTranslation);
+            result = AnswerResult.incorrect();
+        }
 
         saveGameState();
-        return correct;
+        return result;
     }
 
-    private boolean processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
-        return Optional.ofNullable(gameLogicService.processCorrectAnswer(spanishExpression, userTranslation))
-                .map(updatedEnglishExpression -> {
-                    // Update the Spanish expression's translations list with the updated English expression
-                    spanishExpression.getTranslations().replaceAll(e -> 
-                        e.getExpression().equals(updatedEnglishExpression.getExpression()) ? updatedEnglishExpression : e);
-                    
-                    log.info("Correct answer! English expression '{}' score updated to {}.", 
+    private AnswerResult processCorrectAnswerOutcome(SpanishExpression spanishExpression, String userTranslation) {
+        return Optional.ofNullable(gameLogicService.processCorrectAnswer(spanishExpression, userTranslation,
+                        currentDatabase))
+                .map((CorrectAnswerOutcome outcome) -> {
+                    EnglishExpression updatedEnglishExpression = outcome.englishExpression();
+                    spanishExpression.getTranslations().replaceAll(e ->
+                            e.getExpression().equals(updatedEnglishExpression.getExpression())
+                                    ? updatedEnglishExpression : e);
+
+                    log.info("Correct answer! English expression '{}' score updated to {}.",
                             updatedEnglishExpression.getExpression(), updatedEnglishExpression.getScore());
-                    return true;
+
+                    String learnedWord = outcome.promotedToLearnedWords()
+                            ? updatedEnglishExpression.getExpression()
+                            : null;
+                    return new AnswerResult(true, learnedWord);
                 })
-                .orElse(false);
+                .orElse(AnswerResult.incorrect());
     }
 
-    private boolean processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
+    private void processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
         List<EnglishExpression> updatedTranslations = gameLogicService.processIncorrectAnswer(spanishExpression, userTranslation);
         spanishExpression.setTranslations(updatedTranslations); // Update the Spanish expression with penalized translations
         log.info("Incorrect answer. All English translations for '{}' penalized.", spanishExpression.getExpression());
-        return false;
     }
 
     public SpanishExpression getCurrentSpanishExpression() {
@@ -133,6 +144,10 @@ public class GameController {
 
     public String getCurrentDatabase() {
         return currentDatabase;
+    }
+
+    public int getLearnedScoreThreshold() {
+        return gameLogicService.getLearnedScoreThreshold();
     }
 
     public boolean createNewDatabase(String databaseName) {

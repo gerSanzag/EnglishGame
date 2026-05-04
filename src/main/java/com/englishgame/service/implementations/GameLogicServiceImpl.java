@@ -2,6 +2,7 @@ package com.englishgame.service.implementations;
 
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
+import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.service.interfaces.GameLogicService;
 import com.englishgame.service.interfaces.GameDataService;
 import com.englishgame.service.interfaces.DatabaseService;
@@ -20,7 +21,8 @@ public class GameLogicServiceImpl implements GameLogicService {
     
     private final GameDataService gameDataService;
     private final DatabaseService databaseService;
-    private static final int LEARNED_THRESHOLD = 15;
+    // Temporal (pruebas): 5 puntos = aprendida. Restaurar a 15 antes de release o externalizar configuración.
+    private static final int LEARNED_THRESHOLD = 5;
     private static final int PENALTY_POINTS = 5;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
     
@@ -36,18 +38,32 @@ public class GameLogicServiceImpl implements GameLogicService {
     
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
+        return getRandomSpanishExpression(databaseName, null);
+    }
+    
+    @Override
+    public SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound) {
         log.debug("Getting random Spanish expression from database: {}", databaseName);
         if (databaseService != null) {
-            return databaseService.getRandomSpanishExpression(databaseName);
+            return databaseService.getRandomSpanishExpression(databaseName, excludePreviousRound);
         }
         // Fallback to previous behavior if databaseService is not provided
         return Optional.ofNullable(databaseName)
                 .map(this::getSpanishExpressionsFromDatabase)
                 .filter(expressions -> !expressions.isEmpty())
                 .map(expressions -> {
+                    List<SpanishExpression> pool = new ArrayList<>(expressions);
+                    if (excludePreviousRound != null && excludePreviousRound.getExpression() != null
+                            && pool.size() > 1) {
+                        pool.removeIf(e ->
+                                Objects.equals(e.getExpression(), excludePreviousRound.getExpression()));
+                    }
+                    if (pool.isEmpty()) {
+                        pool = new ArrayList<>(expressions);
+                    }
                     Random random = new Random();
-                    SpanishExpression selectedExpression = expressions.get(random.nextInt(expressions.size()));
-                    log.debug("Selected Spanish expression: '{}' with score: {}", 
+                    SpanishExpression selectedExpression = pool.get(random.nextInt(pool.size()));
+                    log.debug("Selected Spanish expression: '{}' with score: {}",
                             selectedExpression.getExpression(), selectedExpression.getScore());
                     return selectedExpression;
                 })
@@ -78,31 +94,34 @@ public class GameLogicServiceImpl implements GameLogicService {
     }
     
     @Override
-    public EnglishExpression processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
+    public CorrectAnswerOutcome processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation,
+                                                     String practiceDatabase) {
         return Optional.ofNullable(spanishExpression)
-                .map(expr -> {
-                    log.debug("Processing correct answer for '{}' -> '{}'", 
+                .flatMap(expr -> {
+                    log.debug("Processing correct answer for '{}' -> '{}'",
                             expr.getExpression(), userTranslation);
                     
                     return expr.getTranslations().stream()
                             .filter(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()))
                             .findFirst()
                             .map(matchingExpression -> {
-                                // Add 1 point to the English expression
                                 matchingExpression.setScore(matchingExpression.getScore() + 1);
-                                log.debug("Added 1 point to English expression '{}'. New score: {}", 
+                                expr.setScore(expr.getScore() + 1);
+                                log.debug("Added 1 point to English expression '{}'. New score: {}",
                                         matchingExpression.getExpression(), matchingExpression.getScore());
                                 
-                                // Check if learned
-                                if (isExpressionLearned(matchingExpression)) {
-                                    log.info("English expression '{}' has been learned! Moving to learned words.", 
+                                boolean promoted = false;
+                                if (isExpressionLearned(matchingExpression)
+                                        && databaseService != null
+                                        && practiceDatabase != null && !practiceDatabase.isBlank()) {
+                                    log.info("English expression '{}' reached learned threshold. Promoting to learned words.",
                                             matchingExpression.getExpression());
-                                    moveToLearnedWords(matchingExpression);
+                                    promoted = databaseService.promoteTranslationToLearned(
+                                            practiceDatabase, expr, matchingExpression);
                                 }
                                 
-                                return matchingExpression;
-                            })
-                            .orElse(null);
+                                return new CorrectAnswerOutcome(matchingExpression, promoted);
+                            });
                 })
                 .orElse(null);
     }
@@ -114,19 +133,27 @@ public class GameLogicServiceImpl implements GameLogicService {
                     log.debug("Processing incorrect answer for '{}' -> '{}'", 
                             expr.getExpression(), userTranslation);
                     
-                    return expr.getTranslations().stream()
+                    List<EnglishExpression> updated = expr.getTranslations().stream()
                             .map(englishExpr -> {
                                 int currentScore = englishExpr.getScore();
                                 int penalty = calculateDynamicPenalty(currentScore);
                                 int newScore = Math.max(0, currentScore - penalty);
                                 englishExpr.setScore(newScore);
                                 
-                                log.debug("Applied {} penalty points to English expression '{}' (was {}, now {})", 
+                                log.debug("Applied {} penalty points to English expression '{}' (was {}, now {})",
                                         penalty, englishExpr.getExpression(), currentScore, newScore);
                                 
                                 return englishExpr;
                             })
                             .collect(java.util.stream.Collectors.toList());
+                    
+                    int phraseScoreBefore = expr.getScore();
+                    int phrasePenalty = calculateDynamicPenalty(phraseScoreBefore);
+                    expr.setScore(Math.max(0, phraseScoreBefore - phrasePenalty));
+                    log.debug("Applied phrase score penalty for '{}' (was {}, now {})",
+                            expr.getExpression(), phraseScoreBefore, expr.getScore());
+                    
+                    return updated;
                 })
                 .orElse(new ArrayList<>());
     }
@@ -163,6 +190,11 @@ public class GameLogicServiceImpl implements GameLogicService {
             return false;
         }
         return databaseService.moveToLearnedWords(englishExpression);
+    }
+    
+    @Override
+    public int getLearnedScoreThreshold() {
+        return LEARNED_THRESHOLD;
     }
     
     @Override
