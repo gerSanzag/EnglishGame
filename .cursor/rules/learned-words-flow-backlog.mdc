@@ -1,0 +1,8 @@
+---
+description: Pendiente — flujo y reglas distintas para Learned Words en English Game
+alwaysApply: true
+---
+
+# Pendiente: Learned Words
+
+Queda por **implementar un flujo aparte** (reglas de juego / UX distintas) para la sección **Learned Words** frente al juego con listas normales. Al planificar o tocar código relacionado con palabras aprendidas, priorizar diseñar y codificar ese flujo dedicado.

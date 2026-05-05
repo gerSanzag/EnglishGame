@@ -21,8 +21,8 @@ public class GameLogicServiceImpl implements GameLogicService {
     
     private final GameDataService gameDataService;
     private final DatabaseService databaseService;
-    // Temporal (pruebas): 5 puntos = aprendida. Restaurar a 15 antes de release o externalizar configuración.
-    private static final int LEARNED_THRESHOLD = 5;
+    // Umbral de promoción a learned words.
+    private static final int LEARNED_THRESHOLD = 21;
     private static final int PENALTY_POINTS = 5;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
     

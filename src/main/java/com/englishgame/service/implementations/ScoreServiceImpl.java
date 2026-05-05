@@ -16,7 +16,7 @@ import java.util.Optional;
 @Slf4j
 public class ScoreServiceImpl implements ScoreService {
     
-    private static final int LEARNED_THRESHOLD = 15;
+    private static final int LEARNED_THRESHOLD = 21;
     private static final int DEFAULT_PENALTY = 5;
     private static final int CORRECT_ANSWER_POINTS = 1;
     

@@ -1,19 +1,12 @@
 [ [ {
   "database" : "Binomial pairs",
-  "created_at" : 1777922588657,
+  "created_at" : 1778000375526,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
   "expression" : "Pros y contras",
   "translations" : [ "Pros and cons" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Breve y conciso",
-  "translations" : [ "Short and sweet" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
@@ -52,7 +45,7 @@
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Binomial pairs",
   "expression" : "Harto",
   "translations" : [ "Sick and tired" ],
@@ -123,15 +116,11 @@
   "type" : "spanish_expression"
 } ], [ {
   "database" : "learned_words",
-  "created_at" : 1777922588657,
-  "type" : "database_metadata"
-} ], [ {
-  "database" : "llila",
-  "created_at" : 1777922588657,
+  "created_at" : 1778000375527,
   "type" : "database_metadata"
 } ], [ {
   "database" : "Lolo",
-  "created_at" : 1777922588657,
+  "created_at" : 1778000375527,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
@@ -168,8 +157,4 @@
   "translations" : [ "Get over" ],
   "language" : "spanish",
   "type" : "spanish_expression"
-} ], [ {
-  "database" : "pepe",
-  "created_at" : 1777922588657,
-  "type" : "database_metadata"
 } ] ]

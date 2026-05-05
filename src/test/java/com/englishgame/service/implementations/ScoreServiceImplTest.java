@@ -96,7 +96,7 @@ class ScoreServiceImplTest {
     @DisplayName("Should check if English expression is learned")
     void shouldCheckIfEnglishExpressionIsLearned() {
         // Set score to learned threshold
-        englishExpression.setScore(15);
+        englishExpression.setScore(21);
         assertTrue(scoreService.isLearned(englishExpression));
         
         // Set score above threshold
@@ -112,7 +112,7 @@ class ScoreServiceImplTest {
     @DisplayName("Should check if Spanish expression is learned")
     void shouldCheckIfSpanishExpressionIsLearned() {
         // Set score to learned threshold
-        spanishExpression.setScore(15);
+        spanishExpression.setScore(21);
         assertTrue(scoreService.isLearned(spanishExpression));
         
         // Set score above threshold
@@ -169,12 +169,12 @@ class ScoreServiceImplTest {
         englishExpression.setScore(0);
         assertEquals(0.0, scoreService.getLearningProgress(englishExpression), 0.01);
         
-        // Test with score 7.5 (50% of 15)
+        // Test with score 7 (~33.33% of 21)
         englishExpression.setScore(7);
-        assertEquals(46.67, scoreService.getLearningProgress(englishExpression), 0.01);
+        assertEquals(33.33, scoreService.getLearningProgress(englishExpression), 0.01);
         
-        // Test with score 15 (100%)
-        englishExpression.setScore(15);
+        // Test with score 21 (100%)
+        englishExpression.setScore(21);
         assertEquals(100.0, scoreService.getLearningProgress(englishExpression), 0.01);
         
         // Test with score above threshold (should cap at 100%)
@@ -185,15 +185,15 @@ class ScoreServiceImplTest {
     @Test
     @DisplayName("Should get points needed to learn")
     void shouldGetPointsNeededToLearn() {
-        assertEquals(10, scoreService.getPointsNeededToLearn(5));
-        assertEquals(0, scoreService.getPointsNeededToLearn(15));
-        assertEquals(0, scoreService.getPointsNeededToLearn(20));
-        assertEquals(15, scoreService.getPointsNeededToLearn(0));
+        assertEquals(16, scoreService.getPointsNeededToLearn(5));
+        assertEquals(0, scoreService.getPointsNeededToLearn(21));
+        assertEquals(1, scoreService.getPointsNeededToLearn(20));
+        assertEquals(21, scoreService.getPointsNeededToLearn(0));
     }
 
     @Test
     @DisplayName("Should get learned threshold")
     void shouldGetLearnedThreshold() {
-        assertEquals(15, scoreService.getLearnedThreshold());
+        assertEquals(21, scoreService.getLearnedThreshold());
     }
 }
