@@ -1,51 +1,23 @@
 [ [ {
   "database" : "Binomial pairs",
-  "created_at" : 1778000375526,
+  "created_at" : 1778015731729,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "Pros y contras",
-  "translations" : [ "Pros and cons" ],
+  "expression" : "Puntos y comas",
+  "translations" : [ "Ins and outs" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "Trastos",
-  "translations" : [ "Odds and ends" ],
+  "expression" : "Poco y nada",
+  "translations" : [ "Next to nothing" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Sano y salvo",
-  "translations" : [ "Safe and sound" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Ensayo y error",
-  "translations" : [ "Trial and error" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Subes y bajas",
-  "translations" : [ "Ups and downs" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Cosas sueltas",
-  "translations" : [ "Odds and ends" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
+  "score" : 13,
   "database" : "Binomial pairs",
   "expression" : "Harto",
   "translations" : [ "Sick and tired" ],
@@ -54,19 +26,187 @@
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
+  "expression" : "Ni más ni menos",
+  "translations" : [ "Plain and simple" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Cuerpo y alma",
+  "translations" : [ "Heart and soul" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "De vez en cuando",
+  "translations" : [ "Now and then" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Por todas partes",
+  "translations" : [ "Far and wide" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Poco a poco",
+  "translations" : [ "Little by little" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "A grandes rasgos",
+  "translations" : [ "Broadly speaking" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "En voz alta",
+  "translations" : [ "Loud and clear" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Con pelos y señales",
+  "translations" : [ "Chapter and verse" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Binomial pairs",
+  "expression" : "Altibajos",
+  "translations" : [ "Ups and downs" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "De un lado a otro",
+  "translations" : [ "Back and forth" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "Todo o nada",
+  "translations" : [ "All or nothing" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "De arriba abajo",
+  "translations" : [ "Up and down" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 16,
+  "database" : "Binomial pairs",
+  "expression" : "Pros y contras",
+  "translations" : [ "Pros and cons" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Binomial pairs",
+  "expression" : "Trastos",
+  "translations" : [ "Odds and ends" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "En orden",
+  "translations" : [ "Shipshape and Bristol fashion" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "Tarde o temprano",
+  "translations" : [ "Sooner or later" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "Blanco y negro",
+  "translations" : [ "Black and white" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Binomial pairs",
+  "expression" : "Sano y salvo",
+  "translations" : [ "Safe and sound" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Binomial pairs",
+  "expression" : "Ensayo y error",
+  "translations" : [ "Trial and error" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Binomial pairs",
+  "expression" : "Subes y bajas",
+  "translations" : [ "Ups and downs" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Binomial pairs",
+  "expression" : "Cosas sueltas",
+  "translations" : [ "Odds and ends" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Binomial pairs",
   "expression" : "Parte integrante",
   "translations" : [ "Part and parcel" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 6,
   "database" : "Binomial pairs",
   "expression" : "De aquí para allá",
   "translations" : [ "Back and forth" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "Por las buenas o por las malas",
+  "translations" : [ "Like it or not" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
   "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Vivito y coleando",
+  "translations" : [ "Alive and kicking" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Lidiar con",
+  "translations" : [ "Live and learn" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 19,
   "database" : "Binomial pairs",
   "expression" : "Paz y tranquilidad",
   "translations" : [ "Peace and quiet" ],
@@ -75,19 +215,26 @@
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
+  "expression" : "Esencial",
+  "translations" : [ "Meat and drink" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "De pies a cabeza",
+  "translations" : [ "Head to toe" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Binomial pairs",
   "expression" : "Hasta las narices",
   "translations" : [ "Sick and tired" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "En términos generales",
-  "translations" : [ "By and large" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
+  "score" : 7,
   "database" : "Binomial pairs",
   "expression" : "Gajes del oficio",
   "translations" : [ "Part and parcel" ],
@@ -96,12 +243,12 @@
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "Altibajos",
-  "translations" : [ "Ups and downs" ],
+  "expression" : "Guste o no",
+  "translations" : [ "Win or lose" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 16,
   "database" : "Binomial pairs",
   "expression" : "Más o menos",
   "translations" : [ "More or less" ],
@@ -110,17 +257,52 @@
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "De un lado a otro",
-  "translations" : [ "Back and forth" ],
+  "expression" : "Limpio y ordenado",
+  "translations" : [ "Neat and tidy" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "De una forma u otra",
+  "translations" : [ "One way or another" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "Hacer o deshacer",
+  "translations" : [ "Make or break" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "A trompicones",
+  "translations" : [ "Fits and starts" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ], [ {
   "database" : "learned_words",
-  "created_at" : 1778000375527,
+  "created_at" : 1778015731729,
   "type" : "database_metadata"
 } ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Sick and tired",
+  "language" : "english",
+  "spanish_sources" : [ "Harto", "Hasta las narices" ],
+  "type" : "english_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "learned_words",
+  "expression" : "Trial and error",
+  "language" : "english",
+  "spanish_sources" : [ "Ensayo y error" ],
+  "type" : "english_expression"
+} ], [ {
   "database" : "Lolo",
-  "created_at" : 1778000375527,
+  "created_at" : 1778015731729,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
@@ -155,6 +337,192 @@
   "database" : "Lolo",
   "expression" : "recuperarse",
   "translations" : [ "Get over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "Phrsal verbs",
+  "created_at" : 1778015731729,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Volver",
+  "translations" : [ "To come back" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Madurar",
+  "translations" : [ "To grow up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Botar",
+  "translations" : [ "To throw away" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Presumir",
+  "translations" : [ "To show off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Hacer ejercicio",
+  "translations" : [ "To work out" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Posponer",
+  "translations" : [ "To put off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Rechazar",
+  "translations" : [ "To turn down" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Entregarse",
+  "translations" : [ "To turn in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Crecer",
+  "translations" : [ "To grow up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Rendirse",
+  "translations" : [ "To give up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Suspender",
+  "translations" : [ "To call off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Regañar",
+  "translations" : [ "To tell off" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Encontrarse con",
+  "translations" : [ "To come across" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Callarse",
+  "translations" : [ "To shut up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Ser infiel",
+  "translations" : [ "To cheat on" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Parecerse",
+  "translations" : [ "To take after" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Terminar una relación",
+  "translations" : [ "To break up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Entrar",
+  "translations" : [ "To come in" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Venir a casa",
+  "translations" : [ "To come over" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Contar con",
+  "translations" : [ "To count on" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Ponerse al día",
+  "translations" : [ "To catch up" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Regresar",
+  "translations" : [ "To come back" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Tirar",
+  "translations" : [ "To throw away" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Quedarse sin",
+  "translations" : [ "To run out of" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Bajar la velocidad",
+  "translations" : [ "To slow down" ],
+  "language" : "spanish",
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Phrsal verbs",
+  "expression" : "Toparse",
+  "translations" : [ "To run into" ],
   "language" : "spanish",
   "type" : "spanish_expression"
 } ] ]

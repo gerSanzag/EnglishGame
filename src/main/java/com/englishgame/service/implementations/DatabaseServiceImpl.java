@@ -475,6 +475,17 @@ public class DatabaseServiceImpl implements DatabaseService {
                     englishTranslation.getExpression(), hostPhrase.getExpression());
             return false;
         }
+
+        // Keep source Spanish phrase for Learned Words UI and JSON round-trip (spanish_sources)
+        String hostExpr = Optional.ofNullable(hostPhrase.getExpression()).map(String::trim).orElse("");
+        boolean hasSameSource = englishTranslation.getTranslations().stream()
+                .anyMatch(sp -> sp != null && expressionsEqualNormalized(sp.getExpression(), hostExpr));
+        if (!hostExpr.isEmpty() && !hasSameSource) {
+            SpanishExpression link = new SpanishExpression();
+            link.setExpression(hostExpr);
+            link.setScore(0);
+            englishTranslation.getTranslations().add(link);
+        }
         
         Set<EnglishExpression> learned = englishDatabases.get(LEARNED_WORDS_DATABASE);
         learned.removeIf(en -> en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
@@ -554,6 +565,12 @@ public class DatabaseServiceImpl implements DatabaseService {
                         if (!databaseExists(databaseName)) {
                             createDatabase(databaseName);
                         }
+
+                        Optional<String> dbKey = resolveCanonicalDatabaseKey(databaseName);
+                        if (dbKey.isEmpty()) {
+                            log.warn("Could not resolve database key for '{}' while loading JSON", databaseName);
+                            continue;
+                        }
                         
                         if ("spanish".equals(language)) {
                             // Create Spanish expression
@@ -576,6 +593,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                             
                             addSpanishExpression(databaseName, spanishExpr);
                             log.debug("Loaded Spanish expression '{}' into database '{}'", expression, databaseName);
+                        } else if ("english".equals(language)) {
+                            EnglishExpression en = englishExpressionFromLoadedMap(expression, firstMap);
+                            englishDatabases.get(dbKey.get()).add(en);
+                            log.debug("Loaded standalone English '{}' into database '{}'", expression, dbKey.get());
                         }
                     }
                 }
@@ -597,6 +618,28 @@ public class DatabaseServiceImpl implements DatabaseService {
             return ((Number) value).intValue();
         }
         return defaultValue;
+    }
+
+    /** Rehydrates a lone {@code english_expression} row (e.g. learned words) from persisted JSON. */
+    private EnglishExpression englishExpressionFromLoadedMap(String expressionText, Map<String, Object> row) {
+        EnglishExpression en = new EnglishExpression();
+        en.setExpression(expressionText.trim());
+        en.setScore(getIntValue(row, "score", 0));
+        Object ss = row.get("spanish_sources");
+        if (ss instanceof List<?>) {
+            for (Object o : (List<?>) ss) {
+                if (o instanceof String str) {
+                    String trimmed = str.trim();
+                    if (!trimmed.isEmpty()) {
+                        SpanishExpression sp = new SpanishExpression();
+                        sp.setExpression(trimmed);
+                        sp.setScore(0);
+                        en.getTranslations().add(sp);
+                    }
+                }
+            }
+        }
+        return en;
     }
     
     /**
@@ -696,6 +739,26 @@ public class DatabaseServiceImpl implements DatabaseService {
                     
                     List<Map<String, Object>> exprRecord = Arrays.asList(expressionData);
                     gameDataService.getRepository().save(exprRecord);
+                }
+
+                List<EnglishExpression> loneEnglish = getEnglishExpressions(dbName);
+                for (EnglishExpression en : loneEnglish) {
+                    Map<String, Object> englishRow = new HashMap<>();
+                    englishRow.put("type", "english_expression");
+                    englishRow.put("database", dbName);
+                    englishRow.put("language", "english");
+                    englishRow.put("expression", en.getExpression());
+                    englishRow.put("score", en.getScore());
+                    List<String> spanishSources = new ArrayList<>();
+                    if (en.getTranslations() != null) {
+                        for (SpanishExpression sp : en.getTranslations()) {
+                            if (sp != null && sp.getExpression() != null && !sp.getExpression().trim().isEmpty()) {
+                                spanishSources.add(sp.getExpression().trim());
+                            }
+                        }
+                    }
+                    englishRow.put("spanish_sources", spanishSources);
+                    gameDataService.getRepository().save(Arrays.asList(englishRow));
                 }
             }
             

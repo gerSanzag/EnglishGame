@@ -375,6 +375,28 @@ public class GameDataServiceImpl implements GameDataService {
                 
                 currentState.add(Arrays.asList(expressionData));
             }
+
+            // Standalone English rows (learned_words and any other english-only bucket)
+            List<com.englishgame.model.EnglishExpression> loneEnglish =
+                    databaseService.getEnglishExpressions(databaseName);
+            for (com.englishgame.model.EnglishExpression en : loneEnglish) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("type", "english_expression");
+                row.put("database", databaseName);
+                row.put("language", "english");
+                row.put("expression", en.getExpression());
+                row.put("score", en.getScore());
+                List<String> spanishSources = new ArrayList<>();
+                if (en.getTranslations() != null) {
+                    for (com.englishgame.model.SpanishExpression sp : en.getTranslations()) {
+                        if (sp != null && sp.getExpression() != null && !sp.getExpression().trim().isEmpty()) {
+                            spanishSources.add(sp.getExpression().trim());
+                        }
+                    }
+                }
+                row.put("spanish_sources", spanishSources);
+                currentState.add(Arrays.asList(row));
+            }
         }
         
         log.debug("Built current state with {} records from {} databases", currentState.size(), databases.size());
