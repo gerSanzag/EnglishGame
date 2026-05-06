@@ -33,7 +33,7 @@ public class Main {
     }
     
     private static void initializeAndStartApplication() {
-        log.info("Initializing English Learning Game...");
+        log.info("Initializing English Learning Game (build {})...", AppVersion.getDisplayVersion());
         
         try {
             // Initialize repositories

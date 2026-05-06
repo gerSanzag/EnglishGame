@@ -136,6 +136,56 @@ public class DatabaseServiceImpl implements DatabaseService {
                     return false;
                 });
     }
+
+    @Override
+    public Optional<String> renameDatabase(String oldDatabaseName, String newDatabaseName) {
+        Optional<String> oldKeyOpt = resolveCanonicalDatabaseKey(oldDatabaseName);
+        Optional<String> newTrimmed = Optional.ofNullable(newDatabaseName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty());
+
+        if (oldKeyOpt.isEmpty()) {
+            log.warn("renameDatabase: source '{}' not found", oldDatabaseName);
+            return Optional.empty();
+        }
+        if (newTrimmed.isEmpty()) {
+            log.warn("renameDatabase: empty new name");
+            return Optional.empty();
+        }
+
+        String oldKey = oldKeyOpt.get();
+        String newKey = newTrimmed.get();
+
+        if (LEARNED_WORDS_DATABASE.equalsIgnoreCase(oldKey)) {
+            log.warn("Cannot rename learned_words");
+            return Optional.empty();
+        }
+
+        Optional<String> existingTarget = resolveCanonicalDatabaseKey(newKey);
+        if (existingTarget.isPresent() && !existingTarget.get().equals(oldKey)) {
+            log.warn("renameDatabase: name '{}' clashes with '{}'", newKey, existingTarget.get());
+            return Optional.empty();
+        }
+
+        if (oldKey.equals(newKey)) {
+            log.debug("renameDatabase: '{}' unchanged", oldKey);
+            return Optional.of(oldKey);
+        }
+
+        Set<SpanishExpression> spanishBucket = spanishDatabases.remove(oldKey);
+        Set<EnglishExpression> englishBucket = englishDatabases.remove(oldKey);
+        if (spanishBucket == null || englishBucket == null) {
+            log.error("renameDatabase: internal error, missing buckets for '{}'", oldKey);
+            return Optional.empty();
+        }
+
+        spanishDatabases.put(newKey, spanishBucket);
+        englishDatabases.put(newKey, englishBucket);
+
+        gameDataService.saveGameData();
+        log.info("Renamed database '{}' -> '{}'", oldKey, newKey);
+        return Optional.of(newKey);
+    }
     
     @Override
     public List<String> getAvailableDatabases() {

@@ -2,6 +2,7 @@ package com.englishgame.view;
 
 import com.englishgame.controller.GameController;
 import com.englishgame.model.AnswerResult;
+import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,11 +10,25 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Interactive Game Window
@@ -39,6 +54,23 @@ public class GameView extends JFrame {
     private JButton revealAnswerButton;
     private JButton revealAllButton;
     private JTextArea revealAnswerArea;
+    private JPanel phrasalBuilderPanel;
+    private JPanel phrasalFourthSlotPanel;
+    private JPanel phrasalFourthSlotSection;
+    private JTextField phrasalVerbInput;
+    private JTextField phrasalParticle1Input;
+    private JTextField phrasalParticle2Input;
+    private JTextField phrasalParticle3Input;
+    private JLabel phrasalVerbOptionsLabel;
+    private JLabel phrasalParticle1OptionsLabel;
+    private JLabel phrasalParticle2OptionsLabel;
+    private JLabel phrasalParticle3OptionsLabel;
+    private List<String> currentVerbOptions = new ArrayList<>();
+    private List<String> currentParticle1Options = new ArrayList<>();
+    private List<String> currentParticle2Options = new ArrayList<>();
+    private List<String> currentParticle3Options = new ArrayList<>();
+    /** Number of editable token slots after the optional leading \"to \" (2-4 words in the lemma). */
+    private int currentPhrasalSlotsNeeded = 2;
     private javax.swing.Timer revealCharTimer;
     private String revealFullText = "";
     private int revealCharIndex;
@@ -58,13 +90,18 @@ public class GameView extends JFrame {
     private static final int CORRECT_ANSWER_NEXT_ROUND_DELAY_MS = 2000;
     private Timer correctAnswerNextRoundTimer;
 
+    /** Ancho por defecto del bloque HTML de \"Opciones:\"; se ajusta al redimensionar el viewport. */
+    private static final int OPTIONS_LINE_WRAP_CSS_PX = 820;
+    private int optionsLineWrapCssPx = OPTIONS_LINE_WRAP_CSS_PX;
+    private JScrollPane mainGameScrollPane;
+
     public GameView(GameController gameController, LandingPageView landingPage) {
         this.gameController = gameController;
         this.landingPage = landingPage;
         
         setTitle("Interactive Game - English Learning Game");
-        setSize(1000, 800);
-        setMinimumSize(new Dimension(900, 600));
+        setSize(1080, 920);
+        setMinimumSize(new Dimension(960, 720));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
@@ -104,6 +141,7 @@ public class GameView extends JFrame {
         
         feedbackLabel = new JLabel("", SwingConstants.CENTER);
         feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+        feedbackLabel.setBorder(BorderFactory.createEmptyBorder(0, 24, 20, 24));
         
         scoreLabel = new JLabel("Phrase score (this word): -", SwingConstants.CENTER);
         scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
@@ -146,6 +184,175 @@ public class GameView extends JFrame {
                 BorderFactory.createLineBorder(new Color(180, 180, 200)),
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)));
         revealAnswerArea.setToolTipText("Aquí aparece la respuesta de referencia cuando usas modo práctica");
+
+        phrasalVerbInput = new JTextField();
+        phrasalParticle1Input = new JTextField();
+        phrasalParticle2Input = new JTextField();
+        phrasalParticle3Input = new JTextField();
+        stylePhrasalInput(phrasalVerbInput, "Escribe el verbo");
+        stylePhrasalInput(phrasalParticle1Input, "Primera partícula o palabra siguiente al verbo");
+        stylePhrasalInput(phrasalParticle2Input, "Segunda partícula o preposición (p. ej. of, with)");
+        stylePhrasalInput(phrasalParticle3Input,
+                "Cuarta parte del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")");
+
+        phrasalVerbOptionsLabel = buildPhrasalOptionsLabel();
+        phrasalParticle1OptionsLabel = buildPhrasalOptionsLabel();
+        phrasalParticle2OptionsLabel = buildPhrasalOptionsLabel();
+        phrasalParticle3OptionsLabel = buildPhrasalOptionsLabel();
+
+        phrasalBuilderPanel = new JPanel();
+        phrasalBuilderPanel.setLayout(new BoxLayout(phrasalBuilderPanel, BoxLayout.Y_AXIS));
+        phrasalBuilderPanel.setOpaque(false);
+        // Mismo criterio que el resto del gamePanel: si queda en 0 el BoxLayout alinea a la izquierda.
+        phrasalBuilderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        phrasalBuilderPanel.add(buildPhrasalInputRow("1) Verbo", phrasalVerbOptionsLabel, phrasalVerbInput));
+        phrasalBuilderPanel.add(Box.createVerticalStrut(6));
+        phrasalBuilderPanel.add(buildPhrasalInputRow("2) Partícula", phrasalParticle1OptionsLabel, phrasalParticle1Input));
+        phrasalBuilderPanel.add(Box.createVerticalStrut(6));
+        phrasalBuilderPanel.add(buildPhrasalInputRow("3) Partícula / preposición", phrasalParticle2OptionsLabel, phrasalParticle2Input));
+        phrasalFourthSlotPanel = buildPhrasalInputRow(
+                "4) Palabra siguiente (si aplica)", phrasalParticle3OptionsLabel, phrasalParticle3Input);
+        phrasalFourthSlotSection = new JPanel();
+        phrasalFourthSlotSection.setOpaque(false);
+        phrasalFourthSlotSection.setLayout(new BoxLayout(phrasalFourthSlotSection, BoxLayout.Y_AXIS));
+        phrasalFourthSlotSection.setAlignmentX(Component.CENTER_ALIGNMENT);
+        phrasalFourthSlotSection.add(Box.createVerticalStrut(6));
+        phrasalFourthSlotSection.add(phrasalFourthSlotPanel);
+        phrasalBuilderPanel.add(phrasalFourthSlotSection);
+        phrasalBuilderPanel.setVisible(false);
+    }
+
+    private JLabel buildPhrasalOptionsLabel() {
+        JLabel label = new JLabel("");
+        label.setForeground(new Color(90, 90, 95));
+        label.setVerticalAlignment(SwingConstants.TOP);
+        label.setOpaque(false);
+        applyCenteredWrappedSmallLabel(label, "Opciones: -");
+        return label;
+    }
+
+    private static String escapeMinimalHtml(String plain) {
+        if (plain == null) {
+            return "";
+        }
+        return plain
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+    /**
+     * {@code JLabel} con HTML simple y ancho máximo centrado para que Swing calcule alto correcto en {@code BoxLayout}.
+     */
+    private void applyCenteredWrappedSmallLabel(JLabel label, String plain) {
+        String esc = escapeMinimalHtml(plain);
+        Color fg = label.getForeground() != null ? label.getForeground() : new Color(90, 90, 95);
+        String rgb = String.format("#%02x%02x%02x", fg.getRed(), fg.getGreen(), fg.getBlue());
+        int wrap = Math.max(240, optionsLineWrapCssPx);
+        label.setText("<html><body style=\"" + "margin:0;text-align:center;font-family:Arial;font-size:12px;color:"
+                + rgb + ";width:" + wrap + "px" + "\"" + ">" + esc + "</body></html>");
+        constrainPhrasalHtmlOptionLabelDimensions(label, wrap);
+    }
+
+    /**
+     * Sin esto, en macOS el {@code JLabel} HTML suele reportar un {@code preferredSize} ancho enorme
+     * (ignora el ancho CSS), el {@code BoxLayout} ensancha todo el panel y la UI parece desplazada.
+     * Las listas tipo Binomial no usan estas etiquetas largas, por eso solo fallaba en phrasal.
+     */
+    private void constrainPhrasalHtmlOptionLabelDimensions(JLabel label, int wrapCssPx) {
+        int cap = Math.min(Math.max(240, wrapCssPx) + 80, 1000);
+        label.setHorizontalAlignment(SwingConstants.CENTER);
+        label.invalidate();
+        Dimension natural = label.getPreferredSize();
+        if (natural.width > cap || natural.width <= 0) {
+            label.setPreferredSize(new Dimension(cap, Math.max(28, natural.height)));
+            label.revalidate();
+            Dimension reflow = label.getPreferredSize();
+            int h = Math.max(28, reflow.height);
+            label.setPreferredSize(new Dimension(cap, h));
+            label.setMaximumSize(new Dimension(cap, h + 40));
+        } else {
+            label.setMaximumSize(new Dimension(cap, natural.height + 40));
+        }
+    }
+
+    private void syncOptionsLineWrapCssPxFromViewport() {
+        if (mainGameScrollPane != null) {
+            int vw = mainGameScrollPane.getViewport().getWidth();
+            if (vw > 0) {
+                optionsLineWrapCssPx = Math.max(240, vw - 72);
+                return;
+            }
+        }
+        int fw = getWidth();
+        if (fw > 0) {
+            optionsLineWrapCssPx = Math.max(240, Math.min(OPTIONS_LINE_WRAP_CSS_PX, fw - 120));
+        }
+    }
+
+    private void reapplyPhrasalOptionsLabelWrapping() {
+        if (!isPhrasalRound()) {
+            return;
+        }
+        applyCenteredWrappedSmallLabel(phrasalVerbOptionsLabel, "Opciones: " + joinOptions(currentVerbOptions));
+        applyCenteredWrappedSmallLabel(phrasalParticle1OptionsLabel,
+                "Opciones: " + joinOptions(currentParticle1Options));
+        applyCenteredWrappedSmallLabel(phrasalParticle2OptionsLabel,
+                currentPhrasalSlotsNeeded >= 3
+                        ? "Opciones: " + joinOptions(currentParticle2Options)
+                        : "(Solo dos piezas en esta ronda.)");
+        if (currentPhrasalSlotsNeeded >= 4) {
+            applyCenteredWrappedSmallLabel(phrasalParticle3OptionsLabel,
+                    "Opciones: " + joinOptions(currentParticle3Options));
+        }
+    }
+
+    private void installPhrasalOptionsViewportWrapListener(JScrollPane mainScrollPane) {
+        mainScrollPane.getViewport().addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                if (!isDisplayable()) {
+                    return;
+                }
+                int viewportW = mainScrollPane.getViewport().getWidth();
+                if (viewportW <= 0) {
+                    return;
+                }
+                int next = Math.max(240, viewportW - 56);
+                if (Math.abs(next - optionsLineWrapCssPx) < 6) {
+                    return;
+                }
+                optionsLineWrapCssPx = next;
+                SwingUtilities.invokeLater(() -> {
+                    reapplyPhrasalOptionsLabelWrapping();
+                    revalidate();
+                });
+            }
+        });
+    }
+
+    private JPanel buildPhrasalInputRow(String title, JLabel optionsLabel, JTextField inputField) {
+        JPanel row = new JPanel();
+        row.setOpaque(false);
+        row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
+        row.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        optionsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        inputField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        row.add(titleLabel);
+        row.add(optionsLabel);
+        row.add(Box.createVerticalStrut(2));
+        row.add(inputField);
+        return row;
+    }
+
+    private void stylePhrasalInput(JTextField input, String tooltip) {
+        input.setFont(new Font("Arial", Font.PLAIN, 14));
+        input.setToolTipText(tooltip);
+        input.setPreferredSize(new Dimension(240, 32));
+        input.setMaximumSize(new Dimension(260, 34));
     }
 
     private JButton createStyledButton(String text, String tooltip) {
@@ -271,6 +478,7 @@ public class GameView extends JFrame {
         JPanel gameSection = createSectionPanel("Interactive Game");
         JPanel gamePanel = new JPanel();
         gamePanel.setLayout(new BoxLayout(gamePanel, BoxLayout.Y_AXIS));
+        gamePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         gamePanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
         // Spanish expression
@@ -282,6 +490,8 @@ public class GameView extends JFrame {
         englishTranslationField.setAlignmentX(Component.CENTER_ALIGNMENT);
         englishTranslationField.setMaximumSize(new Dimension(300, 35));
         gamePanel.add(englishTranslationField);
+        gamePanel.add(Box.createRigidArea(new Dimension(0, 8)));
+        gamePanel.add(phrasalBuilderPanel);
         gamePanel.add(Box.createRigidArea(new Dimension(0, 12)));
 
         JPanel practiceBanner = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
@@ -345,6 +555,7 @@ public class GameView extends JFrame {
         // Navigation Section
         JPanel navSection = createSectionPanel("Navigation");
         JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        navPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         navPanel.add(dataManagementButton);
         navPanel.add(viewWordsButton);
         navPanel.add(learnedWordsButton);
@@ -358,20 +569,40 @@ public class GameView extends JFrame {
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(navSection);
         
-        // Add to frame with scroll
+        // Scroll vertical sólo cuando la pantalla sea baja; el texto largo hace wrap (sin barra horizontal).
         JScrollPane mainScrollPane = new JScrollPane(mainPanel);
         mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        mainScrollPane.setBorder(BorderFactory.createEmptyBorder());
+        mainScrollPane.getVerticalScrollBar().setUnitIncrement(24);
+        mainGameScrollPane = mainScrollPane;
+        installPhrasalOptionsViewportWrapListener(mainScrollPane);
         add(mainScrollPane, BorderLayout.CENTER);
     }
 
     private JPanel createSectionPanel(String title) {
         JPanel section = new JPanel();
         section.setLayout(new BoxLayout(section, BoxLayout.Y_AXIS));
+        section.setAlignmentX(Component.CENTER_ALIGNMENT);
         section.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200), 2), title));
         section.setBackground(new Color(255, 255, 255, 200)); // Semi-transparent white
         section.setOpaque(true);
         return section;
+    }
+
+    /** Enter en el campo (y teclado numérico) envía la respuesta; en macOS a veces falla solo el ActionListener. */
+    private void bindEnterSubmitsAnswer(JTextField field) {
+        Action submit = new javax.swing.AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                processAnswer();
+            }
+        };
+        InputMap im = field.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap am = field.getActionMap();
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "englishGameSubmitAnswer");
+        am.put("englishGameSubmitAnswer", submit);
     }
 
     private void addListeners() {
@@ -382,8 +613,12 @@ public class GameView extends JFrame {
         newRoundButton.addActionListener(e -> startNewRound());
         submitButton.addActionListener(e -> processAnswer());
         
-        // Enter key for answer submission
-        englishTranslationField.addActionListener(e -> processAnswer());
+        bindEnterSubmitsAnswer(englishTranslationField);
+        bindEnterSubmitsAnswer(phrasalVerbInput);
+        bindEnterSubmitsAnswer(phrasalParticle1Input);
+        bindEnterSubmitsAnswer(phrasalParticle2Input);
+        bindEnterSubmitsAnswer(phrasalParticle3Input);
+        SwingUtilities.invokeLater(() -> getRootPane().setDefaultButton(submitButton));
 
         practiceModeCheckBox.addActionListener(e -> {
             if (!practiceModeCheckBox.isSelected()) {
@@ -417,6 +652,10 @@ public class GameView extends JFrame {
             }
         });
         revealAllButton.addActionListener(e -> revealAllAnswersAtOnce());
+        attachPhrasalStepListener(phrasalVerbInput, this::updatePhrasalInputStepState);
+        attachPhrasalStepListener(phrasalParticle1Input, this::updatePhrasalInputStepState);
+        attachPhrasalStepListener(phrasalParticle2Input, this::updatePhrasalInputStepState);
+        attachPhrasalStepListener(phrasalParticle3Input, this::updatePhrasalInputStepState);
         
         // Navigation buttons
         backToLandingButton.addActionListener(e -> returnToLanding());
@@ -469,6 +708,7 @@ public class GameView extends JFrame {
         if (currentSpanishExpression != null) {
             spanishExpressionLabel.setText("Translate: \"" + currentSpanishExpression.getExpression() + "\"");
             englishTranslationField.setText("");
+            configurePhrasalRoundUi();
             feedbackLabel.setText("");
             englishTranslationField.requestFocus();
             log.info("New round started with Spanish expression: '{}'", currentSpanishExpression.getExpression());
@@ -524,7 +764,7 @@ public class GameView extends JFrame {
             return;
         }
         
-        String userTranslation = englishTranslationField.getText().trim();
+        String userTranslation = canonicalUserTranslationFromField();
         if (userTranslation.isEmpty()) {
             feedbackLabel.setText("Please enter a translation.");
             feedbackLabel.setForeground(Color.RED);
@@ -605,6 +845,339 @@ public class GameView extends JFrame {
 
     private boolean isNoScoreCheckRequested() {
         return !practiceModeCheckBox.isSelected() && noScoreCheckBox.isSelected();
+    }
+
+    private boolean isPhrasalDatabaseSelected() {
+        String selected = (String) databaseSelector.getSelectedItem();
+        return selected != null && selected.toLowerCase().contains("phrasal");
+    }
+
+    private boolean isPhrasalRound() {
+        return isPhrasalDatabaseSelected() && currentSpanishExpression != null;
+    }
+
+    private void configurePhrasalRoundUi() {
+        boolean phrasalMode = isPhrasalRound();
+        phrasalBuilderPanel.setVisible(phrasalMode);
+        if (!phrasalMode) {
+            englishTranslationField.setEditable(true);
+            englishTranslationField.setToolTipText("Enter your English translation here");
+            phrasalFourthSlotSection.setVisible(true);
+            phrasalVerbInput.setEnabled(true);
+            phrasalParticle1Input.setEnabled(true);
+            phrasalParticle2Input.setEnabled(true);
+            phrasalParticle3Input.setEnabled(true);
+            return;
+        }
+
+        englishTranslationField.setEditable(true);
+        englishTranslationField.setToolTipText(
+                "Construye el phrasal escribiendo cada parte desde las opciones mostradas.");
+        buildPhrasalOptionsForCurrentRound();
+        clearPhrasalInputs();
+        updatePhrasalInputStepState();
+    }
+
+    /**
+     * Tokens for phrasal-slot UI: strips a leading {@code to} (infinitive) so "to come back"
+     * becomes {@code [come, back]} instead of misclassifying {@code to} as the verb.
+     */
+    private static List<String> tokensAfterOptionalTo(String englishExpr) {
+        if (englishExpr == null || englishExpr.isBlank()) {
+            return Collections.emptyList();
+        }
+        String[] raw = englishExpr.trim().toLowerCase().split("\\s+");
+        int i = 0;
+        if (raw.length > 0 && "to".equals(raw[0])) {
+            i = 1;
+        }
+        if (i >= raw.length) {
+            return Collections.emptyList();
+        }
+        List<String> out = new ArrayList<>();
+        for (; i < raw.length; i++) {
+            out.add(raw[i]);
+        }
+        return out;
+    }
+
+    /** Distribuye 2-4 palabras del lema (tras quitar un {@code to} inicial del infinitivo) en los pools. */
+    private void addPhrasalTokensToPools(String englishExpr, Set<String> verbs, Set<String> p1,
+            Set<String> p2, Set<String> p3) {
+        List<String> t = tokensAfterOptionalTo(englishExpr);
+        if (t.size() < 2 || t.size() > 4) {
+            return;
+        }
+        if ("to".equals(t.get(0))) {
+            return;
+        }
+        verbs.add(t.get(0));
+        p1.add(t.get(1));
+        if (t.size() >= 3) {
+            p2.add(t.get(2));
+        }
+        if (t.size() >= 4) {
+            p3.add(t.get(3));
+        }
+    }
+
+    /** True if any official translation for this card starts with {@code to } (infinitive). */
+    private boolean currentTranslationsUseLeadingTo() {
+        if (currentSpanishExpression == null) {
+            return false;
+        }
+        return currentSpanishExpression.getTranslations().stream()
+                .map(EnglishExpression::getExpression)
+                .filter(s -> s != null && !s.isBlank())
+                .anyMatch(s -> s.trim().toLowerCase(Locale.ROOT).startsWith("to "));
+    }
+
+    /**
+     * Incluye todas las piezas válidas de la tarjeta y completa con distractores del mazo;
+     * el orden final se mezcla para que la correcta no quede siempre al principio de la lista mostrada.
+     */
+    private static List<String> buildShuffledPhrasalOptions(Set<String> required, Set<String> fullPool,
+            int maxOptions, java.util.function.Predicate<String> allowToken, Random rnd) {
+        LinkedHashSet<String> normReq = new LinkedHashSet<>();
+        if (required != null) {
+            for (String s : required) {
+                if (s == null || s.isBlank()) {
+                    continue;
+                }
+                String n = s.trim().toLowerCase(Locale.ROOT);
+                if (allowToken.test(n)) {
+                    normReq.add(n);
+                }
+            }
+        }
+        List<String> chosen = new ArrayList<>(normReq);
+        List<String> extra = new ArrayList<>();
+        if (fullPool != null) {
+            for (String s : fullPool) {
+                if (s == null || s.isBlank()) {
+                    continue;
+                }
+                String n = s.trim().toLowerCase(Locale.ROOT);
+                if (!allowToken.test(n) || normReq.contains(n)) {
+                    continue;
+                }
+                extra.add(n);
+            }
+        }
+        Collections.shuffle(extra, rnd);
+        for (String e : extra) {
+            if (chosen.size() >= maxOptions) {
+                break;
+            }
+            if (!chosen.contains(e)) {
+                chosen.add(e);
+            }
+        }
+        Collections.shuffle(chosen, rnd);
+        return chosen;
+    }
+
+    private void refreshCurrentPhrasalSlotsNeeded() {
+        if (currentSpanishExpression == null) {
+            currentPhrasalSlotsNeeded = 2;
+            return;
+        }
+        int max = 2;
+        for (EnglishExpression en : currentSpanishExpression.getTranslations()) {
+            int sz = tokensAfterOptionalTo(en.getExpression()).size();
+            if (sz >= 2) {
+                max = Math.max(max, sz);
+            }
+        }
+        currentPhrasalSlotsNeeded = Math.min(4, max);
+    }
+
+    private String canonicalUserTranslationFromField() {
+        String raw = englishTranslationField.getText();
+        String t = raw == null ? "" : raw.trim().replaceAll("\\s+", " ");
+        if (!isPhrasalRound()) {
+            return t;
+        }
+        if (t.isEmpty()) {
+            return t;
+        }
+        if (currentTranslationsUseLeadingTo()) {
+            String lc = t.toLowerCase(Locale.ROOT);
+            if (!lc.startsWith("to ")) {
+                return "to " + lc;
+            }
+        }
+        return t;
+    }
+
+    private void buildPhrasalOptionsForCurrentRound() {
+        refreshCurrentPhrasalSlotsNeeded();
+        phrasalFourthSlotSection.setVisible(currentPhrasalSlotsNeeded >= 4);
+        syncOptionsLineWrapCssPxFromViewport();
+
+        LinkedHashSet<String> reqVerbs = new LinkedHashSet<>();
+        LinkedHashSet<String> reqP1 = new LinkedHashSet<>();
+        LinkedHashSet<String> reqP2 = new LinkedHashSet<>();
+        LinkedHashSet<String> reqP3 = new LinkedHashSet<>();
+        currentSpanishExpression.getTranslations().forEach(en ->
+                addPhrasalTokensToPools(en.getExpression(), reqVerbs, reqP1, reqP2, reqP3));
+
+        Set<String> poolVerbs = new LinkedHashSet<>();
+        Set<String> poolP1 = new LinkedHashSet<>();
+        Set<String> poolP2 = new LinkedHashSet<>();
+        Set<String> poolP3 = new LinkedHashSet<>();
+
+        List<SpanishExpression> pool = gameController.getSpanishExpressionsFromDatabase(
+                (String) databaseSelector.getSelectedItem());
+        for (SpanishExpression expr : pool) {
+            expr.getTranslations().forEach(en ->
+                    addPhrasalTokensToPools(en.getExpression(), poolVerbs, poolP1, poolP2, poolP3));
+        }
+
+        Random rnd = ThreadLocalRandom.current();
+        currentVerbOptions = buildShuffledPhrasalOptions(reqVerbs, poolVerbs, 6, tok -> !"to".equals(tok), rnd);
+        currentParticle1Options = buildShuffledPhrasalOptions(reqP1, poolP1, 6, tok -> true, rnd);
+        currentParticle2Options = buildShuffledPhrasalOptions(reqP2, poolP2, 6, tok -> true, rnd);
+        currentParticle3Options = buildShuffledPhrasalOptions(reqP3, poolP3, 6, tok -> true, rnd);
+
+        applyCenteredWrappedSmallLabel(phrasalVerbOptionsLabel, "Opciones: " + joinOptions(currentVerbOptions));
+        applyCenteredWrappedSmallLabel(phrasalParticle1OptionsLabel,
+                "Opciones: " + joinOptions(currentParticle1Options));
+        applyCenteredWrappedSmallLabel(phrasalParticle2OptionsLabel,
+                currentPhrasalSlotsNeeded >= 3
+                        ? "Opciones: " + joinOptions(currentParticle2Options)
+                        : "(Solo dos piezas en esta ronda.)");
+
+        if (currentPhrasalSlotsNeeded >= 4) {
+            applyCenteredWrappedSmallLabel(phrasalParticle3OptionsLabel,
+                    "Opciones: " + joinOptions(currentParticle3Options));
+        }
+    }
+
+    private String joinOptions(List<String> options) {
+        if (options.isEmpty()) {
+            return "-";
+        }
+        return String.join(" | ", options);
+    }
+
+    private void clearPhrasalInputs() {
+        phrasalVerbInput.setText("");
+        phrasalParticle1Input.setText("");
+        phrasalParticle2Input.setText("");
+        phrasalParticle3Input.setText("");
+    }
+
+    private boolean matchesListedOption(JTextField field, List<String> options) {
+        String typed = field.getText() == null ? "" : field.getText().trim();
+        if (typed.isEmpty()) {
+            return false;
+        }
+        return options.stream().anyMatch(opt -> opt.equalsIgnoreCase(typed));
+    }
+
+    private void updatePhrasalInputStepState() {
+        if (!isPhrasalRound()) {
+            return;
+        }
+        boolean needsThird = currentPhrasalSlotsNeeded >= 3;
+        boolean needsFourth = currentPhrasalSlotsNeeded >= 4;
+
+        boolean verbOk = matchesListedOption(phrasalVerbInput, currentVerbOptions);
+        phrasalParticle1Input.setEnabled(verbOk);
+        if (!verbOk) {
+            phrasalParticle1Input.setText("");
+            phrasalParticle2Input.setText("");
+            phrasalParticle3Input.setText("");
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
+
+        boolean p1Ok = matchesListedOption(phrasalParticle1Input, currentParticle1Options);
+        if (!p1Ok) {
+            phrasalParticle2Input.setText("");
+            phrasalParticle3Input.setText("");
+            phrasalParticle2Input.setEnabled(false);
+            phrasalParticle3Input.setEnabled(false);
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
+
+        if (!needsThird) {
+            phrasalParticle2Input.setEnabled(false);
+            phrasalParticle2Input.setText("");
+            phrasalParticle3Input.setEnabled(false);
+            phrasalParticle3Input.setText("");
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
+
+        phrasalParticle2Input.setEnabled(true);
+
+        boolean p2Ok = matchesListedOption(phrasalParticle2Input, currentParticle2Options);
+        if (!p2Ok) {
+            phrasalParticle3Input.setEnabled(false);
+            phrasalParticle3Input.setText("");
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
+
+        if (!needsFourth) {
+            phrasalParticle3Input.setEnabled(false);
+            phrasalParticle3Input.setText("");
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
+
+        phrasalParticle3Input.setEnabled(true);
+
+        syncPhrasalTypedInputToAnswerField();
+    }
+
+    private void syncPhrasalTypedInputToAnswerField() {
+        List<String> parts = new ArrayList<>();
+        String verb = phrasalVerbInput.getText().trim();
+        String particle1 = phrasalParticle1Input.getText().trim();
+        String particle2 = phrasalParticle2Input.getText().trim();
+        String particle3 = phrasalParticle3Input.getText().trim();
+
+        boolean needsThird = currentPhrasalSlotsNeeded >= 3;
+        boolean needsFourth = currentPhrasalSlotsNeeded >= 4;
+
+        if (!verb.isEmpty()) {
+            parts.add(verb);
+        }
+        if (!particle1.isEmpty()) {
+            parts.add(particle1);
+        }
+        if (needsThird && phrasalParticle2Input.isEnabled() && !particle2.isEmpty()) {
+            parts.add(particle2);
+        }
+        if (needsFourth && phrasalParticle3Input.isEnabled() && !particle3.isEmpty()) {
+            parts.add(particle3);
+        }
+
+        String core = String.join(" ", parts);
+        englishTranslationField.setText(core);
+    }
+
+    private void attachPhrasalStepListener(JTextField field, Runnable onChange) {
+        field.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                onChange.run();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                onChange.run();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                onChange.run();
+            }
+        });
     }
 
     private void preparePracticeRevealStateForNewRound() {
@@ -772,6 +1345,9 @@ public class GameView extends JFrame {
         englishTranslationField.setText("");
         feedbackLabel.setText("");
         preparePracticeRevealStateForNewRound();
+        phrasalBuilderPanel.setVisible(false);
+        englishTranslationField.setEditable(true);
+        clearPhrasalInputs();
         currentSpanishExpression = null;
         updatePracticeDependentUi();
         refreshCurrentWordScores();

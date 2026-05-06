@@ -24,6 +24,14 @@ public interface DatabaseService {
      * @return true if deleted successfully, false if not found
      */
     boolean deleteDatabase(String databaseName);
+
+    /**
+     * Renames an existing vocabulary database (not {@link #getLearnedWordsDatabaseName()}).
+     * {@code newName} must not collide with another database when compared case‑ and outer‑space insensitive.
+     *
+     * @return {@code Optional} with the persisted key for the renamed database, or empty on failure.
+     */
+    Optional<String> renameDatabase(String oldDatabaseName, String newDatabaseName);
     
     /**
      * Gets all available database names

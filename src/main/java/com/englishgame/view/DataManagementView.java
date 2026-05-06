@@ -30,6 +30,7 @@ public class DataManagementView extends JFrame {
     // Database management components
     private JComboBox<String> databaseSelector;
     private JButton createDatabaseButton;
+    private JButton renameDatabaseButton;
     private JButton deleteDatabaseButton;
 
     // Individual entry components
@@ -74,6 +75,7 @@ public class DataManagementView extends JFrame {
         databaseSelector.setPreferredSize(new Dimension(200, 30));
         
         createDatabaseButton = createStyledButton("Create Database", "Create a new database");
+        renameDatabaseButton = createStyledButton("Rename Database", "Change the selected database name");
         deleteDatabaseButton = createStyledButton("Delete Database", "Delete selected database");
         
         // Individual Entry Section
@@ -155,6 +157,8 @@ public class DataManagementView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Create") || buttonText.contains("Add") || buttonText.contains("Process")) {
             return new Color(16, 185, 129); // Vibrant green for creation actions
+        } else if (buttonText.contains("Rename")) {
+            return new Color(245, 158, 11); // amber for rename
         } else if (buttonText.contains("Delete")) {
             return new Color(220, 38, 127); // Vibrant pink for deletion
         } else if (buttonText.contains("Paste") || buttonText.contains("Load")) {
@@ -199,6 +203,7 @@ public class DataManagementView extends JFrame {
         dbPanel.add(databaseSelector);
         dbPanel.add(Box.createHorizontalStrut(10));
         dbPanel.add(createDatabaseButton);
+        dbPanel.add(renameDatabaseButton);
         dbPanel.add(deleteDatabaseButton);
         
         dbSection.add(dbPanel);
@@ -277,6 +282,7 @@ public class DataManagementView extends JFrame {
     private void addListeners() {
         // Database management
         createDatabaseButton.addActionListener(e -> createDatabase());
+        renameDatabaseButton.addActionListener(e -> renameDatabase());
         deleteDatabaseButton.addActionListener(e -> deleteDatabase());
         
         // Individual entry
@@ -335,6 +341,58 @@ public class DataManagementView extends JFrame {
                 "Error", 
                 JOptionPane.ERROR_MESSAGE
             );
+        }
+    }
+
+    private void renameDatabase() {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null || selectedDb.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please select a database to rename", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if ("learned_words".equalsIgnoreCase(selectedDb.trim())) {
+            JOptionPane.showMessageDialog(this,
+                    "The learned_words database cannot be renamed.",
+                    "Not allowed",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String newName = JOptionPane.showInputDialog(this,
+                "New name for database '" + selectedDb + "':",
+                "Rename database",
+                JOptionPane.PLAIN_MESSAGE);
+        if (newName == null) {
+            return;
+        }
+        String trimmed = newName.trim();
+        if (trimmed.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter a non-empty name.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (trimmed.equals(selectedDb.trim())) {
+            JOptionPane.showMessageDialog(this,
+                    "The name is unchanged.",
+                    "Rename database",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        if (gameController.renameDatabase(selectedDb, trimmed)) {
+            refreshDatabaseSelector();
+            databaseSelector.setSelectedItem(trimmed);
+            JOptionPane.showMessageDialog(this,
+                    "Database renamed successfully to \"" + trimmed + "\".",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            log.info("Renamed database from '{}' to '{}'", selectedDb, trimmed);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Could not rename. The new name might already exist, or an internal error occurred.",
+                    "Rename failed",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
