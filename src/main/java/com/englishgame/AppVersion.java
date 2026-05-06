@@ -7,7 +7,10 @@ public final class AppVersion {
     private AppVersion() {
     }
 
+    /**
+     * Debe cambiar cuando quieras comprobar que estás lanzando este build (véase también el pom.xml).
+     */
     public static String getDisplayVersion() {
-        return "local";
+        return "1.0.4-phrasal-rows";
     }
 }
