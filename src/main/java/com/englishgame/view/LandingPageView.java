@@ -22,14 +22,18 @@ public class LandingPageView extends JFrame {
         this.gameController = gameController;
         setTitle("English Learning Game - Main Menu");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
         setResizable(true);
         setMinimumSize(new Dimension(600, 500));
         setPreferredSize(new Dimension(800, 600));
-        pack();
         
         initComponents();
         setupLayout();
+        pack();
+        // Ensure initial height leaves breathing room under the last button.
+        int initialWidth = Math.max(getWidth(), 800);
+        int initialHeight = Math.max(getHeight(), 680);
+        setSize(initialWidth, initialHeight);
+        setLocationRelativeTo(null);
         addListeners();
         
         log.info("Landing page initialized");
@@ -202,7 +206,7 @@ public class LandingPageView extends JFrame {
             }
         };
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
-        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 40, 50));
         // Allow dynamic resizing
         centerPanel.setMinimumSize(new Dimension(400, 300));
         centerPanel.setPreferredSize(new Dimension(800, 380));
@@ -225,6 +229,8 @@ public class LandingPageView extends JFrame {
         centerPanel.add(learnedWordsButton);
         centerPanel.add(Box.createVerticalStrut(30));
         centerPanel.add(exitButton);
+        // Keep a visible bottom margin so the last button never touches the container edge.
+        centerPanel.add(Box.createVerticalStrut(20));
         
         add(bannerPanel, BorderLayout.NORTH);
         add(centerPanel, BorderLayout.CENTER);
