@@ -35,6 +35,7 @@ public class GameView extends JFrame {
     private JLabel scoreLabel;
 
     private JCheckBox practiceModeCheckBox;
+    private JCheckBox noScoreCheckBox;
     private JButton revealAnswerButton;
     private JButton revealAllButton;
     private JTextArea revealAnswerArea;
@@ -118,6 +119,11 @@ public class GameView extends JFrame {
         practiceModeCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
         practiceModeCheckBox.setToolTipText(
                 "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\".");
+
+        noScoreCheckBox = new JCheckBox("Comprobar sin puntuación (juego real)");
+        noScoreCheckBox.setFont(new Font("Arial", Font.PLAIN, 13));
+        noScoreCheckBox.setToolTipText(
+                "Comprueba tu respuesta sin recompensa ni penalización, sin entrar en modo práctica.");
 
         revealAnswerButton = createStyledButton("Mostrar respuesta",
                 "Revela la respuesta escrita gradualmente", false);
@@ -284,6 +290,12 @@ public class GameView extends JFrame {
         practiceBanner.add(practiceModeCheckBox);
         gamePanel.add(practiceBanner);
 
+        JPanel noScoreBanner = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 2));
+        noScoreBanner.setOpaque(false);
+        noScoreBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
+        noScoreBanner.add(noScoreCheckBox);
+        gamePanel.add(noScoreBanner);
+
         JPanel revealButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 4));
         revealButtons.setOpaque(false);
         revealButtons.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -387,6 +399,16 @@ public class GameView extends JFrame {
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         });
+        noScoreCheckBox.addActionListener(e -> {
+            if (!noScoreCheckBox.isSelected() && !practiceModeCheckBox.isSelected()
+                    && currentSpanishExpression != null) {
+                log.info("No-score check disabled by user; starting a new round automatically");
+                beginNewRoundCore();
+                return;
+            }
+            updatePracticeDependentUi();
+            refreshCurrentWordScores();
+        });
         revealAnswerButton.addActionListener(e -> {
             if (revealCharTimer != null) {
                 stopProgressiveRevealByUser();
@@ -466,6 +488,7 @@ public class GameView extends JFrame {
         submitButton.setEnabled(enabled);
         newRoundButton.setEnabled(enabled);
         practiceModeCheckBox.setEnabled(enabled);
+        noScoreCheckBox.setEnabled(enabled && !practiceModeCheckBox.isSelected());
         if (!enabled) {
             revealAnswerButton.setEnabled(false);
             revealAllButton.setEnabled(false);
@@ -577,7 +600,11 @@ public class GameView extends JFrame {
     }
 
     private boolean isNeutralScoringRound() {
-        return practiceModeCheckBox.isSelected() || revealCommittedThisRound;
+        return practiceModeCheckBox.isSelected() || revealCommittedThisRound || isNoScoreCheckRequested();
+    }
+
+    private boolean isNoScoreCheckRequested() {
+        return !practiceModeCheckBox.isSelected() && noScoreCheckBox.isSelected();
     }
 
     private void preparePracticeRevealStateForNewRound() {
@@ -725,8 +752,14 @@ public class GameView extends JFrame {
         applyRevealToggleButtonChrome();
         revealAllButton.setEnabled(hasPhrase && practiceOn && hasRevealTarget && !timerRunning);
 
+        noScoreCheckBox.setEnabled(hasPhrase && !practiceOn);
+        if (practiceOn && noScoreCheckBox.isSelected()) {
+            noScoreCheckBox.setSelected(false);
+        }
+
+        boolean noScoreRequested = isNoScoreCheckRequested();
         boolean neutral = isNeutralScoringRound();
-        submitButton.setText(neutral ? "Comprobar (sin puntos)" : "Submit Answer");
+        submitButton.setText(noScoreRequested ? "Comprobar (sin puntos)" : "Submit Answer");
         submitButton.setBackground(getButtonColor(submitButton.getText()));
         submitButton.setToolTipText(neutral
                 ? "Comprueba la traducción sin modificar puntajes."
