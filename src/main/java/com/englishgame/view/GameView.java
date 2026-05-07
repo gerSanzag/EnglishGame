@@ -78,6 +78,8 @@ public class GameView extends JFrame {
     private String revealFullText = "";
     private int revealCharIndex;
     private boolean revealCommittedThisRound;
+    /** Tras feedback de error phrasal en modo con puntuación, limita acciones hasta New Round o activar práctica. */
+    private boolean postIncorrectPhrasalLock;
 
     private static final int REVEAL_CHAR_INTERVAL_MS = 380;
 
@@ -115,6 +117,7 @@ public class GameView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         
         initComponents();
         setupLayout();
@@ -826,6 +829,7 @@ public class GameView extends JFrame {
     }
 
     private void beginNewRoundCore() {
+        postIncorrectPhrasalLock = false;
         preparePracticeRevealStateForNewRound();
         cancelPendingAutoNextRound();
         syncControllerWithComboSelection(false);
@@ -926,8 +930,12 @@ public class GameView extends JFrame {
                 feedbackLabel.setText("Correcto — solo comprobación, sin cambiar puntajes.");
                 feedbackLabel.setForeground(new Color(0, 130, 60));
             } else {
-                feedbackLabel.setText("Incorrecto — sin penalización en esta ronda.");
-                feedbackLabel.setForeground(new Color(200, 80, 0));
+                if (isPhrasalRound()) {
+                    showPhrasalPedagogicFeedback(userTranslation, true);
+                } else {
+                    feedbackLabel.setText("Incorrecto — sin penalización en esta ronda.");
+                    feedbackLabel.setForeground(new Color(200, 80, 0));
+                }
             }
             refreshCurrentWordScores();
             englishTranslationField.setText("");
@@ -953,13 +961,157 @@ public class GameView extends JFrame {
             log.info("Correct answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
             scheduleAutoAdvanceAfterCorrect();
         } else {
-            feedbackLabel.setText("Incorrect. Try again or start a new round.");
-            feedbackLabel.setForeground(Color.RED);
+            if (isPhrasalRound()) {
+                showPhrasalPedagogicFeedback(userTranslation, false);
+                activatePostIncorrectPhrasalLock();
+            } else {
+                feedbackLabel.setText("Incorrect. Try again or start a new round.");
+                feedbackLabel.setForeground(Color.RED);
+            }
             log.info("Incorrect answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
         }
         
         refreshCurrentWordScores();
         englishTranslationField.setText("");
+    }
+
+    private void showPhrasalPedagogicFeedback(String userTranslation, boolean noScoreMode) {
+        List<String> userTokens = tokensAfterOptionalTo(userTranslation);
+        List<String> expectedTokens = bestReferencePhrasalTokens(userTokens);
+
+        String modePrefix = noScoreMode
+                ? "<b>Incorrecto (sin penalización)</b><br>"
+                : "<b>Incorrecto</b><br>";
+        StringBuilder html = new StringBuilder("<html>");
+        html.append(modePrefix);
+        html.append(slotDiagnosisHtml(userTokens, expectedTokens));
+        html.append("<br>Correcto: <b>").append(escapeMinimalHtml(String.join(" ", expectedTokens))).append("</b>");
+        html.append("</html>");
+
+        feedbackLabel.setText(html.toString());
+        feedbackLabel.setForeground(new Color(188, 48, 48));
+    }
+
+    private List<String> bestReferencePhrasalTokens(List<String> userTokens) {
+        if (currentSpanishExpression == null) {
+            return Collections.emptyList();
+        }
+        List<List<String>> candidates = new ArrayList<>();
+        for (EnglishExpression en : currentSpanishExpression.getTranslations()) {
+            List<String> tokens = tokensAfterOptionalTo(en.getExpression());
+            if (!tokens.isEmpty()) {
+                candidates.add(tokens);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (userTokens == null || userTokens.isEmpty()) {
+            return candidates.get(0);
+        }
+        List<String> best = candidates.get(0);
+        int bestPenalty = slotDistancePenalty(userTokens, best);
+        for (int i = 1; i < candidates.size(); i++) {
+            List<String> cand = candidates.get(i);
+            int penalty = slotDistancePenalty(userTokens, cand);
+            if (penalty < bestPenalty) {
+                bestPenalty = penalty;
+                best = cand;
+            }
+        }
+        return best;
+    }
+
+    private int slotDistancePenalty(List<String> user, List<String> expected) {
+        int max = Math.max(user.size(), expected.size());
+        int penalty = 0;
+        for (int i = 0; i < max; i++) {
+            String u = i < user.size() ? user.get(i) : null;
+            String e = i < expected.size() ? expected.get(i) : null;
+            if (u == null || e == null) {
+                penalty += 2;
+            } else if (!u.equalsIgnoreCase(e)) {
+                penalty += 1;
+            }
+        }
+        return penalty;
+    }
+
+    private String slotDiagnosisHtml(List<String> userTokens, List<String> expectedTokens) {
+        int slots = Math.max(2, Math.min(4, expectedTokens.size()));
+        String[] slotNames = { "Verbo", "Partícula 1", "Partícula 2", "Partícula 3" };
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < slots; i++) {
+            String expected = i < expectedTokens.size() ? expectedTokens.get(i) : "—";
+            String typed = i < userTokens.size() ? userTokens.get(i) : "—";
+            boolean ok = i < expectedTokens.size()
+                    && i < userTokens.size()
+                    && expected.equalsIgnoreCase(typed);
+            out.append(slotNames[i]).append(": ");
+            if (ok) {
+                out.append("OK");
+            } else if (i >= userTokens.size()) {
+                out.append("Falta (esperado: ").append(escapeMinimalHtml(expected)).append(")");
+            } else if (i >= expectedTokens.size()) {
+                out.append("No aplica");
+            } else {
+                out.append("esperado ").append(escapeMinimalHtml(expected))
+                        .append(", escribiste ").append(escapeMinimalHtml(typed));
+            }
+            if (i < slots - 1) {
+                out.append("<br>");
+            }
+        }
+        return out.toString();
+    }
+
+    private static String escapeMinimalHtml(String plain) {
+        if (plain == null) {
+            return "";
+        }
+        return plain
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
+    }
+
+    private void activatePostIncorrectPhrasalLock() {
+        postIncorrectPhrasalLock = true;
+        englishTranslationField.setEnabled(false);
+        phrasalVerbInput.setEnabled(false);
+        phrasalParticle1Input.setEnabled(false);
+        phrasalParticle2Input.setEnabled(false);
+        phrasalParticle3Input.setEnabled(false);
+        submitButton.setEnabled(false);
+        noScoreCheckBox.setEnabled(false);
+        revealAnswerButton.setEnabled(false);
+        revealAllButton.setEnabled(false);
+        newRoundButton.setEnabled(true);
+        practiceModeCheckBox.setEnabled(true);
+    }
+
+    private void refreshPostIncorrectPhrasalLockState() {
+        if (!postIncorrectPhrasalLock) {
+            return;
+        }
+        if (practiceModeCheckBox.isSelected()) {
+            postIncorrectPhrasalLock = false;
+            englishTranslationField.setEnabled(true);
+            updatePhrasalInputStepState();
+            updatePracticeDependentUi();
+            return;
+        }
+        englishTranslationField.setEnabled(false);
+        phrasalVerbInput.setEnabled(false);
+        phrasalParticle1Input.setEnabled(false);
+        phrasalParticle2Input.setEnabled(false);
+        phrasalParticle3Input.setEnabled(false);
+        submitButton.setEnabled(false);
+        noScoreCheckBox.setEnabled(false);
+        revealAnswerButton.setEnabled(false);
+        revealAllButton.setEnabled(false);
+        newRoundButton.setEnabled(true);
+        practiceModeCheckBox.setEnabled(true);
     }
 
     private void refreshCurrentWordScores() {
@@ -1212,6 +1364,22 @@ public class GameView extends JFrame {
         }
         boolean needsThird = currentPhrasalSlotsNeeded >= 3;
         boolean needsFourth = currentPhrasalSlotsNeeded >= 4;
+
+        // En modo práctica permitimos corregirse libremente por piezas sin bloqueo secuencial.
+        if (practiceModeCheckBox.isSelected()) {
+            phrasalVerbInput.setEnabled(true);
+            phrasalParticle1Input.setEnabled(true);
+            phrasalParticle2Input.setEnabled(needsThird);
+            if (!needsThird) {
+                phrasalParticle2Input.setText("");
+            }
+            phrasalParticle3Input.setEnabled(needsFourth);
+            if (!needsFourth) {
+                phrasalParticle3Input.setText("");
+            }
+            syncPhrasalTypedInputToAnswerField();
+            return;
+        }
 
         boolean verbOk = matchesListedOption(phrasalVerbInput, currentVerbOptions);
         phrasalParticle1Input.setEnabled(verbOk);
@@ -1467,9 +1635,11 @@ public class GameView extends JFrame {
         submitButton.setToolTipText(neutral
                 ? "Comprueba la traducción sin modificar puntajes."
                 : "Submit your translation for scoring.");
+        refreshPostIncorrectPhrasalLockState();
     }
 
     private void resetGameDisplay() {
+        postIncorrectPhrasalLock = false;
         cancelPendingAutoNextRound();
         spanishExpressionLabel.setText("Select a database and start a new round!");
         englishTranslationField.setText("");
