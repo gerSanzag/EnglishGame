@@ -470,6 +470,17 @@ public class DataManagementView extends JFrame {
             JOptionPane.showMessageDialog(this, "Please select a database", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
+
+        if (existsExactPairDuplicate(selectedDb, spanish, english)) {
+            JOptionPane.showMessageDialog(this,
+                    "Registro rechazado por duplicado exacto.\n\n"
+                            + "Ya existe en la base \"" + selectedDb + "\" el mismo par:\n"
+                            + "• Español: " + spanish + "\n"
+                            + "• Inglés: " + english,
+                    "Duplicado exacto",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         
         // Create entities
         SpanishExpression spanishExpr = new SpanishExpression(spanish, 0, new ArrayList<>());
@@ -491,6 +502,34 @@ public class DataManagementView extends JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "Failed to add expression to database", "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private boolean existsExactPairDuplicate(String databaseName, String spanish, String english) {
+        String esNorm = spanish == null ? "" : spanish.trim().toLowerCase();
+        String enNorm = english == null ? "" : english.trim().toLowerCase();
+        if (esNorm.isEmpty() || enNorm.isEmpty()) {
+            return false;
+        }
+        List<SpanishExpression> spanishExpressions = gameController.getSpanishExpressionsFromDatabase(databaseName);
+        for (SpanishExpression sp : spanishExpressions) {
+            if (sp == null || sp.getExpression() == null) {
+                continue;
+            }
+            if (!sp.getExpression().trim().equalsIgnoreCase(esNorm)) {
+                continue;
+            }
+            if (sp.getTranslations() == null) {
+                continue;
+            }
+            boolean hasExactEnglish = sp.getTranslations().stream()
+                    .map(EnglishExpression::getExpression)
+                    .filter(s -> s != null && !s.isBlank())
+                    .anyMatch(s -> s.trim().equalsIgnoreCase(enNorm));
+            if (hasExactEnglish) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

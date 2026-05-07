@@ -14,6 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * Learned Words Window
@@ -27,12 +28,34 @@ public class LearnedWordsView extends JFrame {
     private final GameController gameController;
     private final LandingPageView landingPage;
     
-    // Data storage for filtering
-    private List<Object[]> allData = new ArrayList<>();
+    private enum SortMode {
+        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC
+    }
+
+    private static final class RowData {
+        private final String expression;
+        private final String translation;
+        private final int score;
+        private final String spanishKey;
+        private final String englishKey;
+
+        private RowData(String expression, String translation, int score, String spanishKey, String englishKey) {
+            this.expression = expression;
+            this.translation = translation;
+            this.score = score;
+            this.spanishKey = spanishKey;
+            this.englishKey = englishKey;
+        }
+    }
+
+    // Data storage for filtering/sorting
+    private final List<RowData> allData = new ArrayList<>();
 
     // Components
     private JTable learnedWordsTable;
     private JTextField searchField;
+    private JComboBox<String> sortSelector;
+    private JLabel recordsCountLabel;
     private JButton refreshButton;
     private JButton deleteAllButton;
     private JButton reviewButton;
@@ -84,6 +107,16 @@ public class LearnedWordsView extends JFrame {
         searchField.setFont(new Font("Arial", Font.PLAIN, 14));
         searchField.setToolTipText("Search learned words...");
         searchField.setPreferredSize(new Dimension(200, 30));
+
+        sortSelector = new JComboBox<>(new String[] {
+                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)"
+        });
+        sortSelector.setPreferredSize(new Dimension(220, 30));
+        sortSelector.setToolTipText("Ordena los registros por español, inglés o score");
+
+        recordsCountLabel = new JLabel("Registros: 0");
+        recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
+        recordsCountLabel.setForeground(new Color(70, 70, 80));
         
         // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the learned words list");
@@ -196,6 +229,11 @@ public class LearnedWordsView extends JFrame {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
+        searchPanel.add(Box.createHorizontalStrut(10));
+        searchPanel.add(new JLabel("Orden:"));
+        searchPanel.add(sortSelector);
+        searchPanel.add(Box.createHorizontalStrut(14));
+        searchPanel.add(recordsCountLabel);
         searchSection.add(searchPanel);
         
         // Learned Words Table Section
@@ -258,6 +296,7 @@ public class LearnedWordsView extends JFrame {
             public void removeUpdate(DocumentEvent e) { filterLearnedWordsTable(); }
             public void insertUpdate(DocumentEvent e) { filterLearnedWordsTable(); }
         });
+        sortSelector.addActionListener(e -> filterLearnedWordsTable());
         
         // Buttons
         refreshButton.addActionListener(e -> refreshLearnedWordsTable());
@@ -291,9 +330,15 @@ public class LearnedWordsView extends JFrame {
                     "Move",
                     "Delete"
                 };
-                allData.add(rowData);
-                model.addRow(rowData);
+                allData.add(new RowData(
+                        rowData[0].toString(),
+                        rowData[1].toString(),
+                        (Integer) rowData[2],
+                        spanishTranslations,
+                        learnedWord.getExpression()));
             }
+
+            filterLearnedWordsTable();
             
             log.info("Learned words table refreshed with {} words", learnedWords.size());
             
@@ -335,25 +380,54 @@ public class LearnedWordsView extends JFrame {
         String searchText = searchField.getText().toLowerCase().trim();
         DefaultTableModel model = (DefaultTableModel) learnedWordsTable.getModel();
         model.setRowCount(0); // Clear existing data
-        
-        if (searchText.isEmpty()) {
-            // Show all data if search is empty
-            for (Object[] rowData : allData) {
-                model.addRow(rowData);
-            }
-        } else {
-            // Filter data based on search text
-            for (Object[] rowData : allData) {
-                String expression = rowData[0].toString().toLowerCase();
-                String translation = rowData[1].toString().toLowerCase();
-                
-                if (expression.contains(searchText) || translation.contains(searchText)) {
-                    model.addRow(rowData);
-                }
+
+        List<RowData> filtered = new ArrayList<>();
+        for (RowData rowData : allData) {
+            String expression = rowData.expression.toLowerCase();
+            String translation = rowData.translation.toLowerCase();
+            if (searchText.isEmpty() || expression.contains(searchText) || translation.contains(searchText)) {
+                filtered.add(rowData);
             }
         }
-        
+
+        filtered.sort(buildComparatorForSelectedSort());
+
+        for (RowData rowData : filtered) {
+            model.addRow(new Object[] {
+                    rowData.expression, rowData.translation, rowData.score, "Move", "Delete"
+            });
+        }
+
+        recordsCountLabel.setText("Registros: " + filtered.size());
         log.debug("Learned words table filtered with search text: '{}', showing {} rows", searchText, model.getRowCount());
+    }
+
+    private Comparator<RowData> buildComparatorForSelectedSort() {
+        SortMode mode = selectedSortMode();
+        Comparator<RowData> byExpression = Comparator.comparing(r -> r.expression, String.CASE_INSENSITIVE_ORDER);
+        return switch (mode) {
+            case ENGLISH_AZ -> Comparator.comparing((RowData r) -> r.englishKey, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byExpression);
+            case SCORE_DESC -> Comparator.comparingInt((RowData r) -> r.score)
+                    .reversed()
+                    .thenComparing(byExpression);
+            case SPANISH_AZ -> Comparator.comparing((RowData r) -> r.spanishKey, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byExpression);
+        };
+    }
+
+    private SortMode selectedSortMode() {
+        String selected = (String) sortSelector.getSelectedItem();
+        if (selected == null) {
+            return SortMode.SPANISH_AZ;
+        }
+        if (selected.startsWith("Ingl")) {
+            return SortMode.ENGLISH_AZ;
+        }
+        if (selected.startsWith("Score")) {
+            return SortMode.SCORE_DESC;
+        }
+        return SortMode.SPANISH_AZ;
     }
 
     private void deleteAllLearnedWords() {
