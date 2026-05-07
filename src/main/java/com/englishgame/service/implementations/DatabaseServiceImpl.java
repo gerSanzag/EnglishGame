@@ -55,19 +55,48 @@ public class DatabaseServiceImpl implements DatabaseService {
         return a.trim().equalsIgnoreCase(b.trim());
     }
 
-    /** True if trimmed phrase conflicts with any Spanish anchor or lone English expression in DB. */
-    private boolean occupiesPhraseCrossSets(String canonicalDbKey, String phraseTrimmedNormalized) {
-        if (canonicalDbKey == null || phraseTrimmedNormalized.isEmpty()) {
+    private static String normalize(String s) {
+        return s == null ? "" : s.trim().toLowerCase();
+    }
+
+    /** Duplicate exacto de registro ES-EN (mismo español y misma traducción inglesa). */
+    private boolean hasExactSpanishEnglishDuplicate(String canonicalDbKey, SpanishExpression candidate) {
+        if (canonicalDbKey == null || candidate == null || candidate.getExpression() == null) {
             return false;
         }
-        for (SpanishExpression s : spanishDatabases.get(canonicalDbKey)) {
-            if (s.getExpression() != null && expressionsEqualNormalized(phraseTrimmedNormalized, s.getExpression())) {
-                return true;
-            }
+        Set<SpanishExpression> bucket = spanishDatabases.get(canonicalDbKey);
+        if (bucket == null || bucket.isEmpty()) {
+            return false;
         }
-        for (EnglishExpression e : englishDatabases.get(canonicalDbKey)) {
-            if (e.getExpression() != null && expressionsEqualNormalized(phraseTrimmedNormalized, e.getExpression())) {
-                return true;
+        String candEs = normalize(candidate.getExpression());
+        Set<String> candEn = candidate.getTranslations() == null
+                ? Set.of()
+                : candidate.getTranslations().stream()
+                        .map(EnglishExpression::getExpression)
+                        .filter(Objects::nonNull)
+                        .map(DatabaseServiceImpl::normalize)
+                        .collect(Collectors.toSet());
+        if (candEn.isEmpty()) {
+            return false;
+        }
+        for (SpanishExpression existing : bucket) {
+            if (existing == null || existing.getExpression() == null) {
+                continue;
+            }
+            if (!candEs.equals(normalize(existing.getExpression()))) {
+                continue;
+            }
+            Set<String> existingEn = existing.getTranslations() == null
+                    ? Set.of()
+                    : existing.getTranslations().stream()
+                            .map(EnglishExpression::getExpression)
+                            .filter(Objects::nonNull)
+                            .map(DatabaseServiceImpl::normalize)
+                            .collect(Collectors.toSet());
+            for (String en : candEn) {
+                if (existingEn.contains(en)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -234,9 +263,13 @@ public class DatabaseServiceImpl implements DatabaseService {
                         .map(expr -> {
                             String trimmedPhrase = expr.getExpression().trim();
                             expr.setExpression(trimmedPhrase);
-                            if (occupiesPhraseCrossSets(dbKey, trimmedPhrase)) {
-                                log.warn("Expression '{}' already exists in '{}' (Spanish or English row); rejected",
-                                        trimmedPhrase, dbKey);
+                            if (hasExactSpanishEnglishDuplicate(dbKey, expr)) {
+                                log.warn("Exact duplicate pair rejected in '{}': '{}' + '{}'",
+                                        dbKey,
+                                        trimmedPhrase,
+                                        expr.getTranslations().stream()
+                                                .map(EnglishExpression::getExpression)
+                                                .findFirst().orElse("-"));
                                 return false;
                             }
                             boolean added = spanishDatabases.get(dbKey).add(expr);
@@ -279,12 +312,6 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         englishExpression.setExpression(trimmed);
-        
-        if (occupiesPhraseCrossSets(dbKey, trimmed)) {
-            log.warn("Expression '{}' already exists in '{}' (Spanish or English row); rejected",
-                    trimmed, dbKey);
-            return false;
-        }
         
         boolean added = englishDatabases.get(dbKey).add(englishExpression);
         if (added) {
@@ -848,8 +875,8 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         SpanishExpression moved = spanishExpr.get();
         String phrase = moved.getExpression() != null ? moved.getExpression().trim() : "";
-        if (occupiesPhraseCrossSets(targetDb, phrase)) {
-            log.warn("Target database '{}' already has '{}' (Spanish or English row); move cancelled",
+        if (spanishDatabases.get(targetDb).contains(moved)) {
+            log.warn("Target database '{}' already has exact duplicate for Spanish '{}'; move cancelled",
                     targetDb, phrase);
             return false;
         }
@@ -887,8 +914,8 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         EnglishExpression moved = englishExpr.get();
         String phrase = moved.getExpression() != null ? moved.getExpression().trim() : "";
-        if (occupiesPhraseCrossSets(targetDb, phrase)) {
-            log.warn("Target database '{}' already has '{}' (Spanish or English row); move cancelled",
+        if (englishDatabases.get(targetDb).contains(moved)) {
+            log.warn("Target database '{}' already has exact duplicate for English '{}'; move cancelled",
                     targetDb, phrase);
             return false;
         }

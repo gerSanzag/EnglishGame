@@ -1170,6 +1170,11 @@ public class GameView extends JFrame {
                 "Construye el phrasal escribiendo cada parte desde las opciones mostradas.");
         buildPhrasalOptionsForCurrentRound();
         clearPhrasalInputs();
+        // Siempre rearmamos el estado base de inputs al empezar ronda phrasal nueva.
+        phrasalVerbInput.setEnabled(true);
+        phrasalParticle1Input.setEnabled(false);
+        phrasalParticle2Input.setEnabled(false);
+        phrasalParticle3Input.setEnabled(false);
         updatePhrasalInputStepState();
         SwingUtilities.invokeLater(this::deferRefreshPhrasalOptionsLayout);
     }
@@ -1362,6 +1367,8 @@ public class GameView extends JFrame {
         if (!isPhrasalRound()) {
             return;
         }
+        // El verbo debe quedar siempre editable en rondas phrasal.
+        phrasalVerbInput.setEnabled(true);
         boolean needsThird = currentPhrasalSlotsNeeded >= 3;
         boolean needsFourth = currentPhrasalSlotsNeeded >= 4;
 
