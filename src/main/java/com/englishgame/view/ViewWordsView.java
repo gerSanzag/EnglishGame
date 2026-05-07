@@ -15,7 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
+import java.util.Comparator;
 
 /**
  * View Words Window
@@ -27,8 +27,28 @@ public class ViewWordsView extends JFrame {
     private final GameController gameController;
     private final LandingPageView landingPage;
     
-    // Data storage for filtering
-    private List<Object[]> allData = new ArrayList<>();
+    private enum SortMode {
+        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC
+    }
+
+    private static final class RowData {
+        private final String expression;
+        private final String translation;
+        private final int score;
+        private final String spanishKey;
+        private final String englishKey;
+
+        private RowData(String expression, String translation, int score, String spanishKey, String englishKey) {
+            this.expression = expression;
+            this.translation = translation;
+            this.score = score;
+            this.spanishKey = spanishKey;
+            this.englishKey = englishKey;
+        }
+    }
+
+    // Data storage for filtering/sorting
+    private final List<RowData> allData = new ArrayList<>();
 
     // Components
     private JComboBox<String> databaseSelector;
@@ -36,6 +56,8 @@ public class ViewWordsView extends JFrame {
     private JButton refreshButton;
     private JButton deleteAllButton;
     private JTextField searchField;
+    private JComboBox<String> sortSelector;
+    private JLabel recordsCountLabel;
     private JButton backToLandingButton;
     private JButton dataManagementButton;
     private JButton playGameButton;
@@ -67,7 +89,7 @@ public class ViewWordsView extends JFrame {
         databaseSelector.setPreferredSize(new Dimension(200, 30));
         
         // Words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Move"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -79,6 +101,7 @@ public class ViewWordsView extends JFrame {
         wordsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         
         wordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
+        wordsTable.getColumn("Delete").setCellRenderer(new ButtonRenderer("Delete"));
         
         wordsTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -90,6 +113,8 @@ public class ViewWordsView extends JFrame {
                     String columnName = wordsTable.getColumnName(col);
                     if ("Move".equals(columnName)) {
                         handleMoveExpression(row);
+                    } else if ("Delete".equals(columnName)) {
+                        handleDeleteExpression(row);
                     }
                 }
             }
@@ -108,6 +133,16 @@ public class ViewWordsView extends JFrame {
         searchField.setFont(new Font("Arial", Font.PLAIN, 14));
         searchField.setToolTipText("Search expressions...");
         searchField.setPreferredSize(new Dimension(200, 30));
+
+        sortSelector = new JComboBox<>(new String[] {
+                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)"
+        });
+        sortSelector.setPreferredSize(new Dimension(220, 30));
+        sortSelector.setToolTipText("Ordena los registros por español, inglés o score");
+
+        recordsCountLabel = new JLabel("Registros: 0");
+        recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
+        recordsCountLabel.setForeground(new Color(70, 70, 80));
     }
 
     private JButton createStyledButton(String text, String tooltip) {
@@ -223,6 +258,11 @@ public class ViewWordsView extends JFrame {
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
+        searchPanel.add(Box.createHorizontalStrut(10));
+        searchPanel.add(new JLabel("Orden:"));
+        searchPanel.add(sortSelector);
+        searchPanel.add(Box.createHorizontalStrut(14));
+        searchPanel.add(recordsCountLabel);
         searchSection.add(searchPanel);
         
         // Words Table Section
@@ -278,6 +318,7 @@ public class ViewWordsView extends JFrame {
             public void removeUpdate(javax.swing.event.DocumentEvent e) { filterWordsTable(); }
             public void insertUpdate(javax.swing.event.DocumentEvent e) { filterWordsTable(); }
         });
+        sortSelector.addActionListener(e -> filterWordsTable());
         
         // Buttons
         refreshButton.addActionListener(e -> refreshWordsTable());
@@ -327,8 +368,12 @@ public class ViewWordsView extends JFrame {
                     spanish.getScore(),
                     "Move"
                 };
-                allData.add(rowData);
-                model.addRow(rowData);
+                allData.add(new RowData(
+                        rowData[0].toString(),
+                        rowData[1].toString(),
+                        (Integer) rowData[2],
+                        spanish.getExpression(),
+                        translations));
             }
             
             // Get English expressions
@@ -345,9 +390,15 @@ public class ViewWordsView extends JFrame {
                     english.getScore(),
                     "Move"
                 };
-                allData.add(rowData);
-                model.addRow(rowData);
+                allData.add(new RowData(
+                        rowData[0].toString(),
+                        rowData[1].toString(),
+                        (Integer) rowData[2],
+                        translations,
+                        english.getExpression()));
             }
+
+            filterWordsTable();
             
             log.info("Words table refreshed with {} expressions from database '{}'", 
                 model.getRowCount(), selectedDb);
@@ -390,25 +441,54 @@ public class ViewWordsView extends JFrame {
         String searchText = searchField.getText().toLowerCase().trim();
         DefaultTableModel model = (DefaultTableModel) wordsTable.getModel();
         model.setRowCount(0); // Clear existing data
-        
-        if (searchText.isEmpty()) {
-            // Show all data if search is empty
-            for (Object[] rowData : allData) {
-                model.addRow(rowData);
-            }
-        } else {
-            // Filter data based on search text
-            for (Object[] rowData : allData) {
-                String expression = rowData[0].toString().toLowerCase();
-                String translation = rowData[1].toString().toLowerCase();
-                
-                if (expression.contains(searchText) || translation.contains(searchText)) {
-                    model.addRow(rowData);
-                }
+
+        List<RowData> filtered = new ArrayList<>();
+        for (RowData rowData : allData) {
+            String expression = rowData.expression.toLowerCase();
+            String translation = rowData.translation.toLowerCase();
+            if (searchText.isEmpty() || expression.contains(searchText) || translation.contains(searchText)) {
+                filtered.add(rowData);
             }
         }
-        
+
+        filtered.sort(buildComparatorForSelectedSort());
+
+        for (RowData rowData : filtered) {
+            model.addRow(new Object[] {
+                    rowData.expression, rowData.translation, rowData.score, "Move", "Delete"
+            });
+        }
+
+        recordsCountLabel.setText("Registros: " + filtered.size());
         log.debug("Table filtered with search text: '{}', showing {} rows", searchText, model.getRowCount());
+    }
+
+    private Comparator<RowData> buildComparatorForSelectedSort() {
+        SortMode mode = selectedSortMode();
+        Comparator<RowData> byExpression = Comparator.comparing(r -> r.expression, String.CASE_INSENSITIVE_ORDER);
+        return switch (mode) {
+            case ENGLISH_AZ -> Comparator.comparing((RowData r) -> r.englishKey, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byExpression);
+            case SCORE_DESC -> Comparator.comparingInt((RowData r) -> r.score)
+                    .reversed()
+                    .thenComparing(byExpression);
+            case SPANISH_AZ -> Comparator.comparing((RowData r) -> r.spanishKey, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byExpression);
+        };
+    }
+
+    private SortMode selectedSortMode() {
+        String selected = (String) sortSelector.getSelectedItem();
+        if (selected == null) {
+            return SortMode.SPANISH_AZ;
+        }
+        if (selected.startsWith("Ingl")) {
+            return SortMode.ENGLISH_AZ;
+        }
+        if (selected.startsWith("Score")) {
+            return SortMode.SCORE_DESC;
+        }
+        return SortMode.SPANISH_AZ;
     }
 
     private void deleteAllExpressionsForDatabase(String databaseName) {
@@ -467,9 +547,12 @@ public class ViewWordsView extends JFrame {
         String expression = (String) wordsTable.getValueAt(row, 0);
         log.info("Move button clicked for expression: {}", expression);
         
-        // Get available databases (excluding current and learned_words)
+        // Get available databases excluding the currently selected one (trim/case-insensitive).
+        String selectedNorm = selectedDb == null ? "" : selectedDb.trim().toLowerCase();
         List<String> availableDatabases = gameController.getAvailableDatabases().stream()
-                .filter(db -> !db.equals(selectedDb))
+                .filter(db -> db != null && !db.trim().isEmpty())
+                .filter(db -> !db.trim().toLowerCase().equals(selectedNorm))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
                 .collect(java.util.stream.Collectors.toList());
         
         if (availableDatabases.isEmpty()) {
@@ -519,6 +602,47 @@ public class ViewWordsView extends JFrame {
                         "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        }
+    }
+
+    private void handleDeleteExpression(int row) {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null) {
+            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String expression = (String) wordsTable.getValueAt(row, 0);
+        int confirmResult = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete '" + expression + "' from '" + selectedDb + "'?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirmResult != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        try {
+            boolean deleted = gameController.deleteExpression(selectedDb, expression);
+            if (deleted) {
+                JOptionPane.showMessageDialog(this,
+                        "Expression '" + expression + "' deleted successfully.",
+                        "Delete Successful",
+                        JOptionPane.INFORMATION_MESSAGE);
+                refreshWordsTable();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Could not delete '" + expression + "'.",
+                        "Delete Failed",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            log.error("Error deleting expression '{}'", expression, e);
+            JOptionPane.showMessageDialog(this,
+                    "Error deleting expression: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
     
