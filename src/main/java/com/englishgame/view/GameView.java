@@ -117,6 +117,7 @@ public class GameView extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         
         initComponents();
         setupLayout();
