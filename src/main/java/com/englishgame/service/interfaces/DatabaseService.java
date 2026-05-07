@@ -53,6 +53,11 @@ public interface DatabaseService {
     Optional<String> getCanonicalDatabaseName(String databaseName);
 
     /**
+     * Returns whether a database is protected/system and therefore cannot be renamed or deleted.
+     */
+    boolean isSystemDatabase(String databaseName);
+
+    /**
      * Gets all Spanish expressions from a specific database
      * @param databaseName name of the database
      * @return list of Spanish expressions

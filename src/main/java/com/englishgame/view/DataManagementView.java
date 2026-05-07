@@ -7,13 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -40,7 +37,6 @@ public class DataManagementView extends JFrame {
 
     // Bulk entry components
     private JTextArea bulkTextArea;
-    private JButton pasteButton;
     private JButton loadFileButton;
     private JButton processBulkButton;
 
@@ -300,12 +296,29 @@ public class DataManagementView extends JFrame {
         
         // Enter key for individual entry
         englishField.addActionListener(e -> addIndividualExpression());
+        databaseSelector.addActionListener(e -> updateDatabaseAdminButtonsState());
     }
 
     private void refreshDatabaseSelector() {
         databaseSelector.removeAllItems();
         gameController.getAvailableDatabases().forEach(databaseSelector::addItem);
+        updateDatabaseAdminButtonsState();
         log.debug("Database selector refreshed with {} databases", databaseSelector.getItemCount());
+    }
+
+    private void updateDatabaseAdminButtonsState() {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        boolean systemDb = selectedDb != null && gameController.isSystemDatabase(selectedDb);
+        renameDatabaseButton.setEnabled(selectedDb != null && !systemDb);
+        deleteDatabaseButton.setEnabled(selectedDb != null && !systemDb);
+        if (systemDb) {
+            String tip = "Database de sistema: no se puede renombrar ni eliminar.";
+            renameDatabaseButton.setToolTipText(tip);
+            deleteDatabaseButton.setToolTipText(tip);
+        } else {
+            renameDatabaseButton.setToolTipText("Change the selected database name");
+            deleteDatabaseButton.setToolTipText("Delete selected database");
+        }
     }
 
     private void createDatabase() {
@@ -351,9 +364,9 @@ public class DataManagementView extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if ("learned_words".equalsIgnoreCase(selectedDb.trim())) {
+        if (gameController.isSystemDatabase(selectedDb.trim())) {
             JOptionPane.showMessageDialog(this,
-                    "The learned_words database cannot be renamed.",
+                    "Esta database de sistema no se puede renombrar.",
                     "Not allowed",
                     JOptionPane.WARNING_MESSAGE);
             return;
@@ -403,8 +416,8 @@ public class DataManagementView extends JFrame {
             return;
         }
         
-        if ("learned_words".equals(selectedDb)) {
-            JOptionPane.showMessageDialog(this, "Cannot delete the learned words database", "Error", JOptionPane.ERROR_MESSAGE);
+        if (gameController.isSystemDatabase(selectedDb)) {
+            JOptionPane.showMessageDialog(this, "Cannot delete a system database", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         

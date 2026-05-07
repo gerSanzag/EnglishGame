@@ -267,6 +267,10 @@ public class GameController {
         return true;
     }
 
+    public boolean isSystemDatabase(String databaseName) {
+        return databaseService.isSystemDatabase(databaseName);
+    }
+
     public void saveGameState() {
         gameDataService.saveGameData();
         log.debug("Game state saved successfully");

@@ -841,7 +841,7 @@ public class GameView extends JFrame {
             englishTranslationField.setText("");
             configurePhrasalRoundUi();
             feedbackLabel.setText("");
-            englishTranslationField.requestFocus();
+            requestFocusForCurrentRound();
             log.info("New round started with Spanish expression: '{}'", currentSpanishExpression.getExpression());
             updatePracticeDependentUi();
             refreshCurrentWordScores();
@@ -864,6 +864,16 @@ public class GameView extends JFrame {
             revealAnswerButton.setEnabled(false);
             revealAllButton.setEnabled(false);
         }
+    }
+
+    private void requestFocusForCurrentRound() {
+        SwingUtilities.invokeLater(() -> {
+            if (isPhrasalRound()) {
+                phrasalVerbInput.requestFocusInWindow();
+            } else {
+                englishTranslationField.requestFocusInWindow();
+            }
+        });
     }
 
     private void cancelPendingAutoNextRound() {

@@ -19,6 +19,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     private final GameDataService gameDataService;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
+    private static final String PHRASAL_VERBS_DATABASE = "Phrasal verbs";
     
     // In-memory storage for databases
     private final Map<String, Set<SpanishExpression>> spanishDatabases;
@@ -107,9 +108,17 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
+    public boolean isSystemDatabase(String databaseName) {
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(key -> LEARNED_WORDS_DATABASE.equalsIgnoreCase(key)
+                        || PHRASAL_VERBS_DATABASE.equalsIgnoreCase(key))
+                .orElse(false);
+    }
+
+    @Override
     public boolean deleteDatabase(String databaseName) {
         return resolveCanonicalDatabaseKey(databaseName)
-                .filter(canonical -> !LEARNED_WORDS_DATABASE.equalsIgnoreCase(canonical))
+                .filter(canonical -> !isSystemDatabase(canonical))
                 .map(canonical -> {
                     // Remove from in-memory databases
                     spanishDatabases.remove(canonical);
@@ -128,10 +137,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                         log.warn("Cannot delete database with null or empty name");
                     } else if (!databaseExists(databaseName)) {
                         log.warn("Database '{}' does not exist", databaseName);
-                    } else if (resolveCanonicalDatabaseKey(databaseName)
-                            .filter(LEARNED_WORDS_DATABASE::equalsIgnoreCase)
-                            .isPresent()) {
-                        log.warn("Cannot delete the learned words database");
+                    } else if (isSystemDatabase(databaseName)) {
+                        log.warn("Cannot delete system database '{}'", databaseName);
                     }
                     return false;
                 });
@@ -156,8 +163,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         String oldKey = oldKeyOpt.get();
         String newKey = newTrimmed.get();
 
-        if (LEARNED_WORDS_DATABASE.equalsIgnoreCase(oldKey)) {
-            log.warn("Cannot rename learned_words");
+        if (isSystemDatabase(oldKey)) {
+            log.warn("Cannot rename system database '{}'", oldKey);
             return Optional.empty();
         }
 
