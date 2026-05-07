@@ -19,6 +19,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     private final GameDataService gameDataService;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
+    private static final String PHRASAL_VERBS_DATABASE = "Phrasal verbs";
     
     // In-memory storage for databases
     private final Map<String, Set<SpanishExpression>> spanishDatabases;
@@ -107,9 +108,17 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
+    public boolean isSystemDatabase(String databaseName) {
+        return resolveCanonicalDatabaseKey(databaseName)
+                .map(key -> LEARNED_WORDS_DATABASE.equalsIgnoreCase(key)
+                        || PHRASAL_VERBS_DATABASE.equalsIgnoreCase(key))
+                .orElse(false);
+    }
+
+    @Override
     public boolean deleteDatabase(String databaseName) {
         return resolveCanonicalDatabaseKey(databaseName)
-                .filter(canonical -> !LEARNED_WORDS_DATABASE.equalsIgnoreCase(canonical))
+                .filter(canonical -> !isSystemDatabase(canonical))
                 .map(canonical -> {
                     // Remove from in-memory databases
                     spanishDatabases.remove(canonical);
@@ -128,13 +137,61 @@ public class DatabaseServiceImpl implements DatabaseService {
                         log.warn("Cannot delete database with null or empty name");
                     } else if (!databaseExists(databaseName)) {
                         log.warn("Database '{}' does not exist", databaseName);
-                    } else if (resolveCanonicalDatabaseKey(databaseName)
-                            .filter(LEARNED_WORDS_DATABASE::equalsIgnoreCase)
-                            .isPresent()) {
-                        log.warn("Cannot delete the learned words database");
+                    } else if (isSystemDatabase(databaseName)) {
+                        log.warn("Cannot delete system database '{}'", databaseName);
                     }
                     return false;
                 });
+    }
+
+    @Override
+    public Optional<String> renameDatabase(String oldDatabaseName, String newDatabaseName) {
+        Optional<String> oldKeyOpt = resolveCanonicalDatabaseKey(oldDatabaseName);
+        Optional<String> newTrimmed = Optional.ofNullable(newDatabaseName)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty());
+
+        if (oldKeyOpt.isEmpty()) {
+            log.warn("renameDatabase: source '{}' not found", oldDatabaseName);
+            return Optional.empty();
+        }
+        if (newTrimmed.isEmpty()) {
+            log.warn("renameDatabase: empty new name");
+            return Optional.empty();
+        }
+
+        String oldKey = oldKeyOpt.get();
+        String newKey = newTrimmed.get();
+
+        if (isSystemDatabase(oldKey)) {
+            log.warn("Cannot rename system database '{}'", oldKey);
+            return Optional.empty();
+        }
+
+        Optional<String> existingTarget = resolveCanonicalDatabaseKey(newKey);
+        if (existingTarget.isPresent() && !existingTarget.get().equals(oldKey)) {
+            log.warn("renameDatabase: name '{}' clashes with '{}'", newKey, existingTarget.get());
+            return Optional.empty();
+        }
+
+        if (oldKey.equals(newKey)) {
+            log.debug("renameDatabase: '{}' unchanged", oldKey);
+            return Optional.of(oldKey);
+        }
+
+        Set<SpanishExpression> spanishBucket = spanishDatabases.remove(oldKey);
+        Set<EnglishExpression> englishBucket = englishDatabases.remove(oldKey);
+        if (spanishBucket == null || englishBucket == null) {
+            log.error("renameDatabase: internal error, missing buckets for '{}'", oldKey);
+            return Optional.empty();
+        }
+
+        spanishDatabases.put(newKey, spanishBucket);
+        englishDatabases.put(newKey, englishBucket);
+
+        gameDataService.saveGameData();
+        log.info("Renamed database '{}' -> '{}'", oldKey, newKey);
+        return Optional.of(newKey);
     }
     
     @Override

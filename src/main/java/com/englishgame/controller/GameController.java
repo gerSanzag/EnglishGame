@@ -243,6 +243,34 @@ public class GameController {
                 });
     }
 
+    /**
+     * Renames a user vocabulary database (not {@code learned_words}). Updates {@link #currentDatabase} if it was the one renamed.
+     *
+     * @return true if renamed and persisted
+     */
+    public boolean renameDatabase(String oldDatabaseName, String newDatabaseName) {
+        Optional<String> oldCanonOpt = Optional.ofNullable(oldDatabaseName)
+                .flatMap(databaseService::getCanonicalDatabaseName);
+        Optional<String> newKeyOpt = databaseService.renameDatabase(oldDatabaseName, newDatabaseName);
+        if (newKeyOpt.isEmpty()) {
+            log.warn("Rename failed from '{}' to '{}'", oldDatabaseName, newDatabaseName);
+            return false;
+        }
+        String newKey = newKeyOpt.get();
+        Optional<String> currCanonOpt = Optional.ofNullable(currentDatabase)
+                .flatMap(databaseService::getCanonicalDatabaseName);
+        if (oldCanonOpt.isPresent() && currCanonOpt.isPresent()
+                && oldCanonOpt.get().equals(currCanonOpt.get())) {
+            currentDatabase = newKey;
+            log.info("Updated currentDatabase after rename -> '{}'", newKey);
+        }
+        return true;
+    }
+
+    public boolean isSystemDatabase(String databaseName) {
+        return databaseService.isSystemDatabase(databaseName);
+    }
+
     public void saveGameState() {
         gameDataService.saveGameData();
         log.debug("Game state saved successfully");
