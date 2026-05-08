@@ -372,7 +372,8 @@ public class GameDataServiceImpl implements GameDataService {
                     translations.add(translation.getExpression());
                 }
                 expressionData.put("translations", translations);
-                
+                expressionData.put("included_at", spanishExpr.getIncludedAtEpochMillis());
+
                 currentState.add(Arrays.asList(expressionData));
             }
 
@@ -395,6 +396,7 @@ public class GameDataServiceImpl implements GameDataService {
                     }
                 }
                 row.put("spanish_sources", spanishSources);
+                row.put("included_at", en.getIncludedAtEpochMillis());
                 currentState.add(Arrays.asList(row));
             }
         }

@@ -312,7 +312,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         englishExpression.setExpression(trimmed);
-        
+
         boolean added = englishDatabases.get(dbKey).add(englishExpression);
         if (added) {
             log.debug("Added English expression '{}' to database '{}'", trimmed, dbKey);
@@ -514,7 +514,9 @@ public class DatabaseServiceImpl implements DatabaseService {
             log.warn("Cannot move null English expression to learned words");
             return false;
         }
-        
+
+        englishExpression.setIncludedAtEpochMillis(System.currentTimeMillis());
+
         boolean added = addEnglishExpression(LEARNED_WORDS_DATABASE, englishExpression);
         if (added) {
             log.info("Moved English expression '{}' to learned words database", 
@@ -573,6 +575,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         
         Set<EnglishExpression> learned = englishDatabases.get(LEARNED_WORDS_DATABASE);
         learned.removeIf(en -> en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
+        englishTranslation.setIncludedAtEpochMillis(System.currentTimeMillis());
         learned.add(englishTranslation);
         
         if (hostPhrase.getTranslations().isEmpty()) {
@@ -675,6 +678,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                                 }
                             }
                             
+                            spanishExpr.setIncludedAtEpochMillis(getLongValue(firstMap, "included_at", 0L));
                             addSpanishExpression(databaseName, spanishExpr);
                             log.debug("Loaded Spanish expression '{}' into database '{}'", expression, databaseName);
                         } else if ("english".equals(language)) {
@@ -696,6 +700,14 @@ public class DatabaseServiceImpl implements DatabaseService {
     /**
      * Helper method to safely get integer values from map
      */
+    private long getLongValue(Map<String, Object> map, String key, long defaultValue) {
+        Object value = map.get(key);
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return defaultValue;
+    }
+
     private int getIntValue(Map<String, Object> map, String key, int defaultValue) {
         Object value = map.get(key);
         if (value instanceof Number) {
@@ -723,6 +735,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                 }
             }
         }
+        en.setIncludedAtEpochMillis(getLongValue(row, "included_at", 0L));
         return en;
     }
     
@@ -763,10 +776,11 @@ public class DatabaseServiceImpl implements DatabaseService {
                 translations.add(translation.getExpression());
             }
             expressionData.put("translations", translations);
-            
+            expressionData.put("included_at", spanishExpression.getIncludedAtEpochMillis());
+
             List<Map<String, Object>> record = Arrays.asList(expressionData);
             gameDataService.getRepository().save(record);
-            
+
             log.debug("Spanish expression '{}' saved to repository", spanishExpression.getExpression());
         } catch (Exception e) {
             log.error("Error saving Spanish expression to repository: {}", e.getMessage());
@@ -820,7 +834,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                         translations.add(translation.getExpression());
                     }
                     expressionData.put("translations", translations);
-                    
+                    expressionData.put("included_at", spanishExpr.getIncludedAtEpochMillis());
+
                     List<Map<String, Object>> exprRecord = Arrays.asList(expressionData);
                     gameDataService.getRepository().save(exprRecord);
                 }
@@ -842,6 +857,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                         }
                     }
                     englishRow.put("spanish_sources", spanishSources);
+                    englishRow.put("included_at", en.getIncludedAtEpochMillis());
                     gameDataService.getRepository().save(Arrays.asList(englishRow));
                 }
             }
@@ -981,7 +997,8 @@ public class DatabaseServiceImpl implements DatabaseService {
             expressionData.put("language", "english");
             expressionData.put("expression", englishExpression.getExpression());
             expressionData.put("score", englishExpression.getScore());
-            
+            expressionData.put("included_at", englishExpression.getIncludedAtEpochMillis());
+
             // Add translations
             List<String> translations = new ArrayList<>();
             for (SpanishExpression translation : englishExpression.getTranslations()) {

@@ -9,6 +9,7 @@ import com.englishgame.service.interfaces.GameDataService;
 import com.englishgame.service.interfaces.GameLogicService;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -101,7 +102,7 @@ public class GameController {
         log.debug("Processing answer '{}' for Spanish expression '{}'", userTranslation, expr.getExpression());
 
         AnswerResult result;
-        if (gameLogicService.validateTranslation(expr, userTranslation)) {
+        if (gameLogicService.validateTranslation(expr, userTranslation, currentDatabase)) {
             result = processCorrectAnswerOutcome(expr, userTranslation);
         } else {
             processIncorrectAnswer(expr, userTranslation);
@@ -133,7 +134,8 @@ public class GameController {
     }
 
     private void processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
-        List<EnglishExpression> updatedTranslations = gameLogicService.processIncorrectAnswer(spanishExpression, userTranslation);
+        List<EnglishExpression> updatedTranslations = gameLogicService.processIncorrectAnswer(
+                spanishExpression, userTranslation, currentDatabase);
         spanishExpression.setTranslations(updatedTranslations); // Update the Spanish expression with penalized translations
         log.info("Incorrect answer. All English translations for '{}' penalized.", spanishExpression.getExpression());
     }
@@ -152,18 +154,53 @@ public class GameController {
 
     /**
      * English answer(s) to display in practice mode reveal (translations joined with {@code  | }).
+     * Incluye todas las traducciones válidas cuando hay varios registros con el mismo español.
      */
     public Optional<String> getRevealAnswersLine() {
-        return Optional.ofNullable(currentSpanishExpression)
-                .map(SpanishExpression::getTranslations)
-                .filter(list -> list != null && !list.isEmpty())
-                .map(list -> list.stream()
-                        .map(EnglishExpression::getExpression)
-                        .filter(s -> s != null && !s.trim().isEmpty())
-                        .map(String::trim)
-                        .distinct()
-                        .collect(Collectors.joining(" | ")))
-                .filter(line -> !line.isEmpty());
+        List<EnglishExpression> translations = getCurrentPhraseCohortEnglishTranslations();
+        if (translations.isEmpty() && currentSpanishExpression != null
+                && currentSpanishExpression.getTranslations() != null
+                && !currentSpanishExpression.getTranslations().isEmpty()) {
+            translations = currentSpanishExpression.getTranslations();
+        }
+        if (translations == null || translations.isEmpty()) {
+            return Optional.empty();
+        }
+        String line = translations.stream()
+                .map(EnglishExpression::getExpression)
+                .filter(s -> s != null && !s.trim().isEmpty())
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.joining(" | "));
+        return line.isEmpty() ? Optional.empty() : Optional.of(line);
+    }
+
+    /**
+     * Todas las filas de vocabulario con el mismo texto en español que la tarjeta actual.
+     */
+    public List<SpanishExpression> getCurrentPhraseCohort() {
+        if (currentSpanishExpression == null) {
+            return List.of();
+        }
+        List<SpanishExpression> c =
+                gameLogicService.getSpanishPhraseCohort(currentDatabase, currentSpanishExpression);
+        if (c == null || c.isEmpty()) {
+            return List.of(currentSpanishExpression);
+        }
+        return c;
+    }
+
+    /**
+     * Concatenación de las traducciones inglesas de toda la cohorte (varios registros, mismo español).
+     */
+    public List<EnglishExpression> getCurrentPhraseCohortEnglishTranslations() {
+        List<EnglishExpression> out = new ArrayList<>();
+        for (SpanishExpression row : getCurrentPhraseCohort()) {
+            if (row.getTranslations() != null) {
+                out.addAll(row.getTranslations());
+            }
+        }
+        return out;
     }
 
     /**
@@ -177,7 +214,8 @@ public class GameController {
         if (userTranslation == null || userTranslation.trim().isEmpty()) {
             return Optional.of(false);
         }
-        boolean ok = gameLogicService.validateTranslation(currentSpanishExpression, userTranslation);
+        boolean ok = gameLogicService.validateTranslation(currentSpanishExpression, userTranslation,
+                currentDatabase);
         log.debug("Practice-only check for '{}': {}", userTranslation, ok);
         return Optional.of(ok);
     }

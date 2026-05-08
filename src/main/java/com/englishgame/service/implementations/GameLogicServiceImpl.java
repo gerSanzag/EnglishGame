@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.Locale;
 
 /**
  * Implementation of GameLogicService for managing game logic
@@ -35,7 +36,35 @@ public class GameLogicServiceImpl implements GameLogicService {
         this.gameDataService = gameDataService;
         this.databaseService = databaseService;
     }
-    
+
+    private static String normalizeSpanishPhrase(String s) {
+        return s == null ? "" : s.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * All {@link SpanishExpression} rows in {@code databaseName} with the same Spanish text as {@code anchor}
+     * (trim + case insensitive). Fallback: singleton list with {@code anchor} when DB unavailable.
+     */
+    private List<SpanishExpression> spanishPhraseCohort(String databaseName, SpanishExpression anchor) {
+        if (anchor == null || anchor.getExpression() == null) {
+            return List.of();
+        }
+        if (databaseName == null || databaseName.isBlank() || databaseService == null) {
+            return List.of(anchor);
+        }
+        String needle = normalizeSpanishPhrase(anchor.getExpression());
+        List<SpanishExpression> cohort = databaseService.getSpanishExpressions(databaseName).stream()
+                .filter(e -> e != null && e.getExpression() != null
+                        && normalizeSpanishPhrase(e.getExpression()).equals(needle))
+                .collect(Collectors.toList());
+        return cohort.isEmpty() ? List.of(anchor) : cohort;
+    }
+
+    private static boolean englishMatchesUser(String userTrimmed, EnglishExpression en) {
+        return en != null && en.getExpression() != null
+                && userTrimmed.equalsIgnoreCase(en.getExpression().trim());
+    }
+
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
         return getRandomSpanishExpression(databaseName, null);
@@ -74,88 +103,93 @@ public class GameLogicServiceImpl implements GameLogicService {
     }
     
     @Override
-    public boolean validateTranslation(SpanishExpression spanishExpression, String userTranslation) {
-        return Optional.ofNullable(spanishExpression)
-                .filter(expr -> userTranslation != null && !userTranslation.trim().isEmpty())
-                .map(expr -> {
-                    log.debug("Validating translation '{}' for Spanish expression '{}'", 
-                            userTranslation, expr.getExpression());
-                    
-                    boolean isValid = expr.getTranslations().stream()
-                            .anyMatch(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()));
-                    
-                    log.debug("Translation validation result: {}", isValid);
-                    return isValid;
-                })
-                .orElseGet(() -> {
-                    log.warn("Invalid parameters for translation validation");
-                    return false;
-                });
+    public boolean validateTranslation(SpanishExpression promptCard, String userTranslation,
+            String practiceDatabaseName) {
+        if (promptCard == null || userTranslation == null || userTranslation.trim().isEmpty()) {
+            log.warn("Invalid parameters for translation validation");
+            return false;
+        }
+        String userTrim = userTranslation.trim();
+        List<SpanishExpression> cohort = spanishPhraseCohort(practiceDatabaseName, promptCard);
+        boolean isValid = cohort.stream()
+                .filter(e -> e.getTranslations() != null)
+                .flatMap(e -> e.getTranslations().stream())
+                .anyMatch(en -> englishMatchesUser(userTrim, en));
+        log.debug("Validating '{}' for '{}' ({} cohort records): {}",
+                userTrim, promptCard.getExpression(), cohort.size(), isValid);
+        return isValid;
     }
-    
+
     @Override
-    public CorrectAnswerOutcome processCorrectAnswer(SpanishExpression spanishExpression, String userTranslation,
-                                                     String practiceDatabase) {
-        return Optional.ofNullable(spanishExpression)
-                .flatMap(expr -> {
-                    log.debug("Processing correct answer for '{}' -> '{}'",
-                            expr.getExpression(), userTranslation);
-                    
-                    return expr.getTranslations().stream()
-                            .filter(englishExpr -> englishExpr.getExpression().equalsIgnoreCase(userTranslation.trim()))
-                            .findFirst()
-                            .map(matchingExpression -> {
-                                matchingExpression.setScore(matchingExpression.getScore() + 1);
-                                expr.setScore(expr.getScore() + 1);
-                                log.debug("Added 1 point to English expression '{}'. New score: {}",
-                                        matchingExpression.getExpression(), matchingExpression.getScore());
-                                
-                                boolean promoted = false;
-                                if (isExpressionLearned(matchingExpression)
-                                        && databaseService != null
-                                        && practiceDatabase != null && !practiceDatabase.isBlank()) {
-                                    log.info("English expression '{}' reached learned threshold. Promoting to learned words.",
-                                            matchingExpression.getExpression());
-                                    promoted = databaseService.promoteTranslationToLearned(
-                                            practiceDatabase, expr, matchingExpression);
-                                }
-                                
-                                return new CorrectAnswerOutcome(matchingExpression, promoted);
-                            });
-                })
-                .orElse(null);
+    public CorrectAnswerOutcome processCorrectAnswer(SpanishExpression promptCard,
+            String userTranslation, String practiceDatabaseName) {
+        if (promptCard == null || userTranslation == null || userTranslation.trim().isEmpty()) {
+            return null;
+        }
+        String userTrim = userTranslation.trim();
+        List<SpanishExpression> cohort = spanishPhraseCohort(practiceDatabaseName, promptCard);
+        for (SpanishExpression expr : cohort) {
+            if (expr.getTranslations() == null) {
+                continue;
+            }
+            for (EnglishExpression englishExpr : expr.getTranslations()) {
+                if (!englishMatchesUser(userTrim, englishExpr)) {
+                    continue;
+                }
+                log.debug("Correct match on record '{}' -> '{}'",
+                        expr.getExpression(), englishExpr.getExpression());
+                englishExpr.setScore(englishExpr.getScore() + 1);
+                expr.setScore(expr.getScore() + 1);
+                log.debug("Added 1 point to English '{}'. New score: {}",
+                        englishExpr.getExpression(), englishExpr.getScore());
+
+                boolean promoted = false;
+                if (isExpressionLearned(englishExpr)
+                        && databaseService != null
+                        && practiceDatabaseName != null && !practiceDatabaseName.isBlank()) {
+                    log.info("English expression '{}' reached learned threshold. Promoting to learned words.",
+                            englishExpr.getExpression());
+                    promoted = databaseService.promoteTranslationToLearned(
+                            practiceDatabaseName, expr, englishExpr);
+                }
+                return new CorrectAnswerOutcome(englishExpr, promoted);
+            }
+        }
+        return null;
     }
-    
+
     @Override
-    public List<EnglishExpression> processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation) {
-        return Optional.ofNullable(spanishExpression)
-                .map(expr -> {
-                    log.debug("Processing incorrect answer for '{}' -> '{}'", 
-                            expr.getExpression(), userTranslation);
-                    
-                    List<EnglishExpression> updated = expr.getTranslations().stream()
-                            .map(englishExpr -> {
-                                int currentScore = englishExpr.getScore();
-                                int penalty = calculateDynamicPenalty(currentScore);
-                                int newScore = Math.max(0, currentScore - penalty);
-                                englishExpr.setScore(newScore);
-                                
-                                log.debug("Applied {} penalty points to English expression '{}' (was {}, now {})",
-                                        penalty, englishExpr.getExpression(), currentScore, newScore);
-                                
-                                return englishExpr;
-                            })
-                            .collect(java.util.stream.Collectors.toList());
-                    
-                    int phraseScoreBefore = expr.getScore();
-                    int phrasePenalty = calculateDynamicPenalty(phraseScoreBefore);
-                    expr.setScore(Math.max(0, phraseScoreBefore - phrasePenalty));
-                    log.debug("Applied phrase score penalty for '{}' (was {}, now {})",
-                            expr.getExpression(), phraseScoreBefore, expr.getScore());
-                    
-                    return updated;
-                })
-                .orElse(new ArrayList<>());
+    public List<EnglishExpression> processIncorrectAnswer(SpanishExpression promptCard, String userTranslation,
+            String practiceDatabaseName) {
+        if (promptCard == null) {
+            return Collections.emptyList();
+        }
+        List<SpanishExpression> cohort = spanishPhraseCohort(practiceDatabaseName, promptCard);
+        log.debug("Incorrect answer '{}' for '{}' — penalizing {} cohort record(s)",
+                userTranslation == null ? "" : userTranslation, promptCard.getExpression(), cohort.size());
+        for (SpanishExpression expr : cohort) {
+            if (expr.getTranslations() != null) {
+                for (EnglishExpression englishExpr : expr.getTranslations()) {
+                    int currentScore = englishExpr.getScore();
+                    int penalty = calculateDynamicPenalty(currentScore);
+                    int newScore = Math.max(0, currentScore - penalty);
+                    englishExpr.setScore(newScore);
+                    log.debug("Penalty {} on English '{}' under phrase '{}' (score {} -> {})",
+                            penalty, englishExpr.getExpression(), expr.getExpression(), currentScore, newScore);
+                }
+            }
+            int phraseScoreBefore = expr.getScore();
+            int phrasePenalty = calculateDynamicPenalty(phraseScoreBefore);
+            expr.setScore(Math.max(0, phraseScoreBefore - phrasePenalty));
+            log.debug("Phrase score penalty for '{}' (score {} -> {})",
+                    expr.getExpression(), phraseScoreBefore, expr.getScore());
+        }
+        return promptCard.getTranslations() != null ? promptCard.getTranslations() : Collections.emptyList();
+    }
+
+    @Override
+    public List<SpanishExpression> getSpanishPhraseCohort(String practiceDatabaseName, SpanishExpression anchor) {
+        return new ArrayList<>(spanishPhraseCohort(practiceDatabaseName, anchor));
     }
     
     /**

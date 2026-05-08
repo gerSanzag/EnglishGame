@@ -481,15 +481,18 @@ public class DataManagementView extends JFrame {
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         // Create entities
+        long now = System.currentTimeMillis();
         SpanishExpression spanishExpr = new SpanishExpression(spanish, 0, new ArrayList<>());
         EnglishExpression englishExpr = new EnglishExpression(english, 0, new ArrayList<>());
-        
+        spanishExpr.setIncludedAtEpochMillis(now);
+        englishExpr.setIncludedAtEpochMillis(now);
+
         // Add to each other's translations
         spanishExpr.getTranslations().add(englishExpr);
         englishExpr.getTranslations().add(spanishExpr);
-        
+
         // Add to database through GameController
         if (gameController.addExpressionToDatabase(selectedDb, spanishExpr)) {
             JOptionPane.showMessageDialog(this, "Individual expression added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
@@ -763,9 +766,12 @@ public class DataManagementView extends JFrame {
      */
     private boolean addIndividualExpressionFromBulk(String databaseName, String spanish, String english) {
         // Create entities
+        long now = System.currentTimeMillis();
         SpanishExpression spanishExpr = new SpanishExpression(spanish, 0, new ArrayList<>());
         EnglishExpression englishExpr = new EnglishExpression(english, 0, new ArrayList<>());
-        
+        spanishExpr.setIncludedAtEpochMillis(now);
+        englishExpr.setIncludedAtEpochMillis(now);
+
         // Add to each other's translations
         spanishExpr.getTranslations().add(englishExpr);
         englishExpr.getTranslations().add(spanishExpr);

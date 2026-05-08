@@ -158,23 +158,34 @@ public class GameView extends JFrame {
         
         // Game area
         spanishExpressionLabel = new JLabel("Select a database and start a new round!", SwingConstants.CENTER);
-        spanishExpressionLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        spanishExpressionLabel.setFont(new Font("Arial", Font.BOLD, 28));
         spanishExpressionLabel.setForeground(new Color(0, 102, 204));
         
         englishTranslationField = new JTextField(20);
-        englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 16));
+        englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 17));
         englishTranslationField.setToolTipText("Enter your English translation here");
+        englishTranslationField.setBackground(new Color(248, 252, 255));
+        englishTranslationField.setForeground(new Color(34, 45, 58));
+        englishTranslationField.setCaretColor(new Color(34, 45, 58));
+        englishTranslationField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 255, 255, 220), 1),
+                        BorderFactory.createLineBorder(new Color(176, 197, 220), 2)),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
         
         submitButton = createStyledButton("Submit Answer", "Submit your translation");
         newRoundButton = createStyledButton("New Round", "Get a new Spanish expression");
         
         feedbackLabel = new JLabel("", SwingConstants.CENTER);
-        feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 16));
+        feedbackLabel.setFont(new Font("Arial", Font.ITALIC, 15));
         feedbackLabel.setBorder(BorderFactory.createEmptyBorder(0, 24, 20, 24));
+        feedbackLabel.setVisible(false);
         
-        scoreLabel = new JLabel("Phrase score (this word): -", SwingConstants.CENTER);
-        scoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        scoreLabel = new JLabel("Phrase score (this word)", SwingConstants.CENTER);
+        scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         scoreLabel.setForeground(new Color(0, 130, 50));
+        scoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        scoreLabel.setVerticalAlignment(SwingConstants.CENTER);
         
         // Navigation buttons
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
@@ -186,11 +197,13 @@ public class GameView extends JFrame {
         practiceModeCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
         practiceModeCheckBox.setToolTipText(
                 "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\".");
+        styleSelectionToggle(practiceModeCheckBox, new Color(232, 248, 240), new Color(46, 156, 112));
 
         noScoreCheckBox = new JCheckBox("Comprobar sin puntuación (juego real)");
-        noScoreCheckBox.setFont(new Font("Arial", Font.PLAIN, 13));
+        noScoreCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
         noScoreCheckBox.setToolTipText(
                 "Comprueba tu respuesta sin recompensa ni penalización, sin entrar en modo práctica.");
+        styleSelectionToggle(noScoreCheckBox, new Color(234, 241, 253), new Color(62, 110, 202));
 
         revealAnswerButton = createStyledButton("Mostrar respuesta",
                 "Revela la respuesta escrita gradualmente", false);
@@ -470,6 +483,83 @@ public class GameView extends JFrame {
         input.setMinimumSize(new Dimension(PHRASAL_INPUT_COL_MIN_W, PHRASAL_INPUT_FIELD_H - 2));
     }
 
+    private void styleSelectionToggle(JCheckBox toggle, Color bg, Color accent) {
+        toggle.setOpaque(false);
+        toggle.setForeground(new Color(35, 42, 52));
+        toggle.setFont(new Font("Arial", Font.BOLD, 15));
+        toggle.setFocusPainted(false);
+        toggle.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        toggle.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
+        toggle.setMargin(new Insets(2, 2, 2, 2));
+        toggle.setIconTextGap(10);
+        toggle.setPreferredSize(new Dimension(360, 34));
+        toggle.setMinimumSize(new Dimension(340, 34));
+        toggle.setMaximumSize(new Dimension(390, 36));
+
+        Icon off = buildCheckIcon(20, new Color(255, 255, 255), accent, null, true);
+        Icon on = buildCheckIcon(20, bg, accent, accent, true);
+        Icon offDisabled = buildCheckIcon(20, new Color(245, 245, 245), new Color(180, 184, 190), null, false);
+        Icon onDisabled = buildCheckIcon(20, new Color(236, 239, 244), new Color(180, 184, 190), new Color(146, 152, 160), false);
+        toggle.setIcon(off);
+        toggle.setSelectedIcon(on);
+        toggle.setDisabledIcon(offDisabled);
+        toggle.setDisabledSelectedIcon(onDisabled);
+    }
+
+    private static Icon buildCheckIcon(int size, Color fill, Color border, Color check, boolean enabled) {
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(fill);
+                g2.fillRoundRect(x, y, size, size, 6, 6);
+                g2.setColor(border);
+                g2.drawRoundRect(x, y, size - 1, size - 1, 6, 6);
+
+                if (check != null) {
+                    g2.setColor(check);
+                    g2.setStroke(new BasicStroke(enabled ? 2.7f : 2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    int x1 = x + (int) (size * 0.23);
+                    int y1 = y + (int) (size * 0.54);
+                    int x2 = x + (int) (size * 0.45);
+                    int y2 = y + (int) (size * 0.76);
+                    int x3 = x + (int) (size * 0.79);
+                    int y3 = y + (int) (size * 0.28);
+                    g2.drawLine(x1, y1, x2, y2);
+                    g2.drawLine(x2, y2, x3, y3);
+                }
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() {
+                return size;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return size;
+            }
+        };
+    }
+
+    private JPanel buildSelectionToggleCard(JCheckBox toggle, Color bg, Color accent) {
+        JPanel card = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 4));
+        card.setOpaque(true);
+        card.setBackground(bg);
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(255, 255, 255, 220), 1),
+                        BorderFactory.createLineBorder(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 190), 2)),
+                BorderFactory.createEmptyBorder(2, 4, 2, 6)));
+        card.setPreferredSize(new Dimension(380, 44));
+        card.setMinimumSize(new Dimension(360, 44));
+        card.setMaximumSize(new Dimension(410, 46));
+        card.add(toggle);
+        return card;
+    }
+
     private JButton createStyledButton(String text, String tooltip) {
         return createStyledButton(text, tooltip, true);
     }
@@ -480,11 +570,11 @@ public class GameView extends JFrame {
      */
     private JButton createStyledButton(String text, String tooltip, boolean hoverGlow) {
         JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setFont(new Font("Arial", Font.BOLD, 15));
         button.setToolTipText(tooltip);
-        button.setPreferredSize(new Dimension(150, 40));
-        button.setMinimumSize(new Dimension(120, 35));
-        button.setMaximumSize(new Dimension(200, 45));
+        button.setPreferredSize(new Dimension(170, 44));
+        button.setMinimumSize(new Dimension(140, 40));
+        button.setMaximumSize(new Dimension(230, 52));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(true);
@@ -584,13 +674,15 @@ public class GameView extends JFrame {
         
         // Database Selection Section
         JPanel dbSection = createSectionPanel("Database Selection");
-        JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        dbPanel.add(new JLabel("Database:"));
+        JPanel dbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+        JLabel dbLabel = new JLabel("Database:");
+        dbLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        dbPanel.add(dbLabel);
         dbPanel.add(databaseSelector);
         dbSection.add(dbPanel);
         JLabel buildHint = new JLabel("Build " + AppVersion.getDisplayVersion()
                 + " — Phrasal: 3) siempre visible; 4) solo si la tarjeta tiene cuarta pieza.");
-        buildHint.setFont(new Font("Arial", Font.PLAIN, 11));
+        buildHint.setFont(new Font("Arial", Font.PLAIN, 12));
         buildHint.setForeground(new Color(95, 100, 115));
         JPanel buildHintRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
         buildHintRow.setOpaque(false);
@@ -600,53 +692,109 @@ public class GameView extends JFrame {
         // Game Area Section: scroll interno para el contenido alto; acciones y navegación fuera del scroll central.
         JPanel gameSection = createSectionPanel("Interactive Game");
         gameSection.setLayout(new BorderLayout());
-        JPanel gameUpperPanel = new JPanel();
-        gameUpperPanel.setLayout(new BoxLayout(gameUpperPanel, BoxLayout.Y_AXIS));
-        gameUpperPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JPanel gameUpperPanel = new JPanel(new BorderLayout());
         gameUpperPanel.setOpaque(false);
-        gameUpperPanel.setBorder(BorderFactory.createEmptyBorder(12, 18, 18, 18));
+        gameUpperPanel.setBorder(BorderFactory.createEmptyBorder(24, 12, 14, 12));
 
-        spanishExpressionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        gameUpperPanel.add(spanishExpressionLabel);
-        gameUpperPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        JPanel topCard = new JPanel(new GridBagLayout());
+        topCard.setOpaque(true);
+        topCard.setBackground(new Color(252, 254, 255));
+        topCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(202, 214, 228), 1),
+                BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+        topCard.setPreferredSize(new Dimension(1020, 430));
 
-        englishTranslationField.setAlignmentX(Component.CENTER_ALIGNMENT);
-        englishTranslationField.setMaximumSize(new Dimension(300, 35));
-        gameUpperPanel.add(englishTranslationField);
-        gameUpperPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        gameUpperPanel.add(phrasalBuilderPanel);
-        gameUpperPanel.add(Box.createRigidArea(new Dimension(0, 12)));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        JPanel practiceBanner = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 4));
-        practiceBanner.setOpaque(false);
-        practiceBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
-        practiceBanner.add(practiceModeCheckBox);
-        gameUpperPanel.add(practiceBanner);
+        spanishExpressionLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        spanishExpressionLabel.setForeground(new Color(27, 84, 138));
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        topCard.add(spanishExpressionLabel, gbc);
 
-        JPanel noScoreBanner = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 2));
-        noScoreBanner.setOpaque(false);
-        noScoreBanner.setAlignmentX(Component.CENTER_ALIGNMENT);
-        noScoreBanner.add(noScoreCheckBox);
-        gameUpperPanel.add(noScoreBanner);
+        englishTranslationField.setPreferredSize(new Dimension(620, 44));
+        englishTranslationField.setMinimumSize(new Dimension(500, 44));
+        englishTranslationField.setMaximumSize(new Dimension(760, 44));
+        JPanel answerRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        answerRow.setOpaque(false);
+        answerRow.add(englishTranslationField);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        topCard.add(answerRow, gbc);
 
-        JPanel revealButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 4));
+        phrasalBuilderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        topCard.add(phrasalBuilderPanel, gbc);
+
+        JPanel modeRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 18, 0));
+        modeRow.setOpaque(false);
+        modeRow.add(buildSelectionToggleCard(practiceModeCheckBox, new Color(232, 248, 240), new Color(46, 156, 112)));
+        modeRow.add(buildSelectionToggleCard(noScoreCheckBox, new Color(234, 241, 253), new Color(62, 110, 202)));
+        gbc.gridy = 3;
+        gbc.insets = new Insets(18, 0, 8, 0);
+        topCard.add(modeRow, gbc);
+
+        JPanel revealButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
         revealButtons.setOpaque(false);
-        revealButtons.setAlignmentX(Component.CENTER_ALIGNMENT);
         revealButtons.add(revealAnswerButton);
         revealButtons.add(revealAllButton);
-        gameUpperPanel.add(revealButtons);
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 8, 0);
+        topCard.add(revealButtons, gbc);
 
-        JLabel revealHint = new JLabel("Respuesta de referencia (modo práctica):", SwingConstants.CENTER);
-        revealHint.setAlignmentX(Component.CENTER_ALIGNMENT);
-        revealHint.setFont(new Font("Arial", Font.PLAIN, 13));
-        revealHint.setForeground(new Color(80, 80, 90));
-        gameUpperPanel.add(revealHint);
+        JLabel revealHint = new JLabel(" ", SwingConstants.CENTER);
+        revealHint.setFont(new Font("Arial", Font.BOLD, 13));
+        revealHint.setForeground(new Color(66, 74, 84));
+        gbc.gridy = 5;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        topCard.add(revealHint, gbc);
+
+        JPanel feedbackInlineRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        feedbackInlineRow.setOpaque(false);
+        feedbackLabel.setBorder(BorderFactory.createEmptyBorder(0, 24, 6, 24));
+        feedbackInlineRow.add(feedbackLabel);
+        gbc.gridy = 6;
+        gbc.insets = new Insets(0, 0, 2, 0);
+        topCard.add(feedbackInlineRow, gbc);
 
         JScrollPane revealScroll = new JScrollPane(revealAnswerArea);
-        revealScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
-        revealScroll.setPreferredSize(new Dimension(520, 90));
-        revealScroll.setMaximumSize(new Dimension(700, 160));
-        gameUpperPanel.add(revealScroll);
+        revealScroll.setPreferredSize(new Dimension(860, 112));
+        revealScroll.setMaximumSize(new Dimension(920, 150));
+        revealScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
+        JPanel revealRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        revealRow.setOpaque(false);
+        revealRow.add(revealScroll);
+        gbc.gridy = 7;
+        gbc.insets = new Insets(14, 0, 0, 0);
+        topCard.add(revealRow, gbc);
+
+        JPanel topCardWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        topCardWrap.setOpaque(false);
+        topCardWrap.add(topCard);
+        gameUpperPanel.add(topCardWrap, BorderLayout.NORTH);
+
+        JPanel centerScoreWrap = new JPanel();
+        centerScoreWrap.setLayout(new BoxLayout(centerScoreWrap, BoxLayout.Y_AXIS));
+        centerScoreWrap.setOpaque(false);
+        centerScoreWrap.setBorder(BorderFactory.createEmptyBorder(28, 0, 12, 0));
+
+        JPanel scoreCenterPill = new JPanel(new BorderLayout());
+        scoreCenterPill.setOpaque(true);
+        scoreCenterPill.setBackground(new Color(248, 251, 255));
+        scoreCenterPill.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(186, 201, 219), 1),
+                BorderFactory.createEmptyBorder(10, 18, 10, 18)));
+        scoreCenterPill.setMaximumSize(new Dimension(640, 92));
+        scoreCenterPill.setPreferredSize(new Dimension(640, 92));
+        scoreCenterPill.add(scoreLabel, BorderLayout.CENTER);
+        centerScoreWrap.add(scoreCenterPill);
+
+        gameUpperPanel.add(centerScoreWrap, BorderLayout.CENTER);
 
         JScrollPane gameUpperScroll = new JScrollPane(gameUpperPanel);
         gameUpperScroll.setBorder(BorderFactory.createEmptyBorder());
@@ -658,7 +806,11 @@ public class GameView extends JFrame {
         gameSection.add(gameUpperScroll, BorderLayout.CENTER);
 
         JPanel navSection = createSectionPanel("Navigation");
-        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        // Sin TitledBorder para evitar la línea/blanqueo superior del título.
+        navSection.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 8));
         navPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         navPanel.add(dataManagementButton);
         navPanel.add(viewWordsButton);
@@ -666,21 +818,16 @@ public class GameView extends JFrame {
         navPanel.add(backToLandingButton);
         navSection.add(navPanel);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 8));
         buttonPanel.setOpaque(false);
+        submitButton.setPreferredSize(new Dimension(180, 48));
+        newRoundButton.setPreferredSize(new Dimension(180, 48));
         buttonPanel.add(submitButton);
         buttonPanel.add(newRoundButton);
 
         feedbackLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JPanel statsPanel = new JPanel();
-        statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
-        statsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        statsPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(200, 200, 200)),
-                BorderFactory.createEmptyBorder(12, 12, 6, 12)));
         scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        statsPanel.add(scoreLabel);
 
         JPanel stickySouth = new JPanel();
         stickySouth.setLayout(new BoxLayout(stickySouth, BoxLayout.Y_AXIS));
@@ -688,20 +835,16 @@ public class GameView extends JFrame {
         stickySouth.setBackground(new Color(246, 248, 251));
         stickySouth.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(210, 214, 220)),
-                BorderFactory.createEmptyBorder(10, 12, 10, 12)));
+                BorderFactory.createEmptyBorder(14, 16, 14, 16)));
         stickySouth.add(buttonPanel);
-        stickySouth.add(Box.createVerticalStrut(4));
-        JPanel feedbackWrap = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        feedbackWrap.setOpaque(false);
-        feedbackWrap.add(feedbackLabel);
-        stickySouth.add(feedbackWrap);
-        stickySouth.add(statsPanel);
         stickySouth.add(Box.createVerticalStrut(8));
-        stickySouth.add(navSection);
+        stickySouth.add(Box.createVerticalStrut(4));
 
         mainPanel.add(dbSection);
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(gameSection);
+        mainPanel.add(Box.createVerticalStrut(12));
+        mainPanel.add(navSection);
 
         JScrollPane mainScrollPane = new JScrollPane(mainPanel);
         mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -844,14 +987,14 @@ public class GameView extends JFrame {
             spanishExpressionLabel.setText("Translate: \"" + currentSpanishExpression.getExpression() + "\"");
             englishTranslationField.setText("");
             configurePhrasalRoundUi();
-            feedbackLabel.setText("");
+            showFeedbackInRevealArea("", new Color(40, 40, 40));
             requestFocusForCurrentRound();
             log.info("New round started with Spanish expression: '{}'", currentSpanishExpression.getExpression());
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         } else {
             spanishExpressionLabel.setText("No expressions available. Add some words or select another database.");
-            feedbackLabel.setText("Please add expressions to this database or select another one.");
+            showFeedbackInRevealArea("Please add expressions to this database or select another one.", Color.RED);
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         }
@@ -911,8 +1054,7 @@ public class GameView extends JFrame {
         
         String userTranslation = canonicalUserTranslationFromField();
         if (userTranslation.isEmpty()) {
-            feedbackLabel.setText("Please enter a translation.");
-            feedbackLabel.setForeground(Color.RED);
+            showFeedbackInRevealArea("Please enter a translation.", Color.RED);
             return;
         }
 
@@ -927,14 +1069,15 @@ public class GameView extends JFrame {
             }
             boolean correctPractice = probe.get();
             if (correctPractice) {
-                feedbackLabel.setText("Correcto — solo comprobación, sin cambiar puntajes.");
-                feedbackLabel.setForeground(new Color(0, 130, 60));
+                showFeedbackInRevealArea("Correcto — solo comprobación, sin cambiar puntajes.", new Color(0, 130, 60));
             } else {
                 if (isPhrasalRound()) {
                     showPhrasalPedagogicFeedback(userTranslation, true);
                 } else {
-                    feedbackLabel.setText("Incorrecto — sin penalización en esta ronda.");
-                    feedbackLabel.setForeground(new Color(200, 80, 0));
+                    String detail = buildExpectedVsTypedDetail(userTranslation);
+                    showFeedbackInRevealArea(
+                            "Incorrecto — sin penalización en esta ronda.\n" + detail,
+                            new Color(200, 80, 0));
                 }
             }
             refreshCurrentWordScores();
@@ -956,8 +1099,8 @@ public class GameView extends JFrame {
                         JOptionPane.INFORMATION_MESSAGE);
             }
             int seconds = Math.max(1, CORRECT_ANSWER_NEXT_ROUND_DELAY_MS / 1000);
-            feedbackLabel.setText("Correct! Well done. Next round in " + seconds + " seconds...");
-            feedbackLabel.setForeground(new Color(0, 150, 0));
+            showFeedbackInRevealArea("Correct! Well done. Next round in " + seconds + " seconds...",
+                    new Color(0, 150, 0));
             log.info("Correct answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
             scheduleAutoAdvanceAfterCorrect();
         } else {
@@ -965,8 +1108,8 @@ public class GameView extends JFrame {
                 showPhrasalPedagogicFeedback(userTranslation, false);
                 activatePostIncorrectPhrasalLock();
             } else {
-                feedbackLabel.setText("Incorrect. Try again or start a new round.");
-                feedbackLabel.setForeground(Color.RED);
+                String detail = buildExpectedVsTypedDetail(userTranslation);
+                showFeedbackInRevealArea("Incorrect. Try again or start a new round.\n" + detail, Color.RED);
             }
             log.info("Incorrect answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
         }
@@ -980,16 +1123,13 @@ public class GameView extends JFrame {
         List<String> expectedTokens = bestReferencePhrasalTokens(userTokens);
 
         String modePrefix = noScoreMode
-                ? "<b>Incorrecto (sin penalización)</b><br>"
-                : "<b>Incorrecto</b><br>";
-        StringBuilder html = new StringBuilder("<html>");
-        html.append(modePrefix);
-        html.append(slotDiagnosisHtml(userTokens, expectedTokens));
-        html.append("<br>Correcto: <b>").append(escapeMinimalHtml(String.join(" ", expectedTokens))).append("</b>");
-        html.append("</html>");
-
-        feedbackLabel.setText(html.toString());
-        feedbackLabel.setForeground(new Color(188, 48, 48));
+                ? "Incorrecto (sin penalización)"
+                : "Incorrecto";
+        StringBuilder msg = new StringBuilder();
+        msg.append(modePrefix).append("\n");
+        msg.append(slotDiagnosisPlain(userTokens, expectedTokens)).append("\n");
+        msg.append("Correcto: ").append(String.join(" ", expectedTokens));
+        showFeedbackInRevealArea(msg.toString(), new Color(188, 48, 48));
     }
 
     private List<String> bestReferencePhrasalTokens(List<String> userTokens) {
@@ -997,7 +1137,7 @@ public class GameView extends JFrame {
             return Collections.emptyList();
         }
         List<List<String>> candidates = new ArrayList<>();
-        for (EnglishExpression en : currentSpanishExpression.getTranslations()) {
+        for (EnglishExpression en : cohortEnglishTranslationsOrCurrent()) {
             List<String> tokens = tokensAfterOptionalTo(en.getExpression());
             if (!tokens.isEmpty()) {
                 candidates.add(tokens);
@@ -1037,7 +1177,7 @@ public class GameView extends JFrame {
         return penalty;
     }
 
-    private String slotDiagnosisHtml(List<String> userTokens, List<String> expectedTokens) {
+    private String slotDiagnosisPlain(List<String> userTokens, List<String> expectedTokens) {
         int slots = Math.max(2, Math.min(4, expectedTokens.size()));
         String[] slotNames = { "Verbo", "Partícula 1", "Partícula 2", "Partícula 3" };
         StringBuilder out = new StringBuilder();
@@ -1051,28 +1191,17 @@ public class GameView extends JFrame {
             if (ok) {
                 out.append("OK");
             } else if (i >= userTokens.size()) {
-                out.append("Falta (esperado: ").append(escapeMinimalHtml(expected)).append(")");
+                out.append("Falta (esperado: ").append(expected).append(")");
             } else if (i >= expectedTokens.size()) {
                 out.append("No aplica");
             } else {
-                out.append("esperado ").append(escapeMinimalHtml(expected))
-                        .append(", escribiste ").append(escapeMinimalHtml(typed));
+                out.append("esperado ").append(expected).append(", escribiste ").append(typed);
             }
             if (i < slots - 1) {
-                out.append("<br>");
+                out.append("\n");
             }
         }
         return out.toString();
-    }
-
-    private static String escapeMinimalHtml(String plain) {
-        if (plain == null) {
-            return "";
-        }
-        return plain
-                .replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;");
     }
 
     private void activatePostIncorrectPhrasalLock() {
@@ -1116,15 +1245,14 @@ public class GameView extends JFrame {
 
     private void refreshCurrentWordScores() {
         if (currentSpanishExpression == null) {
-            scoreLabel.setText("Phrase score (this word): -");
+            scoreLabel.setText("Phrase score (this word)");
             scoreLabel.setForeground(new Color(90, 90, 90));
             return;
         }
 
         int phraseScore = currentSpanishExpression.getScore();
         if (isNeutralScoringRound()) {
-            scoreLabel.setText("Phrase score (reference): " + phraseScore
-                    + " — esta ronda no cuenta para puntaje");
+            scoreLabel.setText("Phrase score (reference): " + phraseScore + " (sin puntuación)");
             scoreLabel.setForeground(new Color(105, 105, 115));
         } else {
             scoreLabel.setText("Phrase score (this word): " + phraseScore);
@@ -1147,6 +1275,21 @@ public class GameView extends JFrame {
 
     private boolean isPhrasalRound() {
         return isPhrasalDatabaseSelected() && currentSpanishExpression != null;
+    }
+
+    /**
+     * Traducciones inglesas válidas para la frase en pantalla: incluye todas las filas ES con el mismo texto en español.
+     */
+    private List<EnglishExpression> cohortEnglishTranslationsOrCurrent() {
+        if (gameController == null || currentSpanishExpression == null) {
+            return Collections.emptyList();
+        }
+        List<EnglishExpression> cohortEn = gameController.getCurrentPhraseCohortEnglishTranslations();
+        if (!cohortEn.isEmpty()) {
+            return cohortEn;
+        }
+        List<EnglishExpression> t = currentSpanishExpression.getTranslations();
+        return t != null ? t : Collections.emptyList();
     }
 
     private void configurePhrasalRoundUi() {
@@ -1227,7 +1370,7 @@ public class GameView extends JFrame {
         if (currentSpanishExpression == null) {
             return false;
         }
-        return currentSpanishExpression.getTranslations().stream()
+        return cohortEnglishTranslationsOrCurrent().stream()
                 .map(EnglishExpression::getExpression)
                 .filter(s -> s != null && !s.isBlank())
                 .anyMatch(s -> s.trim().toLowerCase(Locale.ROOT).startsWith("to "));
@@ -1284,7 +1427,7 @@ public class GameView extends JFrame {
             return;
         }
         int max = 2;
-        for (EnglishExpression en : currentSpanishExpression.getTranslations()) {
+        for (EnglishExpression en : cohortEnglishTranslationsOrCurrent()) {
             int sz = tokensAfterOptionalTo(en.getExpression()).size();
             if (sz >= 2) {
                 max = Math.max(max, sz);
@@ -1319,8 +1462,12 @@ public class GameView extends JFrame {
         LinkedHashSet<String> reqP1 = new LinkedHashSet<>();
         LinkedHashSet<String> reqP2 = new LinkedHashSet<>();
         LinkedHashSet<String> reqP3 = new LinkedHashSet<>();
-        currentSpanishExpression.getTranslations().forEach(en ->
-                addPhrasalTokensToPools(en.getExpression(), reqVerbs, reqP1, reqP2, reqP3));
+        for (SpanishExpression sp : gameController.getCurrentPhraseCohort()) {
+            if (sp.getTranslations() != null) {
+                sp.getTranslations().forEach(en ->
+                        addPhrasalTokensToPools(en.getExpression(), reqVerbs, reqP1, reqP2, reqP3));
+            }
+        }
 
         Set<String> poolVerbs = new LinkedHashSet<>();
         Set<String> poolP1 = new LinkedHashSet<>();
@@ -1491,6 +1638,20 @@ public class GameView extends JFrame {
         revealFullText = "";
         revealCharIndex = 0;
         revealAnswerArea.setText("");
+        revealAnswerArea.setForeground(new Color(40, 40, 40));
+    }
+
+    private void showFeedbackInRevealArea(String message, Color color) {
+        revealAnswerArea.setText(message == null ? "" : message);
+        revealAnswerArea.setForeground(color == null ? new Color(40, 40, 40) : color);
+    }
+
+    private String buildExpectedVsTypedDetail(String userTranslation) {
+        String typed = userTranslation == null || userTranslation.isBlank() ? "(vacío)" : userTranslation.trim();
+        String expected = gameController.getRevealAnswersLine()
+                .filter(line -> !line.isBlank())
+                .orElse("(sin referencia disponible)");
+        return "Se esperaba: " + expected + "\nHas escrito: " + typed;
     }
 
     private void stopRevealCharTimer() {
@@ -1650,7 +1811,7 @@ public class GameView extends JFrame {
         cancelPendingAutoNextRound();
         spanishExpressionLabel.setText("Select a database and start a new round!");
         englishTranslationField.setText("");
-        feedbackLabel.setText("");
+        showFeedbackInRevealArea("", new Color(40, 40, 40));
         preparePracticeRevealStateForNewRound();
         phrasalBuilderPanel.setVisible(false);
         englishTranslationField.setEditable(true);
