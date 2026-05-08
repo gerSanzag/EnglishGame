@@ -61,10 +61,10 @@ public class GameView extends JFrame {
     private JButton revealAllButton;
     private JTextArea revealAnswerArea;
     private JPanel phrasalBuilderPanel;
+    /** Una sola fila: 1) Verbo | 2) Partícula | 3) Partícula/preposición | 4) cuarta pieza. */
+    private JPanel phrasalColumnsBand;
     private JPanel phrasalThirdSlotPanel;
-    private JPanel phrasalThirdSlotSection;
     private JPanel phrasalFourthSlotPanel;
-    private JPanel phrasalFourthSlotSection;
     private JTextField phrasalVerbInput;
     private JTextField phrasalParticle1Input;
     private JTextField phrasalParticle2Input;
@@ -105,7 +105,18 @@ public class GameView extends JFrame {
     /** Opciones phrasal y JTextField deben compartir el mismo ancho (alineación). */
     private static final int PHRASAL_INPUT_COL_MAX_W = 280;
     private static final int PHRASAL_INPUT_COL_MIN_W = 170;
-    private static final int PHRASAL_INPUT_FIELD_H = 32;
+    /** ~+28 % respecto al alto previo para acomodar texto más grande sin recortes. */
+    private static final int PHRASAL_INPUT_FIELD_H = 41;
+    /** Titulares 1), 2), 3)… (~+25 % frente a 12). */
+    private static final int PHRASAL_ROW_TITLE_PX = 15;
+    /** Lista \"Opciones: …\" activa (~+31 % frente a 13). */
+    private static final int PHRASAL_OPTIONS_ACTIVE_PX = 17;
+    /** Mensaje gris cuando la ranura está inactiva (~+25 % frente a 12). */
+    private static final int PHRASAL_OPTIONS_INACTIVE_PX = 15;
+    /** Lo que escribe el usuario en cada pieza (~+29 % frente a 14). */
+    private static final int PHRASAL_INPUT_TEXT_PX = 18;
+    /** Separación horizontal entre las cuatro columnas del bloque phrasal. */
+    private static final int PHRASAL_COL_HGAP = 10;
     private static final Color PHRASAL_OPTIONS_FG = new Color(52, 56, 64);
     private static final Color PHRASAL_OPTIONS_FG_MUTED = new Color(118, 125, 140);
     private JScrollPane mainGameScrollPane;
@@ -256,44 +267,34 @@ public class GameView extends JFrame {
         phrasalBuilderPanel = new JPanel();
         phrasalBuilderPanel.setLayout(new BoxLayout(phrasalBuilderPanel, BoxLayout.Y_AXIS));
         phrasalBuilderPanel.setOpaque(false);
-        // Mismo criterio que el resto del gamePanel: si queda en 0 el BoxLayout alinea a la izquierda.
-        phrasalBuilderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        phrasalBuilderPanel.add(buildPhrasalInputRow("1) Verbo", phrasalVerbOptionsArea, phrasalVerbInput));
-        phrasalBuilderPanel.add(Box.createVerticalStrut(3));
-        phrasalBuilderPanel.add(buildPhrasalInputRow("2) Partícula", phrasalParticle1OptionsArea, phrasalParticle1Input));
-        phrasalBuilderPanel.add(Box.createVerticalStrut(3));
-        phrasalThirdSlotSection = new JPanel();
-        phrasalThirdSlotSection.setOpaque(false);
-        phrasalThirdSlotSection.setLayout(new BoxLayout(phrasalThirdSlotSection, BoxLayout.Y_AXIS));
-        phrasalThirdSlotSection.setAlignmentX(Component.CENTER_ALIGNMENT);
-        phrasalThirdSlotSection.add(Box.createVerticalStrut(3));
+        // Evita centrar un ancho mal calculado y que la fila phrasal “se vaya” a la derecha.
+        phrasalBuilderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        phrasalColumnsBand = new JPanel(new GridLayout(1, 4, PHRASAL_COL_HGAP, 0));
+        phrasalColumnsBand.setOpaque(false);
+        phrasalColumnsBand.add(buildPhrasalInputRow("1) Verbo", phrasalVerbOptionsArea, phrasalVerbInput));
+        phrasalColumnsBand.add(buildPhrasalInputRow("2) Partícula", phrasalParticle1OptionsArea, phrasalParticle1Input));
         phrasalThirdSlotPanel = buildPhrasalInputRow(
                 "3) Partícula / preposición", phrasalParticle2OptionsArea, phrasalParticle2Input);
-        phrasalThirdSlotSection.add(phrasalThirdSlotPanel);
-        phrasalBuilderPanel.add(phrasalThirdSlotSection);
+        phrasalColumnsBand.add(phrasalThirdSlotPanel);
         phrasalFourthSlotPanel = buildPhrasalInputRow(
-                "4) Palabra siguiente (si aplica)", phrasalParticle3OptionsArea, phrasalParticle3Input);
-        phrasalFourthSlotSection = new JPanel();
-        phrasalFourthSlotSection.setOpaque(false);
-        phrasalFourthSlotSection.setLayout(new BoxLayout(phrasalFourthSlotSection, BoxLayout.Y_AXIS));
-        phrasalFourthSlotSection.setAlignmentX(Component.CENTER_ALIGNMENT);
-        phrasalFourthSlotSection.add(Box.createVerticalStrut(3));
-        phrasalFourthSlotSection.add(phrasalFourthSlotPanel);
-        phrasalBuilderPanel.add(phrasalFourthSlotSection);
+                "4) Siguiente (si aplica)", phrasalParticle3OptionsArea, phrasalParticle3Input);
+        phrasalColumnsBand.add(phrasalFourthSlotPanel);
+        phrasalBuilderPanel.add(phrasalColumnsBand);
         phrasalBuilderPanel.setVisible(false);
     }
 
     private JTextArea buildPhrasalOptionsTextArea() {
-        JTextArea ta = new JTextArea(2, 32);
+        JTextArea ta = new JTextArea(3, 32);
         ta.setEditable(false);
         ta.setFocusable(false);
         ta.setLineWrap(true);
         ta.setWrapStyleWord(true);
         ta.setOpaque(true);
-        ta.setFont(new Font("Arial", Font.BOLD, 13));
+        ta.setFont(new Font("Arial", Font.BOLD, PHRASAL_OPTIONS_ACTIVE_PX));
         ta.setForeground(PHRASAL_OPTIONS_FG);
         ta.setBackground(new Color(246, 248, 252));
-        ta.setMargin(new Insets(3, 5, 3, 5));
+        ta.setMargin(new Insets(5, 6, 5, 6));
+        ta.setAlignmentY(Component.TOP_ALIGNMENT);
         ta.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(198, 204, 218), 1),
                 BorderFactory.createEmptyBorder(1, 2, 2, 2)));
@@ -309,41 +310,57 @@ public class GameView extends JFrame {
             return;
         }
         if (activeList) {
-            area.setFont(new Font("Arial", Font.BOLD, 13));
+            area.setFont(new Font("Arial", Font.BOLD, PHRASAL_OPTIONS_ACTIVE_PX));
             area.setForeground(PHRASAL_OPTIONS_FG);
         } else {
-            area.setFont(new Font("Arial", Font.ITALIC, 12));
+            area.setFont(new Font("Arial", Font.ITALIC, PHRASAL_OPTIONS_INACTIVE_PX));
             area.setForeground(PHRASAL_OPTIONS_FG_MUTED);
         }
     }
 
-    /** Ancho común (listas de opciones + campo de texto) para que queden alineados. */
-    private int phrasalColumnWidthPx() {
-        int avail = maxPhrasalContentWidthPx();
-        return Math.max(PHRASAL_INPUT_COL_MIN_W, Math.min(PHRASAL_INPUT_COL_MAX_W, avail));
+    /** Ancho de cada una de las cuatro columnas: (ancho útil del contenido − huecos) / 4. */
+    private int phrasalSlotColumnWidthPx() {
+        int inner = phrasalBandInnerWidthPx();
+        int gaps = PHRASAL_COL_HGAP * 3;
+        return Math.max(48, (inner - gaps) / 4);
     }
 
     /**
-     * Ancho máximo útil para el bloque phrasal: prioriza el viewport del scroll interno del juego.
+     * Ancho interior real para la banda phrasal: acota con la tarjeta visible y con el viewport
+     * para que la fila de 4 columnas no sobrepase el contenedor ni se centre mal.
      */
-    private int maxPhrasalContentWidthPx() {
+    private int phrasalBandInnerWidthPx() {
+        int fromTopCard = -1;
+        if (topCardPanel != null && topCardPanel.getWidth() > 40) {
+            Insets in = topCardPanel.getInsets();
+            fromTopCard = topCardPanel.getWidth() - in.left - in.right;
+        }
+        int fromViewport = -1;
         if (gameUpperScrollPane != null) {
             int iw = gameUpperScrollPane.getViewport().getWidth();
             if (iw > 0) {
-                return Math.max(200, iw - 56);
+                fromViewport = Math.max(120, iw - 52);
             }
         }
-        if (mainGameScrollPane != null) {
+        if (fromViewport < 0 && mainGameScrollPane != null) {
             int vw = mainGameScrollPane.getViewport().getWidth();
             if (vw > 0) {
-                return Math.max(200, vw - 64);
+                fromViewport = Math.max(120, vw - 80);
             }
         }
-        int fw = getWidth();
-        if (fw > 0) {
-            return Math.max(200, fw - 100);
+        int inner;
+        if (fromTopCard >= 0 && fromViewport >= 0) {
+            inner = Math.min(fromTopCard, fromViewport);
+        } else if (fromTopCard >= 0) {
+            inner = fromTopCard;
+        } else if (fromViewport >= 0) {
+            inner = fromViewport;
+        } else if (getWidth() > 0) {
+            inner = Math.max(160, getWidth() - 160);
+        } else {
+            inner = Math.min(PHRASAL_WRAP_FALLBACK_PX, 720);
         }
-        return PHRASAL_WRAP_FALLBACK_PX;
+        return Math.max(160, inner);
     }
 
     private void applyPhrasalOptionPlainText(JTextArea area, String plain) {
@@ -355,13 +372,13 @@ public class GameView extends JFrame {
         if (area == null) {
             return;
         }
-        int w = phrasalColumnWidthPx();
+        int w = phrasalSlotColumnWidthPx();
         area.setSize(new Dimension(w, 50_000));
         Dimension pref = area.getPreferredSize();
-        int h = Math.max(18, pref.height);
+        int h = Math.max(24, pref.height);
         area.setPreferredSize(new Dimension(w, h));
-        area.setMaximumSize(new Dimension(w, h + 12));
-        area.setMinimumSize(new Dimension(Math.min(120, w), Math.min(h, 16)));
+        area.setMaximumSize(new Dimension(w, h + 14));
+        area.setMinimumSize(new Dimension(Math.min(w, 100), Math.min(h, 16)));
     }
 
     private void layoutPhrasalOptionsTextAreas() {
@@ -371,40 +388,44 @@ public class GameView extends JFrame {
         layoutOnePhrasalOptionArea(phrasalVerbOptionsArea);
         layoutOnePhrasalOptionArea(phrasalParticle1OptionsArea);
         layoutOnePhrasalOptionArea(phrasalParticle2OptionsArea);
-        if (currentPhrasalSlotsNeeded >= 4) {
-            layoutOnePhrasalOptionArea(phrasalParticle3OptionsArea);
-        }
+        layoutOnePhrasalOptionArea(phrasalParticle3OptionsArea);
     }
 
     private void syncPhrasalInputsToColumnWidth() {
-        int col = phrasalColumnWidthPx();
+        int col = phrasalSlotColumnWidthPx();
         Dimension fld = new Dimension(col, PHRASAL_INPUT_FIELD_H);
-        JTextField[] fields = {
-                phrasalVerbInput, phrasalParticle1Input, phrasalParticle2Input, phrasalParticle3Input };
-        int minFlat = Math.max(96, Math.min(col, PHRASAL_INPUT_COL_MIN_W));
-        Dimension minFld = new Dimension(minFlat, PHRASAL_INPUT_FIELD_H - 2);
-        for (JTextField f : fields) {
-            if (f == null) {
-                continue;
-            }
-            f.setPreferredSize(fld);
-            f.setMinimumSize(minFld);
-            f.setMaximumSize(fld);
+        Dimension minFld = new Dimension(col, PHRASAL_INPUT_FIELD_H - 2);
+        applyPhrasalFieldWidth(phrasalVerbInput, fld, minFld);
+        applyPhrasalFieldWidth(phrasalParticle1Input, fld, minFld);
+        applyPhrasalFieldWidth(phrasalParticle2Input, fld, minFld);
+        applyPhrasalFieldWidth(phrasalParticle3Input, fld, minFld);
+    }
+
+    private static void applyPhrasalFieldWidth(JTextField f, Dimension prefMinMax, Dimension minSz) {
+        if (f == null) {
+            return;
         }
+        f.setPreferredSize(prefMinMax);
+        f.setMinimumSize(minSz);
+        f.setMaximumSize(prefMinMax);
     }
 
     private void constrainPhrasalRowPanelsToColumnWidth(int colW) {
-        Dimension capRow = new Dimension(colW + 8, Integer.MAX_VALUE);
-        for (Component child : phrasalBuilderPanel.getComponents()) {
-            if (child instanceof JPanel) {
-                child.setMaximumSize(capRow);
-                if (child == phrasalThirdSlotSection) {
-                    phrasalThirdSlotPanel.setMaximumSize(capRow);
-                }
-                if (child == phrasalFourthSlotSection) {
-                    phrasalFourthSlotPanel.setMaximumSize(capRow);
+        if (phrasalColumnsBand != null) {
+            int inner = phrasalBandInnerWidthPx();
+            int maxH = 0;
+            for (Component partCol : phrasalColumnsBand.getComponents()) {
+                if (partCol != null) {
+                    Dimension ps = partCol.getPreferredSize();
+                    int colH = ps.height;
+                    partCol.setPreferredSize(new Dimension(colW, colH));
+                    partCol.setMaximumSize(new Dimension(colW, Integer.MAX_VALUE));
+                    maxH = Math.max(maxH, colH);
                 }
             }
+            phrasalColumnsBand.setPreferredSize(new Dimension(inner, maxH));
+            phrasalColumnsBand.setMaximumSize(new Dimension(inner, Integer.MAX_VALUE));
+            phrasalColumnsBand.setMinimumSize(new Dimension(inner, 0));
         }
     }
 
@@ -413,11 +434,13 @@ public class GameView extends JFrame {
             return;
         }
         reapplyPhrasalOptionsText();
-        int col = phrasalColumnWidthPx();
+        int col = phrasalSlotColumnWidthPx();
         syncPhrasalInputsToColumnWidth();
         layoutPhrasalOptionsTextAreas();
         constrainPhrasalRowPanelsToColumnWidth(col);
-        phrasalBuilderPanel.setMaximumSize(new Dimension(Math.max(col + 32, 200), Integer.MAX_VALUE));
+        int inner = phrasalBandInnerWidthPx();
+        phrasalBuilderPanel.setMaximumSize(new Dimension(inner, Integer.MAX_VALUE));
+        phrasalBuilderPanel.setMinimumSize(new Dimension(inner, 0));
         phrasalBuilderPanel.revalidate();
         revalidate();
         repaint();
@@ -444,10 +467,23 @@ public class GameView extends JFrame {
                 ? "Segunda partícula o preposición (p. ej. of, with)"
                 : "Inactivo en esta tarjeta: no hace falta tercera pieza.");
 
-        if (currentPhrasalSlotsNeeded >= 4) {
+        boolean fourthSlotActive = currentPhrasalSlotsNeeded >= 4;
+        if (fourthSlotActive) {
             applyPhrasalOptionPlainText(phrasalParticle3OptionsArea,
                     "Opciones: " + joinOptions(currentParticle3Options));
             applyPhrasalOptionsAreaTone(phrasalParticle3OptionsArea, true);
+            phrasalParticle3Input.setToolTipText(
+                    "Cuarta pieza del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")");
+        } else {
+            String fourthInactiveMsg;
+            if (currentPhrasalSlotsNeeded <= 2) {
+                fourthInactiveMsg = "Opciones: inactivas — Esta tarjeta solo usa dos piezas; rellena solo 1) y 2).";
+            } else {
+                fourthInactiveMsg = "Opciones: inactivas — Esta tarjeta no usa cuarta pieza (basta con 1), 2) y 3).";
+            }
+            applyPhrasalOptionPlainText(phrasalParticle3OptionsArea, fourthInactiveMsg);
+            applyPhrasalOptionsAreaTone(phrasalParticle3OptionsArea, false);
+            phrasalParticle3Input.setToolTipText("Inactivo en esta tarjeta: no hace falta cuarta pieza.");
         }
     }
 
@@ -471,22 +507,28 @@ public class GameView extends JFrame {
         JPanel row = new JPanel();
         row.setOpaque(false);
         row.setLayout(new BoxLayout(row, BoxLayout.Y_AXIS));
-        row.setAlignmentX(Component.CENTER_ALIGNMENT);
+        row.setAlignmentX(Component.LEFT_ALIGNMENT);
+        row.setAlignmentY(Component.TOP_ALIGNMENT);
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, PHRASAL_ROW_TITLE_PX));
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        titleLabel.setAlignmentY(Component.TOP_ALIGNMENT);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         optionsArea.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsArea.setAlignmentY(Component.TOP_ALIGNMENT);
         inputField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        inputField.setAlignmentY(Component.TOP_ALIGNMENT);
         row.add(titleLabel);
         row.add(optionsArea);
         row.add(Box.createVerticalStrut(1));
         row.add(inputField);
+        row.add(Box.createVerticalGlue());
         return row;
     }
 
     private void stylePhrasalInput(JTextField input, String tooltip) {
-        input.setFont(new Font("Arial", Font.PLAIN, 14));
+        input.setFont(new Font("Arial", Font.PLAIN, PHRASAL_INPUT_TEXT_PX));
+        input.setAlignmentY(Component.TOP_ALIGNMENT);
         input.setToolTipText(tooltip);
         Dimension d = new Dimension(PHRASAL_INPUT_COL_MAX_W, PHRASAL_INPUT_FIELD_H);
         input.setPreferredSize(d);
@@ -739,7 +781,7 @@ public class GameView extends JFrame {
         gbc.insets = new Insets(0, 0, 10, 0);
         topCard.add(answerRow, gbc);
 
-        phrasalBuilderPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        phrasalBuilderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 8, 0);
         topCard.add(phrasalBuilderPanel, gbc);
@@ -1374,8 +1416,7 @@ public class GameView extends JFrame {
         if (!phrasalMode) {
             englishTranslationField.setEditable(true);
             englishTranslationField.setToolTipText("Enter your English translation here");
-            phrasalThirdSlotSection.setVisible(true);
-            phrasalFourthSlotSection.setVisible(true);
+            phrasalColumnsBand.setVisible(true);
             phrasalBuilderPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
             phrasalVerbInput.setEnabled(true);
             phrasalParticle1Input.setEnabled(true);
@@ -1532,7 +1573,6 @@ public class GameView extends JFrame {
 
     private void buildPhrasalOptionsForCurrentRound() {
         refreshCurrentPhrasalSlotsNeeded();
-        phrasalFourthSlotSection.setVisible(currentPhrasalSlotsNeeded >= 4);
 
         LinkedHashSet<String> reqVerbs = new LinkedHashSet<>();
         LinkedHashSet<String> reqP1 = new LinkedHashSet<>();
