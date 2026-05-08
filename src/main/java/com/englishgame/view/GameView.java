@@ -21,6 +21,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.DocumentFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -233,10 +238,10 @@ public class GameView extends JFrame {
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)));
         revealAnswerArea.setToolTipText("Aquí aparece la respuesta de referencia cuando usas modo práctica");
 
-        phrasalVerbInput = new JTextField();
-        phrasalParticle1Input = new JTextField();
-        phrasalParticle2Input = new JTextField();
-        phrasalParticle3Input = new JTextField();
+        phrasalVerbInput = new PhrasalTokenField();
+        phrasalParticle1Input = new PhrasalTokenField();
+        phrasalParticle2Input = new PhrasalTokenField();
+        phrasalParticle3Input = new PhrasalTokenField();
         stylePhrasalInput(phrasalVerbInput, "Escribe el verbo");
         stylePhrasalInput(phrasalParticle1Input, "Primera partícula o palabra siguiente al verbo");
         stylePhrasalInput(phrasalParticle2Input, "Segunda partícula o preposición (p. ej. of, with)");
@@ -1552,11 +1557,23 @@ public class GameView extends JFrame {
                     addPhrasalTokensToPools(en.getExpression(), poolVerbs, poolP1, poolP2, poolP3));
         }
 
+        /*
+         * poolP2 solo se llena con la 3ª pieza de lemmas de >=3 tokens; si el mazo tiene muchos phrasales
+         * cortos (2 piezas), el pool casi está vacío y solo aparece la opción correcta (p. ej. "of").
+         * Unimos todas las pools de piezas como distractores creíbles para ranuras altas.
+         */
+        LinkedHashSet<String> poolParticle2Combined = new LinkedHashSet<>(poolP2);
+        poolParticle2Combined.addAll(poolP1);
+        poolParticle2Combined.addAll(poolP3);
+        LinkedHashSet<String> poolParticle3Combined = new LinkedHashSet<>(poolP3);
+        poolParticle3Combined.addAll(poolP1);
+        poolParticle3Combined.addAll(poolP2);
+
         Random rnd = ThreadLocalRandom.current();
         currentVerbOptions = buildShuffledPhrasalOptions(reqVerbs, poolVerbs, 6, tok -> !"to".equals(tok), rnd);
         currentParticle1Options = buildShuffledPhrasalOptions(reqP1, poolP1, 6, tok -> true, rnd);
-        currentParticle2Options = buildShuffledPhrasalOptions(reqP2, poolP2, 6, tok -> true, rnd);
-        currentParticle3Options = buildShuffledPhrasalOptions(reqP3, poolP3, 6, tok -> true, rnd);
+        currentParticle2Options = buildShuffledPhrasalOptions(reqP2, poolParticle2Combined, 6, tok -> true, rnd);
+        currentParticle3Options = buildShuffledPhrasalOptions(reqP3, poolParticle3Combined, 6, tok -> true, rnd);
     }
 
     private String joinOptions(List<String> options) {
@@ -1922,5 +1939,53 @@ public class GameView extends JFrame {
         log.info("Returning to landing page");
         this.setVisible(false);
         landingPage.returnToLanding();
+    }
+
+    /**
+     * Campo por piezas del phrasal: máximo una palabra (sin whitespace) y sin pegado,
+     * para mantener práctica manual.
+     */
+    private static final class PhrasalTokenField extends JTextField {
+        PhrasalTokenField() {
+            super();
+            Document doc = getDocument();
+            if (doc instanceof AbstractDocument abstractDocument) {
+                abstractDocument.setDocumentFilter(new SingleTokenWhitespaceRejectFilter());
+            }
+        }
+
+        @Override
+        public void paste() {
+        }
+
+        /** Si el texto nuevo contiene espacio u otro whitespace, la inserción no se aplica. */
+        private static final class SingleTokenWhitespaceRejectFilter extends DocumentFilter {
+            @Override
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                    throws BadLocationException {
+                if (string != null && containsWhitespace(string)) {
+                    return;
+                }
+                fb.insertString(offset, string, attr);
+            }
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                    throws BadLocationException {
+                if (text != null && containsWhitespace(text)) {
+                    return;
+                }
+                fb.replace(offset, length, text, attrs);
+            }
+
+            private static boolean containsWhitespace(String s) {
+                for (int i = 0; i < s.length(); i++) {
+                    if (Character.isWhitespace(s.charAt(i))) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
     }
 }
