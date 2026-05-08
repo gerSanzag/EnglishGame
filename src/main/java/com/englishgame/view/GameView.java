@@ -168,7 +168,7 @@ public class GameView extends JFrame {
         spanishExpressionLabel.setForeground(new Color(0, 102, 204));
         
         englishTranslationField = new JTextField(20);
-        englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 17));
+        englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 23));
         englishTranslationField.setToolTipText("Enter your English translation here");
         englishTranslationField.setBackground(new Color(248, 252, 255));
         englishTranslationField.setForeground(new Color(34, 45, 58));
@@ -1257,19 +1257,26 @@ public class GameView extends JFrame {
 
     private void refreshCurrentWordScores() {
         if (currentSpanishExpression == null) {
-            scoreLabel.setText("Phrase score (this word)");
+            scoreLabel.setText("This phrase score");
             scoreLabel.setForeground(new Color(90, 90, 90));
             return;
         }
 
         int phraseScore = currentSpanishExpression.getScore();
         if (isNeutralScoringRound()) {
-            scoreLabel.setText("Phrase score (reference): " + phraseScore + " (sin puntuación)");
+            scoreLabel.setText(buildScoreLabelHtml("This phrase score:", phraseScore, " (sin puntuación)"));
             scoreLabel.setForeground(new Color(105, 105, 115));
         } else {
-            scoreLabel.setText("Phrase score (this word): " + phraseScore);
+            scoreLabel.setText(buildScoreLabelHtml("This phrase score:", phraseScore, ""));
             scoreLabel.setForeground(new Color(0, 130, 50));
         }
+    }
+
+    private String buildScoreLabelHtml(String prefix, int score, String suffix) {
+        String safePrefix = prefix == null ? "" : prefix;
+        String safeSuffix = suffix == null ? "" : suffix;
+        return "<html>" + safePrefix + " <span style='font-size:1.18em;font-weight:700;'>" + score
+                + "</span>" + safeSuffix + "</html>";
     }
 
     private boolean isNeutralScoringRound() {
