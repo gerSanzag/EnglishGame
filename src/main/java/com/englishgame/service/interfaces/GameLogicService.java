@@ -23,12 +23,14 @@ public interface GameLogicService {
     SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound);
     
     /**
-     * Validates user's English translation against the Spanish expression
-     * @param spanishExpression the Spanish expression being translated
-     * @param userTranslation the user's English translation
-     * @return true if translation is correct, false otherwise
+     * Validates user's English translation against every ES row sharing the same Spanish phrase
+     * in {@code practiceDatabase}.
+     *
+     * @param promptCard       Spanish side of the current round (any duplicate row for that phrase)
+     * @param userTranslation  user's English answer
+     * @param practiceDatabase vocabulary DB name
      */
-    boolean validateTranslation(SpanishExpression spanishExpression, String userTranslation);
+    boolean validateTranslation(SpanishExpression promptCard, String userTranslation, String practiceDatabase);
     
     /**
      * Processes correct answer - adds points to matching English expression
@@ -41,12 +43,15 @@ public interface GameLogicService {
                                               String practiceDatabase);
     
     /**
-     * Processes incorrect answer - subtracts points from all English expressions
-     * @param spanishExpression the Spanish expression
-     * @param userTranslation the incorrect English translation
-     * @return list of updated English expressions with new scores
+     * Processes incorrect answer: penalizes every English translation on every ES row sharing the same Spanish phrase.
+     *
+     * @return translations list of {@code promptCard} (same reference as in-memory model) after penalties
      */
-    java.util.List<EnglishExpression> processIncorrectAnswer(SpanishExpression spanishExpression, String userTranslation);
+    java.util.List<EnglishExpression> processIncorrectAnswer(SpanishExpression promptCard, String userTranslation,
+                                                            String practiceDatabase);
+
+    /** All vocabulary rows whose Spanish text equals {@code anchor} (trim, case-insensitive). */
+    java.util.List<SpanishExpression> getSpanishPhraseCohort(String practiceDatabaseName, SpanishExpression anchor);
     
     /**
      * Checks if an English expression has reached the learned threshold (15 points)

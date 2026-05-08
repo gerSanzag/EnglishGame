@@ -3,6 +3,7 @@ package com.englishgame.view;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
+import com.englishgame.util.InclusionDisplay;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class ViewWordsView extends JFrame {
     private final LandingPageView landingPage;
     
     private enum SortMode {
-        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC
+        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC, INCLUSION_DESC, INCLUSION_ASC
     }
 
     private static final class RowData {
@@ -37,13 +38,16 @@ public class ViewWordsView extends JFrame {
         private final int score;
         private final String spanishKey;
         private final String englishKey;
+        private final long includedAtMillis;
 
-        private RowData(String expression, String translation, int score, String spanishKey, String englishKey) {
+        private RowData(String expression, String translation, int score, String spanishKey, String englishKey,
+                long includedAtMillis) {
             this.expression = expression;
             this.translation = translation;
             this.score = score;
             this.spanishKey = spanishKey;
             this.englishKey = englishKey;
+            this.includedAtMillis = includedAtMillis;
         }
     }
 
@@ -89,7 +93,7 @@ public class ViewWordsView extends JFrame {
         databaseSelector.setPreferredSize(new Dimension(200, 30));
         
         // Words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Move", "Delete"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Inclusión", "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -135,10 +139,11 @@ public class ViewWordsView extends JFrame {
         searchField.setPreferredSize(new Dimension(200, 30));
 
         sortSelector = new JComboBox<>(new String[] {
-                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)"
+                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)",
+                "Inclusión (reciente primero)", "Inclusión (antigua primero)"
         });
-        sortSelector.setPreferredSize(new Dimension(220, 30));
-        sortSelector.setToolTipText("Ordena los registros por español, inglés o score");
+        sortSelector.setPreferredSize(new Dimension(280, 30));
+        sortSelector.setToolTipText("Ordena por español, inglés, score o fecha de inclusión");
 
         recordsCountLabel = new JLabel("Registros: 0");
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
@@ -373,7 +378,8 @@ public class ViewWordsView extends JFrame {
                         rowData[1].toString(),
                         (Integer) rowData[2],
                         spanish.getExpression(),
-                        translations));
+                        translations,
+                        spanish.getIncludedAtEpochMillis()));
             }
             
             // Get English expressions
@@ -395,7 +401,8 @@ public class ViewWordsView extends JFrame {
                         rowData[1].toString(),
                         (Integer) rowData[2],
                         translations,
-                        english.getExpression()));
+                        english.getExpression(),
+                        english.getIncludedAtEpochMillis()));
             }
 
             filterWordsTable();
@@ -455,7 +462,12 @@ public class ViewWordsView extends JFrame {
 
         for (RowData rowData : filtered) {
             model.addRow(new Object[] {
-                    rowData.expression, rowData.translation, rowData.score, "Move", "Delete"
+                    rowData.expression,
+                    rowData.translation,
+                    rowData.score,
+                    InclusionDisplay.formatIncludedAt(rowData.includedAtMillis),
+                    "Move",
+                    "Delete"
             });
         }
 
@@ -472,6 +484,11 @@ public class ViewWordsView extends JFrame {
             case SCORE_DESC -> Comparator.comparingInt((RowData r) -> r.score)
                     .reversed()
                     .thenComparing(byExpression);
+            case INCLUSION_DESC -> Comparator.comparingLong((RowData r) -> r.includedAtMillis)
+                    .reversed()
+                    .thenComparing(byExpression);
+            case INCLUSION_ASC -> Comparator.comparingLong((RowData r) -> r.includedAtMillis)
+                    .thenComparing(byExpression);
             case SPANISH_AZ -> Comparator.comparing((RowData r) -> r.spanishKey, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(byExpression);
         };
@@ -487,6 +504,12 @@ public class ViewWordsView extends JFrame {
         }
         if (selected.startsWith("Score")) {
             return SortMode.SCORE_DESC;
+        }
+        if (selected.startsWith("Inclusión")) {
+            if (selected.contains("reciente")) {
+                return SortMode.INCLUSION_DESC;
+            }
+            return SortMode.INCLUSION_ASC;
         }
         return SortMode.SPANISH_AZ;
     }

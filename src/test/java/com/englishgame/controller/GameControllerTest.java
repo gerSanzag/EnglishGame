@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 @DisplayName("GameController Tests")
@@ -138,7 +139,7 @@ class GameControllerTest {
         gameController.selectDatabase(databaseName);
         gameController.startNewRound();
         
-        when(gameLogicService.validateTranslation(spanishExpression, "house")).thenReturn(true);
+        when(gameLogicService.validateTranslation(spanishExpression, "house", databaseName)).thenReturn(true);
         when(gameLogicService.processCorrectAnswer(spanishExpression, "house", databaseName))
                 .thenReturn(new CorrectAnswerOutcome(updatedEnglishExpression, false));
         
@@ -168,15 +169,16 @@ class GameControllerTest {
         gameController.selectDatabase(databaseName);
         gameController.startNewRound();
         
-        when(gameLogicService.validateTranslation(spanishExpression, "wrong")).thenReturn(false);
-        when(gameLogicService.processIncorrectAnswer(spanishExpression, "wrong")).thenReturn(penalizedTranslations);
+        when(gameLogicService.validateTranslation(spanishExpression, "wrong", databaseName)).thenReturn(false);
+        when(gameLogicService.processIncorrectAnswer(spanishExpression, "wrong", databaseName))
+                .thenReturn(penalizedTranslations);
         
         // When
         AnswerResult result = gameController.processAnswer("wrong");
         
         // Then
         assertFalse(result.correct());
-        verify(gameLogicService).processIncorrectAnswer(spanishExpression, "wrong");
+        verify(gameLogicService).processIncorrectAnswer(spanishExpression, "wrong", databaseName);
         verify(gameDataService).saveGameData();
     }
 
@@ -188,7 +190,7 @@ class GameControllerTest {
         
         // Then
         assertFalse(result.correct());
-        verify(gameLogicService, never()).validateTranslation(any(), anyString());
+        verify(gameLogicService, never()).validateTranslation(any(), anyString(), nullable(String.class));
         verify(gameDataService, never()).saveGameData();
     }
 
@@ -204,14 +206,14 @@ class GameControllerTest {
         gameController.selectDatabase(databaseName);
         gameController.startNewRound();
 
-        when(gameLogicService.validateTranslation(spanishExpression, "house")).thenReturn(true);
+        when(gameLogicService.validateTranslation(spanishExpression, "house", databaseName)).thenReturn(true);
 
         Optional<Boolean> res = gameController.checkAnswerWithoutScoring("house");
         assertTrue(res.isPresent());
         assertTrue(res.get());
-        verify(gameLogicService).validateTranslation(spanishExpression, "house");
+        verify(gameLogicService).validateTranslation(spanishExpression, "house", databaseName);
         verify(gameLogicService, never()).processCorrectAnswer(any(), anyString(), anyString());
-        verify(gameLogicService, never()).processIncorrectAnswer(any(), anyString());
+        verify(gameLogicService, never()).processIncorrectAnswer(any(), anyString(), nullable(String.class));
     }
 
     @Test

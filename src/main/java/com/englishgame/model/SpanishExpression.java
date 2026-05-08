@@ -1,7 +1,7 @@
 package com.englishgame.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -15,11 +15,19 @@ import java.util.stream.Collectors;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class SpanishExpression {
     private String expression;
     private int score;
     private List<EnglishExpression> translations = new ArrayList<>();
+    /** Epoch millis when the record was first added; 0 = legacy / unknown. Not used in equals. */
+    private long includedAtEpochMillis;
+
+    public SpanishExpression(String expression, int score, List<EnglishExpression> translations) {
+        this.expression = expression;
+        this.score = score;
+        this.translations = translations != null ? translations : new ArrayList<>();
+        this.includedAtEpochMillis = 0L;
+    }
 
     private String normalizedExpression() {
         return expression == null ? "" : expression.trim().toLowerCase();

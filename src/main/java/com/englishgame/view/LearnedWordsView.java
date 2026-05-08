@@ -2,6 +2,7 @@ package com.englishgame.view;
 
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
+import com.englishgame.util.InclusionDisplay;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public class LearnedWordsView extends JFrame {
     private final LandingPageView landingPage;
     
     private enum SortMode {
-        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC
+        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC, INCLUSION_DESC, INCLUSION_ASC
     }
 
     private static final class RowData {
@@ -38,13 +39,16 @@ public class LearnedWordsView extends JFrame {
         private final int score;
         private final String spanishKey;
         private final String englishKey;
+        private final long includedAtMillis;
 
-        private RowData(String expression, String translation, int score, String spanishKey, String englishKey) {
+        private RowData(String expression, String translation, int score, String spanishKey, String englishKey,
+                long includedAtMillis) {
             this.expression = expression;
             this.translation = translation;
             this.score = score;
             this.spanishKey = spanishKey;
             this.englishKey = englishKey;
+            this.includedAtMillis = includedAtMillis;
         }
     }
 
@@ -85,11 +89,11 @@ public class LearnedWordsView extends JFrame {
 
     private void initComponents() {
         // Learned words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Move", "Delete"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Inclusión", "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 3 || column == 4;
+                return column == 4 || column == 5;
             }
         };
         learnedWordsTable = new JTable(tableModel);
@@ -109,10 +113,11 @@ public class LearnedWordsView extends JFrame {
         searchField.setPreferredSize(new Dimension(200, 30));
 
         sortSelector = new JComboBox<>(new String[] {
-                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)"
+                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)",
+                "Inclusión (reciente primero)", "Inclusión (antigua primero)"
         });
-        sortSelector.setPreferredSize(new Dimension(220, 30));
-        sortSelector.setToolTipText("Ordena los registros por español, inglés o score");
+        sortSelector.setPreferredSize(new Dimension(280, 30));
+        sortSelector.setToolTipText("Ordena por español, inglés, score o fecha de inclusión");
 
         recordsCountLabel = new JLabel("Registros: 0");
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
@@ -335,7 +340,8 @@ public class LearnedWordsView extends JFrame {
                         rowData[1].toString(),
                         (Integer) rowData[2],
                         spanishTranslations,
-                        learnedWord.getExpression()));
+                        learnedWord.getExpression(),
+                        learnedWord.getIncludedAtEpochMillis()));
             }
 
             filterLearnedWordsTable();
@@ -394,7 +400,12 @@ public class LearnedWordsView extends JFrame {
 
         for (RowData rowData : filtered) {
             model.addRow(new Object[] {
-                    rowData.expression, rowData.translation, rowData.score, "Move", "Delete"
+                    rowData.expression,
+                    rowData.translation,
+                    rowData.score,
+                    InclusionDisplay.formatIncludedAt(rowData.includedAtMillis),
+                    "Move",
+                    "Delete"
             });
         }
 
@@ -410,6 +421,11 @@ public class LearnedWordsView extends JFrame {
                     .thenComparing(byExpression);
             case SCORE_DESC -> Comparator.comparingInt((RowData r) -> r.score)
                     .reversed()
+                    .thenComparing(byExpression);
+            case INCLUSION_DESC -> Comparator.comparingLong((RowData r) -> r.includedAtMillis)
+                    .reversed()
+                    .thenComparing(byExpression);
+            case INCLUSION_ASC -> Comparator.comparingLong((RowData r) -> r.includedAtMillis)
                     .thenComparing(byExpression);
             case SPANISH_AZ -> Comparator.comparing((RowData r) -> r.spanishKey, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(byExpression);
@@ -427,6 +443,12 @@ public class LearnedWordsView extends JFrame {
         if (selected.startsWith("Score")) {
             return SortMode.SCORE_DESC;
         }
+        if (selected.startsWith("Inclusión")) {
+            if (selected.contains("reciente")) {
+                return SortMode.INCLUSION_DESC;
+            }
+            return SortMode.INCLUSION_ASC;
+        }
         return SortMode.SPANISH_AZ;
     }
 
@@ -437,18 +459,22 @@ public class LearnedWordsView extends JFrame {
         
         if (result == JOptionPane.YES_OPTION) {
             try {
-                // TODO: Implement delete all learned words functionality through controller
                 log.info("Delete all learned words requested");
-                JOptionPane.showMessageDialog(this, 
-                    "Delete all learned words functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
-                
-                // Refresh table after deletion
+                boolean deleted = gameController.deleteAllExpressions(LEARNED_WORDS_DB);
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this,
+                            "Se eliminaron todas las palabras aprendidas.",
+                            "Borrado completado", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                            "No había palabras aprendidas que borrar.",
+                            "Sin datos", JOptionPane.INFORMATION_MESSAGE);
+                }
                 refreshLearnedWordsTable();
-                
             } catch (Exception e) {
                 log.error("Error deleting all learned words", e);
-                JOptionPane.showMessageDialog(this, "Error deleting learned words: " + e.getMessage(), 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Error al borrar palabras aprendidas: " + e.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -574,10 +600,10 @@ public class LearnedWordsView extends JFrame {
                 String expr = englishExpression;
                 int col = editedColumn;
                 fireEditingStopped();
-                if (col == 3) {
+                if (col == 4) {
                     log.info("Move learned word: {}", expr);
                     moveLearnedWordToPractice(expr);
-                } else if (col == 4) {
+                } else if (col == 5) {
                     log.info("Delete learned word: {}", expr);
                     deleteLearnedWord(expr);
                 }
