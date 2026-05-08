@@ -106,6 +106,12 @@ public class GameView extends JFrame {
     private JScrollPane mainGameScrollPane;
     /** Scroll interno de la sección de juego (ancho útil para wrap de opciones phrasal). */
     private JScrollPane gameUpperScrollPane;
+    /** Tarjeta central del juego (se estiliza distinto en normal vs phrasal). */
+    private JPanel topCardPanel;
+    /** Contenedor visual del score central (se escala por modo). */
+    private JPanel scoreCardPanel;
+    /** Scroll del área de respuesta/referencia (se dimensiona distinto por modo). */
+    private JScrollPane revealAnswerScrollPane;
 
     public GameView(GameController gameController, LandingPageView landingPage) {
         this.gameController = gameController;
@@ -697,12 +703,14 @@ public class GameView extends JFrame {
         gameUpperPanel.setBorder(BorderFactory.createEmptyBorder(24, 12, 14, 12));
 
         JPanel topCard = new JPanel(new GridBagLayout());
+        topCardPanel = topCard;
         topCard.setOpaque(true);
         topCard.setBackground(new Color(252, 254, 255));
         topCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(202, 214, 228), 1),
                 BorderFactory.createEmptyBorder(14, 14, 14, 14)));
-        topCard.setPreferredSize(new Dimension(1020, 430));
+        // En phrasal el contenido puede crecer (filas 1..4 + opciones + feedback).
+        // No fijamos altura rígida para evitar recortes.
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -763,6 +771,7 @@ public class GameView extends JFrame {
         topCard.add(feedbackInlineRow, gbc);
 
         JScrollPane revealScroll = new JScrollPane(revealAnswerArea);
+        revealAnswerScrollPane = revealScroll;
         revealScroll.setPreferredSize(new Dimension(860, 112));
         revealScroll.setMaximumSize(new Dimension(920, 150));
         revealScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
@@ -773,10 +782,13 @@ public class GameView extends JFrame {
         gbc.insets = new Insets(14, 0, 0, 0);
         topCard.add(revealRow, gbc);
 
+        // No forzar preferred size: Swing calcula altura según contenido visible.
+
         JPanel topCardWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         topCardWrap.setOpaque(false);
         topCardWrap.add(topCard);
         gameUpperPanel.add(topCardWrap, BorderLayout.NORTH);
+        applyGameLayoutModel(false);
 
         JPanel centerScoreWrap = new JPanel();
         centerScoreWrap.setLayout(new BoxLayout(centerScoreWrap, BoxLayout.Y_AXIS));
@@ -784,6 +796,7 @@ public class GameView extends JFrame {
         centerScoreWrap.setBorder(BorderFactory.createEmptyBorder(28, 0, 12, 0));
 
         JPanel scoreCenterPill = new JPanel(new BorderLayout());
+        scoreCardPanel = scoreCenterPill;
         scoreCenterPill.setOpaque(true);
         scoreCenterPill.setBackground(new Color(248, 251, 255));
         scoreCenterPill.setBorder(BorderFactory.createCompoundBorder(
@@ -836,15 +849,14 @@ public class GameView extends JFrame {
         stickySouth.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(210, 214, 220)),
                 BorderFactory.createEmptyBorder(14, 16, 14, 16)));
-        stickySouth.add(buttonPanel);
+        stickySouth.add(navSection);
         stickySouth.add(Box.createVerticalStrut(8));
-        stickySouth.add(Box.createVerticalStrut(4));
+        stickySouth.add(buttonPanel);
+        stickySouth.add(Box.createVerticalStrut(6));
 
         mainPanel.add(dbSection);
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(gameSection);
-        mainPanel.add(Box.createVerticalStrut(12));
-        mainPanel.add(navSection);
 
         JScrollPane mainScrollPane = new JScrollPane(mainPanel);
         mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -1278,6 +1290,57 @@ public class GameView extends JFrame {
     }
 
     /**
+     * Modelos de diseño desacoplados por modo: normal vs phrasal.
+     * Esto evita que un ajuste visual de un modo afecte al otro.
+     */
+    private void applyGameLayoutModel(boolean phrasalMode) {
+        if (topCardPanel == null || revealAnswerScrollPane == null) {
+            return;
+        }
+        if (phrasalMode) {
+            topCardPanel.setBackground(new Color(252, 254, 255));
+            topCardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(202, 214, 228), 1),
+                    BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+            spanishExpressionLabel.setFont(new Font("Arial", Font.BOLD, 28));
+            englishTranslationField.setPreferredSize(new Dimension(620, 44));
+            englishTranslationField.setMinimumSize(new Dimension(500, 44));
+            englishTranslationField.setMaximumSize(new Dimension(760, 44));
+            revealAnswerButton.setPreferredSize(new Dimension(200, 40));
+            revealAllButton.setPreferredSize(new Dimension(130, 40));
+            revealAnswerScrollPane.setPreferredSize(new Dimension(860, 112));
+            revealAnswerScrollPane.setMaximumSize(new Dimension(920, 150));
+            scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            if (scoreCardPanel != null) {
+                scoreCardPanel.setPreferredSize(new Dimension(640, 92));
+                scoreCardPanel.setMaximumSize(new Dimension(640, 92));
+            }
+        } else {
+            // Perfil normal separado: escalado visual más amplio.
+            topCardPanel.setBackground(new Color(253, 254, 255));
+            topCardPanel.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(207, 218, 232), 1),
+                    BorderFactory.createEmptyBorder(22, 22, 22, 22)));
+            spanishExpressionLabel.setFont(new Font("Arial", Font.BOLD, 36));
+            englishTranslationField.setPreferredSize(new Dimension(760, 60));
+            englishTranslationField.setMinimumSize(new Dimension(660, 60));
+            englishTranslationField.setMaximumSize(new Dimension(900, 60));
+            revealAnswerButton.setPreferredSize(new Dimension(250, 52));
+            revealAllButton.setPreferredSize(new Dimension(188, 52));
+            revealAnswerScrollPane.setPreferredSize(new Dimension(1020, 170));
+            revealAnswerScrollPane.setMaximumSize(new Dimension(1120, 210));
+            scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 29));
+            if (scoreCardPanel != null) {
+                scoreCardPanel.setPreferredSize(new Dimension(820, 132));
+                scoreCardPanel.setMaximumSize(new Dimension(820, 132));
+            }
+        }
+        revealAnswerArea.setFont(new Font("Arial", Font.PLAIN, phrasalMode ? 16 : 19));
+        topCardPanel.revalidate();
+        topCardPanel.repaint();
+    }
+
+    /**
      * Traducciones inglesas válidas para la frase en pantalla: incluye todas las filas ES con el mismo texto en español.
      */
     private List<EnglishExpression> cohortEnglishTranslationsOrCurrent() {
@@ -1294,6 +1357,7 @@ public class GameView extends JFrame {
 
     private void configurePhrasalRoundUi() {
         boolean phrasalMode = isPhrasalRound();
+        applyGameLayoutModel(phrasalMode);
         phrasalBuilderPanel.setVisible(phrasalMode);
         if (!phrasalMode) {
             englishTranslationField.setEditable(true);
@@ -1809,6 +1873,7 @@ public class GameView extends JFrame {
     private void resetGameDisplay() {
         postIncorrectPhrasalLock = false;
         cancelPendingAutoNextRound();
+        applyGameLayoutModel(false);
         spanishExpressionLabel.setText("Select a database and start a new round!");
         englishTranslationField.setText("");
         showFeedbackInRevealArea("", new Color(40, 40, 40));
