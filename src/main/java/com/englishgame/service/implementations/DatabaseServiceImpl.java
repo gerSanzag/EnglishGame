@@ -1,5 +1,6 @@
 package com.englishgame.service.implementations;
 
+import com.englishgame.model.LearnedWordsReviewResult;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.service.interfaces.DatabaseService;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import javax.swing.JOptionPane;
 
 /**
  * Implementation of DatabaseService for managing game databases
@@ -20,6 +22,12 @@ public class DatabaseServiceImpl implements DatabaseService {
     private final GameDataService gameDataService;
     private static final String LEARNED_WORDS_DATABASE = "learned_words";
     private static final String PHRASAL_VERBS_DATABASE = "Phrasal verbs";
+
+    /** Review learned_words: +1 / −5; reapertura a práctica bajo este umbral. */
+    private static final int LEARNED_REVIEW_DEMOTION_UNDER = 21;
+    /** Puntuación a la que una entrada se considera “dominada” y se borra por completo. */
+    private static final int LEARNED_REVIEW_MASTER_AT = 28;
+
     
     // In-memory storage for databases
     private final Map<String, Set<SpanishExpression>> spanishDatabases;
@@ -429,6 +437,22 @@ public class DatabaseServiceImpl implements DatabaseService {
         gameDataService.saveGameData();
         return countBefore > 0;
     }
+
+    @Override
+    public void pruneSpanishRowsWithoutTranslations() {
+        for (Map.Entry<String, Set<SpanishExpression>> e : spanishDatabases.entrySet()) {
+            Set<SpanishExpression> bucket = e.getValue();
+            if (bucket == null || bucket.isEmpty()) {
+                continue;
+            }
+            int before = bucket.size();
+            bucket.removeIf(DatabaseServiceImpl::translationsEffectivelyEmpty);
+            int removed = before - bucket.size();
+            if (removed > 0) {
+                log.debug("Pruned {} invalid Spanish row(s) (no translations) from '{}'", removed, e.getKey());
+            }
+        }
+    }
     
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName) {
@@ -438,6 +462,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     @Override
     public SpanishExpression getRandomSpanishExpression(String databaseName, SpanishExpression excludePreviousRound) {
         List<SpanishExpression> expressions = getSpanishExpressions(databaseName);
+        expressions.removeIf(DatabaseServiceImpl::translationsEffectivelyEmpty);
         if (expressions.isEmpty()) {
             log.warn("Database '{}' is empty", databaseName);
             return null;
@@ -601,6 +626,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             link.setScore(0);
             englishTranslation.getTranslations().add(link);
         }
+        englishTranslation.setPracticeSourceDatabase(practiceDb);
 
         int phrasesTouched = 0;
         for (SpanishExpression expr : cohortBySpanishPhrase) {
@@ -641,6 +667,282 @@ public class DatabaseServiceImpl implements DatabaseService {
                 englishTranslation.getExpression(), LEARNED_WORDS_DATABASE, practiceDb,
                 cohortBySpanishPhrase.size(), phrasesTouched);
         return true;
+    }
+
+    @Override
+    public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard,
+            String userAnswer) {
+        if (learnedCard == null || userAnswer == null) {
+            return Optional.empty();
+        }
+        Set<EnglishExpression> learnedBucket = englishDatabases.get(LEARNED_WORDS_DATABASE);
+        if (learnedBucket == null || !learnedBucket.contains(learnedCard)) {
+            log.warn("Review: la tarjeta no está en learned_words (referencia inválida o ya movida).");
+            return Optional.empty();
+        }
+        String expectedRaw = Optional.ofNullable(learnedCard.getExpression()).map(String::trim).orElse("");
+        String typed = squashWhitespace(userAnswer);
+        boolean ok = !expectedRaw.isEmpty()
+                && squashWhitespace(expectedRaw).equalsIgnoreCase(typed);
+        int prior = learnedCard.getScore();
+
+        if (ok) {
+            int s = prior + 1;
+            learnedCard.setScore(s);
+            if (s >= LEARNED_REVIEW_MASTER_AT) {
+                learnedBucket.remove(learnedCard);
+                purgeEnglishLemmaEverywhere(expectedRaw);
+                pruneSpanishRowsWithoutTranslations();
+                gameDataService.saveGameData();
+                return Optional.of(new LearnedWordsReviewResult(
+                        LearnedWordsReviewResult.Outcome.MASTERED_REMOVED_EVERYWHERE,
+                        true,
+                        Math.min(s, LEARNED_REVIEW_MASTER_AT),
+                        expectedRaw,
+                        typed,
+                        null));
+            }
+            gameDataService.saveGameData();
+            return Optional.of(new LearnedWordsReviewResult(
+                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, s, expectedRaw, typed, null));
+        }
+
+        int penalized = Math.max(0, prior - 5);
+        learnedCard.setScore(penalized);
+        if (penalized < LEARNED_REVIEW_DEMOTION_UNDER) {
+            if (demoteLearnedCardToPractice(learnedCard, penalized, learnedBucket)) {
+                pruneSpanishRowsWithoutTranslations();
+                gameDataService.saveGameData();
+                String restoredDb = Optional.ofNullable(learnedCard.getPracticeSourceDatabase())
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .orElse(null);
+                return Optional.of(new LearnedWordsReviewResult(
+                        LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE,
+                        false,
+                        penalized,
+                        expectedRaw,
+                        typed,
+                        restoredDb));
+            }
+            learnedCard.setScore(prior);
+            gameDataService.saveGameData();
+            JOptionPane.showMessageDialog(null,
+                    "No se pudo devolver la expresión a la base de práctica (sin frase español enlazada o sin BBDD de destino). El score anterior se mantuvo.",
+                    "Review Learned Words", JOptionPane.WARNING_MESSAGE);
+            return Optional.of(new LearnedWordsReviewResult(
+                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null));
+        }
+
+        gameDataService.saveGameData();
+        return Optional.of(new LearnedWordsReviewResult(
+                LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, penalized, expectedRaw, typed, null));
+    }
+
+    /** Normaliza espacios internos y recorta; comparación típica de respuesta libre. */
+    private static String squashWhitespace(String s) {
+        if (s == null) {
+            return "";
+        }
+        String t = s.trim();
+        if (t.isEmpty()) {
+            return "";
+        }
+        return String.join(" ", t.split("\\s+"));
+    }
+
+    private boolean demoteLearnedCardToPractice(EnglishExpression card, int penalizedLearnedScore,
+            Set<EnglishExpression> learnedBucket) {
+        String canonicalDb = resolveCanonicalDatabaseKey(
+                Optional.ofNullable(card.getPracticeSourceDatabase()).orElse("")).orElse("");
+        if (canonicalDb.isEmpty() || LEARNED_WORDS_DATABASE.equalsIgnoreCase(canonicalDb)) {
+            Optional<String> auto = resolveAutomaticPracticeDatabaseForDemotion(card);
+            if (auto.isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        "No hay ninguna base de vocabulario donde reincorporar la expresión.",
+                        "Review Learned Words", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            canonicalDb = auto.get();
+            card.setPracticeSourceDatabase(canonicalDb);
+            log.info("Review demotion: reincorporación automática en BBDD de práctica '{}'", canonicalDb);
+        }
+        Set<SpanishExpression> practicePhrases = spanishDatabases.get(canonicalDb);
+        if (practicePhrases == null) {
+            return false;
+        }
+        String spanishPhrase = firstSpanishPhraseFor(card);
+        if (spanishPhrase == null || spanishPhrase.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Esta entrada en learned_words no lleva texto español enlazado; no se puede reubicar.",
+                    "Review Learned Words", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        int practiceScore = penalizedLearnedScore;
+        int rollbackLearnedScore = penalizedLearnedScore;
+        card.setScore(practiceScore);
+        if (!learnedBucket.remove(card)) {
+            return false;
+        }
+        boolean attached = attachEnglishUnderSpanishPhrase(canonicalDb, spanishPhrase.trim(), card);
+        if (!attached) {
+            learnedBucket.add(card);
+            card.setScore(rollbackLearnedScore);
+            return false;
+        }
+        Set<EnglishExpression> practiceStandalone = englishDatabases.get(canonicalDb);
+        if (practiceStandalone != null) {
+            practiceStandalone.removeIf(e -> e != null && e.getExpression() != null && e.getExpression()
+                    .trim()
+                    .equalsIgnoreCase(Optional.ofNullable(card.getExpression()).orElse("").trim()));
+        }
+        return true;
+    }
+
+    private static String firstSpanishPhraseFor(EnglishExpression card) {
+        if (card.getTranslations() == null) {
+            return null;
+        }
+        return card.getTranslations().stream()
+                .map(SpanishExpression::getExpression)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Cuando {@code practice_source_database} falta o es inválido, elige una BBDD de práctica sin preguntar al usuario:
+     * si la frase español enlazada existe en una sola BBDD candidata, esa; si no, la primera disponible (orden estable).
+     */
+    private Optional<String> resolveAutomaticPracticeDatabaseForDemotion(EnglishExpression card) {
+        List<String> displayNames = getAvailableDatabases().stream()
+                .filter(Objects::nonNull)
+                .filter(name -> !name.equalsIgnoreCase(LEARNED_WORDS_DATABASE))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList());
+        if (displayNames.isEmpty()) {
+            return Optional.empty();
+        }
+        List<String> canonicalOrdered = displayNames.stream()
+                .map(d -> resolveCanonicalDatabaseKey(d).orElse(d.trim()))
+                .filter(d -> !d.isEmpty())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.toList());
+        if (canonicalOrdered.isEmpty()) {
+            return Optional.empty();
+        }
+        if (canonicalOrdered.size() == 1) {
+            return Optional.of(canonicalOrdered.get(0));
+        }
+        String phrase = firstSpanishPhraseFor(card);
+        if (phrase != null && !phrase.trim().isEmpty()) {
+            String norm = normalize(phrase.trim());
+            List<String> hits = new ArrayList<>();
+            for (String canon : canonicalOrdered) {
+                Set<SpanishExpression> phrases = spanishDatabases.get(canon);
+                if (phrases == null) {
+                    continue;
+                }
+                boolean found = phrases.stream()
+                        .filter(Objects::nonNull)
+                        .anyMatch(p -> p.getExpression() != null && normalize(p.getExpression()).equals(norm));
+                if (found) {
+                    hits.add(canon);
+                }
+            }
+            if (hits.size() == 1) {
+                return Optional.of(hits.get(0));
+            }
+            if (hits.size() > 1) {
+                log.debug("Demotion resolve: '{}' aparece en varias bases; usando la primera estable.", norm);
+            }
+        }
+        return Optional.of(canonicalOrdered.get(0));
+    }
+
+    /**
+     * Inserta o fusiona un inglés bajo una frase español en la BD de práctica indicada por clave canónica.
+     */
+    private boolean attachEnglishUnderSpanishPhrase(String canonicalDb, String trimmedSpanish,
+            EnglishExpression english) {
+        Set<SpanishExpression> phrases = spanishDatabases.get(canonicalDb);
+        if (phrases == null || english == null || english.getExpression() == null) {
+            return false;
+        }
+        String es = trimmedSpanish.trim();
+        if (es.isEmpty()) {
+            return false;
+        }
+        String norm = normalize(es);
+        SpanishExpression host = phrases.stream()
+                .filter(p -> p != null && p.getExpression() != null && normalize(p.getExpression()).equals(norm))
+                .findFirst()
+                .orElse(null);
+        if (host == null) {
+            host = new SpanishExpression();
+            host.setExpression(es);
+            host.setScore(english.getScore());
+            List<EnglishExpression> list = new ArrayList<>();
+            list.add(english);
+            host.setTranslations(list);
+            phrases.add(host);
+            return true;
+        }
+        if (host.getTranslations() == null) {
+            host.setTranslations(new ArrayList<>());
+        }
+        for (EnglishExpression ex : host.getTranslations()) {
+            if (ex != null && ex.getExpression() != null && ex.getExpression().trim()
+                    .equalsIgnoreCase(english.getExpression().trim())) {
+                ex.setScore(english.getScore());
+                host.setScore(Math.max(host.getScore(), english.getScore()));
+                return true;
+            }
+        }
+        host.getTranslations().add(english);
+        host.setScore(Math.max(host.getScore(), english.getScore()));
+        return true;
+    }
+
+    /**
+     * Elimina el lema inglés como fila standalone y como traducción anidada en todas las BD (learned incluido).
+     */
+    private void purgeEnglishLemmaEverywhere(String englishLemmaRaw) {
+        if (englishLemmaRaw == null) {
+            return;
+        }
+        String canon = squashWhitespace(englishLemmaRaw).trim().toLowerCase(Locale.ROOT);
+        if (canon.isEmpty()) {
+            return;
+        }
+        for (String db : new ArrayList<>(englishDatabases.keySet())) {
+            Set<EnglishExpression> bucket = englishDatabases.get(db);
+            if (bucket == null) {
+                continue;
+            }
+            bucket.removeIf(e -> e != null && e.getExpression() != null
+                    && squashWhitespace(e.getExpression()).trim().toLowerCase(Locale.ROOT).equals(canon));
+        }
+        for (String db : new ArrayList<>(spanishDatabases.keySet())) {
+            Set<SpanishExpression> spans = spanishDatabases.get(db);
+            if (spans == null) {
+                continue;
+            }
+            List<SpanishExpression> snapshot = new ArrayList<>(spans);
+            for (SpanishExpression sp : snapshot) {
+                if (sp.getTranslations() != null) {
+                    sp.getTranslations().removeIf(en -> en != null && en.getExpression() != null
+                            && squashWhitespace(en.getExpression()).trim().toLowerCase(Locale.ROOT).equals(canon));
+                }
+                if (translationsEffectivelyEmpty(sp)) {
+                    spans.remove(sp);
+                }
+            }
+        }
     }
     
     @Override
@@ -797,6 +1099,10 @@ public class DatabaseServiceImpl implements DatabaseService {
             }
         }
         en.setIncludedAtEpochMillis(getLongValue(row, "included_at", 0L));
+        Object psDb = row.get("practice_source_database");
+        if (psDb instanceof String s && !s.trim().isEmpty()) {
+            en.setPracticeSourceDatabase(resolveCanonicalDatabaseKey(s.trim()).orElse(s.trim()));
+        }
         return en;
     }
     
@@ -991,6 +1297,10 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         EnglishExpression moved = englishExpr.get();
         String phrase = moved.getExpression() != null ? moved.getExpression().trim() : "";
+        if (LEARNED_WORDS_DATABASE.equalsIgnoreCase(targetDb)
+                && !LEARNED_WORDS_DATABASE.equalsIgnoreCase(sourceDb)) {
+            moved.setPracticeSourceDatabase(sourceDb);
+        }
         if (englishDatabases.get(targetDb).contains(moved)) {
             log.warn("Target database '{}' already has exact duplicate for English '{}'; move cancelled",
                     targetDb, phrase);

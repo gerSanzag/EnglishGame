@@ -481,9 +481,20 @@ public class LearnedWordsView extends JFrame {
 
     private void reviewLearnedWords() {
         log.info("Review learned words requested");
-        // TODO: Implement review functionality
-        JOptionPane.showMessageDialog(this, 
-            "Review functionality not yet implemented", "Info", JOptionPane.INFORMATION_MESSAGE);
+        List<EnglishExpression> pending =
+                gameController.getEnglishExpressionsFromDatabase(LEARNED_WORDS_DB);
+        if (pending.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay ninguna expresión en Learned Words para repasar.", "Review",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        setVisible(false);
+        LearnedWordsReviewView review = new LearnedWordsReviewView(gameController, this, landingPage, () -> {
+            LearnedWordsView.this.setVisible(true);
+            refreshLearnedWordsTable();
+        });
+        review.setVisible(true);
     }
 
     private void moveLearnedWordToPractice(String englishExpression) {

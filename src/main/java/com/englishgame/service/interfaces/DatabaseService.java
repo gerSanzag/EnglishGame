@@ -1,5 +1,6 @@
 package com.englishgame.service.interfaces;
 
+import com.englishgame.model.LearnedWordsReviewResult;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.model.EnglishExpression;
 
@@ -186,6 +187,11 @@ public interface DatabaseService {
      */
     boolean promoteTranslationToLearned(String practiceDatabaseName, SpanishExpression hostPhrase,
                                          EnglishExpression englishTranslation);
+
+    /**
+     * Review de learned_words: +1 si acierta, -5 si falla; reingreso a práctica si baja de 21; purga si llega a 28.
+     */
+    Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard, String userAnswer);
     
     /**
      * Gets all learned expressions
@@ -230,4 +236,10 @@ public interface DatabaseService {
      * @return true if deleted successfully, false otherwise
      */
     boolean deleteAllEnglishExpressions(String databaseName);
+
+    /**
+     * Quita en memoria filas españolas sin ninguna traducción visible (solo blancos o lista vacía), para que no se
+     * puedan elegir en el juego ni queden fantasmas hasta reiniciar. Convoca antes de persistir cuando proceda.
+     */
+    void pruneSpanishRowsWithoutTranslations();
 }

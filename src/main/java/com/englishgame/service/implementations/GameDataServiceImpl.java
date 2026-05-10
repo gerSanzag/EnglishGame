@@ -65,6 +65,9 @@ public class GameDataServiceImpl implements GameDataService {
         }
         
         try {
+            if (databaseService != null) {
+                databaseService.pruneSpanishRowsWithoutTranslations();
+            }
             // Get current state from database service instead of repository
             List<List<Map<String, Object>>> currentState = buildCurrentStateFromDatabases();
             
@@ -408,6 +411,9 @@ public class GameDataServiceImpl implements GameDataService {
                 }
                 row.put("spanish_sources", spanishSources);
                 row.put("included_at", en.getIncludedAtEpochMillis());
+                if (en.getPracticeSourceDatabase() != null && !en.getPracticeSourceDatabase().trim().isEmpty()) {
+                    row.put("practice_source_database", en.getPracticeSourceDatabase().trim());
+                }
                 currentState.add(Arrays.asList(row));
             }
         }

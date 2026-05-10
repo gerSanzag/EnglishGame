@@ -3,6 +3,7 @@ package com.englishgame.controller;
 import com.englishgame.model.AnswerResult;
 import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.model.EnglishExpression;
+import com.englishgame.model.LearnedWordsReviewResult;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.service.interfaces.DatabaseService;
 import com.englishgame.service.interfaces.GameDataService;
@@ -342,6 +343,14 @@ public class GameController {
      */
     public List<EnglishExpression> getEnglishExpressionsFromDatabase(String databaseName) {
         return databaseService.getEnglishExpressions(databaseName);
+    }
+
+    /**
+     * Review de learned_words (+1 / −5, reingreso bajo 21, dominio en 28).
+     */
+    public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAnswer(EnglishExpression learnedCard,
+            String userAnswer) {
+        return databaseService.submitLearnedWordsReviewAttempt(learnedCard, userAnswer);
     }
     
     /**

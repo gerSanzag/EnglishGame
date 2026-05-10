@@ -675,28 +675,28 @@ public class GameView extends JFrame {
         button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
         
         if (hoverGlow) {
-            // Enhanced hover effect with subtle glow
-            button.addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    Color hoverColor = new Color(
-                        Math.min(255, buttonColor.getRed() + 25),
-                        Math.min(255, buttonColor.getGreen() + 25),
-                        Math.min(255, buttonColor.getBlue() + 25)
-                    );
-                    button.setBackground(hoverColor);
-                    // Create a subtle glow effect with lighter border
-                    Color glowBorder = new Color(
-                        Math.min(255, buttonColor.getRed() + 50),
-                        Math.min(255, buttonColor.getGreen() + 50),
-                        Math.min(255, buttonColor.getBlue() + 50)
-                    );
-                    button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
-                }
-                public void mouseExited(java.awt.event.MouseEvent evt) {
-                    button.setBackground(buttonColor);
-                    button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
-                }
-            });
+        // Enhanced hover effect with subtle glow
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                Color hoverColor = new Color(
+                    Math.min(255, buttonColor.getRed() + 25),
+                    Math.min(255, buttonColor.getGreen() + 25),
+                    Math.min(255, buttonColor.getBlue() + 25)
+                );
+                button.setBackground(hoverColor);
+                // Create a subtle glow effect with lighter border
+                Color glowBorder = new Color(
+                    Math.min(255, buttonColor.getRed() + 50),
+                    Math.min(255, buttonColor.getGreen() + 50),
+                    Math.min(255, buttonColor.getBlue() + 50)
+                );
+                button.setBorder(BorderFactory.createLineBorder(glowBorder, 2));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(buttonColor);
+                button.setBorder(BorderFactory.createLineBorder(borderColor, 2));
+            }
+        });
         }
         
         return button;
@@ -905,7 +905,7 @@ public class GameView extends JFrame {
         navPanel.add(learnedWordsButton);
         navPanel.add(backToLandingButton);
         navSection.add(navPanel);
-
+        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 14, 8));
         buttonPanel.setOpaque(false);
         submitButton.setPreferredSize(new Dimension(180, 48));
@@ -932,7 +932,7 @@ public class GameView extends JFrame {
         mainPanel.add(dbSection);
         mainPanel.add(Box.createVerticalStrut(20));
         mainPanel.add(gameSection);
-
+        
         JScrollPane mainScrollPane = new JScrollPane(mainPanel);
         mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -1068,7 +1068,7 @@ public class GameView extends JFrame {
             JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
+        
         currentSpanishExpression = gameController.startNewRound();
         if (currentSpanishExpression != null) {
             spanishExpressionLabel.setText("Translate: \"" + currentSpanishExpression.getExpression() + "\"");
@@ -1144,7 +1144,7 @@ public class GameView extends JFrame {
             showFeedbackInRevealArea("Please enter a translation.", Color.RED);
             return;
         }
-
+        
         if (isNeutralScoringRound()) {
             Optional<Boolean> probe = gameController.checkAnswerWithoutScoring(userTranslation);
             if (probe.isEmpty()) {
@@ -1281,7 +1281,7 @@ public class GameView extends JFrame {
                 out.append("Falta (esperado: ").append(expected).append(")");
             } else if (i >= expectedTokens.size()) {
                 out.append("No aplica");
-            } else {
+        } else {
                 out.append("esperado ").append(expected).append(", escribiste ").append(typed);
             }
             if (i < slots - 1) {

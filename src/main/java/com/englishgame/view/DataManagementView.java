@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -20,6 +21,11 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class DataManagementView extends JFrame {
+
+    /**
+     * No es el nombre de una BBDD: fuerza elegir una opción real para evitar añadir datos a la primera de la lista por descuido.
+     */
+    private static final String DB_SELECTOR_PLACEHOLDER = "— Selecciona una base de datos —";
 
     private final GameController gameController;
     private final LandingPageView landingPage;
@@ -68,7 +74,7 @@ public class DataManagementView extends JFrame {
     private void initComponents() {
         // Database Management Section
         databaseSelector = new JComboBox<>();
-        databaseSelector.setPreferredSize(new Dimension(200, 30));
+        databaseSelector.setPreferredSize(new Dimension(320, 30));
         
         createDatabaseButton = createStyledButton("Create Database", "Create a new database");
         renameDatabaseButton = createStyledButton("Rename Database", "Change the selected database name");
@@ -300,17 +306,51 @@ public class DataManagementView extends JFrame {
     }
 
     private void refreshDatabaseSelector() {
+        String previouslySelected = (String) databaseSelector.getSelectedItem();
         databaseSelector.removeAllItems();
+        databaseSelector.addItem(DB_SELECTOR_PLACEHOLDER);
         gameController.getAvailableDatabases().forEach(databaseSelector::addItem);
+        if (previouslySelected != null && !isNoDatabaseSelected(previouslySelected)) {
+            String match = gameController.getAvailableDatabases().stream()
+                    .filter(db -> db.equalsIgnoreCase(previouslySelected.trim()))
+                    .findFirst()
+                    .orElse(null);
+            if (match != null) {
+                databaseSelector.setSelectedItem(match);
+            } else {
+                databaseSelector.setSelectedIndex(0);
+            }
+        } else {
+            databaseSelector.setSelectedIndex(0);
+        }
         updateDatabaseAdminButtonsState();
-        log.debug("Database selector refreshed with {} databases", databaseSelector.getItemCount());
+        log.debug("Database selector refreshed with {} items (incl. placeholder)", databaseSelector.getItemCount());
+    }
+
+    private boolean isNoDatabaseSelected(String item) {
+        return item == null || item.trim().isEmpty() || DB_SELECTOR_PLACEHOLDER.equals(item);
+    }
+
+    private Optional<String> selectedWorkingDatabase() {
+        String s = (String) databaseSelector.getSelectedItem();
+        if (isNoDatabaseSelected(s)) {
+            return Optional.empty();
+        }
+        return Optional.of(s.trim());
     }
 
     private void updateDatabaseAdminButtonsState() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
-        boolean systemDb = selectedDb != null && gameController.isSystemDatabase(selectedDb);
-        renameDatabaseButton.setEnabled(selectedDb != null && !systemDb);
-        deleteDatabaseButton.setEnabled(selectedDb != null && !systemDb);
+        if (isNoDatabaseSelected(selectedDb)) {
+            renameDatabaseButton.setEnabled(false);
+            deleteDatabaseButton.setEnabled(false);
+            renameDatabaseButton.setToolTipText("Selecciona una base de datos para renombrar.");
+            deleteDatabaseButton.setToolTipText("Selecciona una base de datos para eliminar.");
+            return;
+        }
+        boolean systemDb = gameController.isSystemDatabase(selectedDb.trim());
+        renameDatabaseButton.setEnabled(!systemDb);
+        deleteDatabaseButton.setEnabled(!systemDb);
         if (systemDb) {
             String tip = "Database de sistema: no se puede renombrar ni eliminar.";
             renameDatabaseButton.setToolTipText(tip);
@@ -346,6 +386,7 @@ public class DataManagementView extends JFrame {
                 JOptionPane.INFORMATION_MESSAGE
             );
             refreshDatabaseSelector();
+            databaseSelector.setSelectedItem(dbName);
             log.info("Database '{}' created successfully", dbName);
         } else {
             JOptionPane.showMessageDialog(
@@ -359,9 +400,9 @@ public class DataManagementView extends JFrame {
 
     private void renameDatabase() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null || selectedDb.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please select a database to rename", "Error",
-                    JOptionPane.ERROR_MESSAGE);
+        if (isNoDatabaseSelected(selectedDb)) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos para renombrar.", "Sin selección",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (gameController.isSystemDatabase(selectedDb.trim())) {
@@ -411,8 +452,9 @@ public class DataManagementView extends JFrame {
 
     private void deleteDatabase() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database to delete", "Error", JOptionPane.ERROR_MESSAGE);
+        if (isNoDatabaseSelected(selectedDb)) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos para eliminar.", "Sin selección",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
         
@@ -465,11 +507,13 @@ public class DataManagementView extends JFrame {
             return;
         }
         
-        String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database", "Error", JOptionPane.ERROR_MESSAGE);
+        Optional<String> dbOpt = selectedWorkingDatabase();
+        if (dbOpt.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos antes de añadir expresiones.",
+                    "Sin base de datos", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        String selectedDb = dbOpt.get();
 
         if (existsExactPairDuplicate(selectedDb, spanish, english)) {
             JOptionPane.showMessageDialog(this,
@@ -618,12 +662,14 @@ public class DataManagementView extends JFrame {
             return;
         }
         
-        String selectedDb = (String) databaseSelector.getSelectedItem();
-        if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database", "Error", JOptionPane.ERROR_MESSAGE);
+        Optional<String> dbOpt = selectedWorkingDatabase();
+        if (dbOpt.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos antes de procesar el lote.",
+                    "Sin base de datos", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+        String selectedDb = dbOpt.get();
+
         try {
             // Split by lines
             String[] lines = content.split("\n");

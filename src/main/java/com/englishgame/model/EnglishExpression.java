@@ -20,6 +20,11 @@ public class EnglishExpression {
     private List<SpanishExpression> translations = new ArrayList<>();
     /** Epoch millis when the record was first added; 0 = legacy / unknown. Not used in equals. */
     private long includedAtEpochMillis;
+    /**
+     * BBDD de práctica (clave canónica) de la que entró en learned_words; null en datos legacy o entradas sin trazabilidad.
+     * No forma parte de {@link #equals}/{@link #hashCode}.
+     */
+    private String practiceSourceDatabase;
 
     public EnglishExpression(String expression, int score, List<SpanishExpression> translations) {
         this.expression = expression;
