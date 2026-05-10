@@ -359,18 +359,29 @@ public class GameDataServiceImpl implements GameDataService {
             // Add all Spanish expressions from this database
             List<com.englishgame.model.SpanishExpression> spanishExpressions = databaseService.getSpanishExpressions(databaseName);
             for (com.englishgame.model.SpanishExpression spanishExpr : spanishExpressions) {
+                // Add translations
+                List<String> translations = new ArrayList<>();
+                if (spanishExpr.getTranslations() != null) {
+                    for (com.englishgame.model.EnglishExpression translation : spanishExpr.getTranslations()) {
+                        if (translation == null || translation.getExpression() == null
+                                || translation.getExpression().trim().isEmpty()) {
+                            continue;
+                        }
+                        translations.add(translation.getExpression());
+                    }
+                }
+                if (translations.isEmpty()) {
+                    log.debug("Omitiendo persistencia de '{}' en '{}': español sin traducciones válidas",
+                            spanishExpr.getExpression(), databaseName);
+                    continue;
+                }
+
                 Map<String, Object> expressionData = new HashMap<>();
                 expressionData.put("type", "spanish_expression");
                 expressionData.put("database", databaseName);
                 expressionData.put("language", "spanish");
                 expressionData.put("expression", spanishExpr.getExpression());
                 expressionData.put("score", spanishExpr.getScore());
-                
-                // Add translations
-                List<String> translations = new ArrayList<>();
-                for (com.englishgame.model.EnglishExpression translation : spanishExpr.getTranslations()) {
-                    translations.add(translation.getExpression());
-                }
                 expressionData.put("translations", translations);
                 expressionData.put("included_at", spanishExpr.getIncludedAtEpochMillis());
 

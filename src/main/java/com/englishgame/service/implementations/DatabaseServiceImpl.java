@@ -59,6 +59,18 @@ public class DatabaseServiceImpl implements DatabaseService {
         return s == null ? "" : s.trim().toLowerCase();
     }
 
+    /** Sin traducciones o solo cadenas vacías / en blanco (no deben persistirse en práctica). */
+    private static boolean translationsEffectivelyEmpty(SpanishExpression expr) {
+        if (expr == null || expr.getTranslations() == null || expr.getTranslations().isEmpty()) {
+            return true;
+        }
+        return expr.getTranslations().stream().allMatch(DatabaseServiceImpl::englishLineBlank);
+    }
+
+    private static boolean englishLineBlank(EnglishExpression en) {
+        return en == null || en.getExpression() == null || en.getExpression().trim().isEmpty();
+    }
+
     /** Duplicate exacto de registro ES-EN (mismo español y misma traducción inglesa). */
     private boolean hasExactSpanishEnglishDuplicate(String canonicalDbKey, SpanishExpression candidate) {
         if (canonicalDbKey == null || candidate == null || candidate.getExpression() == null) {
@@ -553,18 +565,35 @@ public class DatabaseServiceImpl implements DatabaseService {
                     hostPhrase.getExpression(), practiceDb);
             return false;
         }
-        
-        boolean detached = hostPhrase.getTranslations().removeIf(en ->
-                en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
-        if (!detached) {
-            log.warn("English '{}' not found on host phrase '{}'",
-                    englishTranslation.getExpression(), hostPhrase.getExpression());
+
+        String promotedEnTrimmed = englishTranslation.getExpression().trim();
+        if (promotedEnTrimmed.isEmpty()) {
+            log.warn("promoteTranslationToLearned: empty English expression");
+            return false;
+        }
+
+        String normalizedHostSpanish = normalize(hostPhrase.getExpression());
+        List<SpanishExpression> cohortBySpanishPhrase = practicePhrases.stream()
+                .filter(expr -> normalize(expr.getExpression()).equals(normalizedHostSpanish))
+                .collect(Collectors.toList());
+
+        boolean translationExistsSomewhere = cohortBySpanishPhrase.stream()
+                .map(SpanishExpression::getTranslations)
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .filter(Objects::nonNull)
+                .anyMatch(en -> en.getExpression() != null && en.getExpression().trim().equalsIgnoreCase(promotedEnTrimmed));
+        if (!translationExistsSomewhere) {
+            log.warn("English '{}' not found under any '{}' row(s) in '{}'",
+                    englishTranslation.getExpression(),
+                    Optional.ofNullable(hostPhrase.getExpression()).orElse("(null)"), practiceDb);
             return false;
         }
 
         // Keep source Spanish phrase for Learned Words UI and JSON round-trip (spanish_sources)
         String hostExpr = Optional.ofNullable(hostPhrase.getExpression()).map(String::trim).orElse("");
-        boolean hasSameSource = englishTranslation.getTranslations().stream()
+        boolean hasSameSource = englishTranslation.getTranslations() != null && englishTranslation.getTranslations()
+                .stream()
                 .anyMatch(sp -> sp != null && expressionsEqualNormalized(sp.getExpression(), hostExpr));
         if (!hostExpr.isEmpty() && !hasSameSource) {
             SpanishExpression link = new SpanishExpression();
@@ -572,21 +601,45 @@ public class DatabaseServiceImpl implements DatabaseService {
             link.setScore(0);
             englishTranslation.getTranslations().add(link);
         }
-        
+
+        int phrasesTouched = 0;
+        for (SpanishExpression expr : cohortBySpanishPhrase) {
+            if (expr.getTranslations() != null && expr.getTranslations().removeIf(en -> en != null
+                    && en.getExpression() != null
+                    && en.getExpression().trim().equalsIgnoreCase(promotedEnTrimmed))) {
+                phrasesTouched++;
+            }
+        }
+
         Set<EnglishExpression> learned = englishDatabases.get(LEARNED_WORDS_DATABASE);
         learned.removeIf(en -> en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
         englishTranslation.setIncludedAtEpochMillis(System.currentTimeMillis());
         learned.add(englishTranslation);
-        
-        if (hostPhrase.getTranslations().isEmpty()) {
-            practicePhrases.remove(hostPhrase);
-            log.debug("Removed emptied Spanish '{}' from '{}'", hostPhrase.getExpression(), practiceDb);
+
+        // Quitar también filas inglés sueltas duplicadas (misma gráfía) que queden en esta BBDD de práctica.
+        Set<EnglishExpression> practiceEnglish = englishDatabases.get(practiceDb);
+        if (practiceEnglish != null && !practiceEnglish.isEmpty()) {
+            practiceEnglish.removeIf(en -> en != null && en.getExpression() != null
+                    && en.getExpression().trim().equalsIgnoreCase(promotedEnTrimmed));
         }
-        
+
+        for (SpanishExpression expr : cohortBySpanishPhrase) {
+            List<EnglishExpression> tr = expr.getTranslations();
+            if (tr == null || tr.isEmpty()) {
+                practicePhrases.remove(expr);
+                log.debug("Removed emptied Spanish '{}' from '{}'", expr.getExpression(), practiceDb);
+            }
+        }
+
+        // Cualquier otra fila ES con ese texto y sin traducciones válidas no debe quedar vestigio.
+        practicePhrases.removeIf(expr -> normalize(expr.getExpression()).equals(normalizedHostSpanish)
+                && translationsEffectivelyEmpty(expr));
+
         gameDataService.saveGameData();
-        log.info("Learned '{}' added to '{}' and detached from '{}' (phrase '{}')",
-                englishTranslation.getExpression(), LEARNED_WORDS_DATABASE,
-                practiceDb, hostPhrase.getExpression());
+        log.info(
+                "Learned '{}' moved to '{}' and removed from '{}' ({} Spanish row(s); {} row(s) had that translation). No duplicate EN left under same phrase.",
+                englishTranslation.getExpression(), LEARNED_WORDS_DATABASE, practiceDb,
+                cohortBySpanishPhrase.size(), phrasesTouched);
         return true;
     }
     
@@ -671,6 +724,9 @@ public class DatabaseServiceImpl implements DatabaseService {
                                 @SuppressWarnings("unchecked")
                                 List<String> translations = (List<String>) translationsObj;
                                 for (String translation : translations) {
+                                    if (translation == null || translation.trim().isEmpty()) {
+                                        continue;
+                                    }
                                     EnglishExpression englishExpr = new EnglishExpression();
                                     englishExpr.setExpression(translation);
                                     englishExpr.setScore(getIntValue(firstMap, "score", 0));
@@ -679,6 +735,11 @@ public class DatabaseServiceImpl implements DatabaseService {
                             }
                             
                             spanishExpr.setIncludedAtEpochMillis(getLongValue(firstMap, "included_at", 0L));
+                            if (translationsEffectivelyEmpty(spanishExpr)) {
+                                log.warn("Skipping load of Spanish '{}' in '{}': no non-blank translations",
+                                        expression, databaseName);
+                                continue;
+                            }
                             addSpanishExpression(databaseName, spanishExpr);
                             log.debug("Loaded Spanish expression '{}' into database '{}'", expression, databaseName);
                         } else if ("english".equals(language)) {

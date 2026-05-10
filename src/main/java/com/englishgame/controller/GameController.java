@@ -118,9 +118,16 @@ public class GameController {
                         currentDatabase))
                 .map((CorrectAnswerOutcome outcome) -> {
                     EnglishExpression updatedEnglishExpression = outcome.englishExpression();
-                    spanishExpression.getTranslations().replaceAll(e ->
-                            e.getExpression().equals(updatedEnglishExpression.getExpression())
-                                    ? updatedEnglishExpression : e);
+                    /*
+                     * Sin promoción: sincronizar referencias sobre la tarjeta actual (penalizaciones/coherencia UI).
+                     * Si acaba de promocionarse a learned words, DatabaseService ya desasoció el inglés de la BD;
+                     * hacer replaceAll aquí podría volver a colgar el mismo objeto en la lista española (= huérfano con "None" al guardar).
+                     */
+                    if (!outcome.promotedToLearnedWords()) {
+                        spanishExpression.getTranslations().replaceAll(e ->
+                                e.getExpression().equals(updatedEnglishExpression.getExpression())
+                                        ? updatedEnglishExpression : e);
+                    }
 
                     log.info("Correct answer! English expression '{}' score updated to {}.",
                             updatedEnglishExpression.getExpression(), updatedEnglishExpression.getScore());

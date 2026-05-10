@@ -1,55 +1,70 @@
 [ [ {
   "database" : "Binomial pairs",
-  "created_at" : 1778094067228,
+  "created_at" : 1778361404841,
   "type" : "database_metadata"
 } ], [ {
-  "score" : 0,
+  "score" : 15,
   "database" : "Binomial pairs",
-  "expression" : "Puntos y comas",
-  "translations" : [ "Ins and outs" ],
+  "expression" : "Cosas sueltas",
+  "translations" : [ "Odds and ends" ],
   "language" : "spanish",
+  "included_at" : 1778185344492,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 11,
   "database" : "Binomial pairs",
   "expression" : "Poco y nada",
   "translations" : [ "Next to nothing" ],
   "language" : "spanish",
+  "included_at" : 1778185328099,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 15,
+  "score" : 12,
   "database" : "Binomial pairs",
-  "expression" : "Harto",
-  "translations" : [ "Sick and tired" ],
+  "expression" : "A elegir",
+  "translations" : [ "Pick and choose" ],
   "language" : "spanish",
+  "included_at" : 1778185360431,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "Ni más ni menos",
+  "expression" : "Por activa y por pasiva",
+  "translations" : [ "Hammer and tongs" ],
+  "language" : "spanish",
+  "included_at" : 1778185360438,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "Simple y llanamente",
   "translations" : [ "Plain and simple" ],
   "language" : "spanish",
+  "included_at" : 1778267697721,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 4,
+  "database" : "Binomial pairs",
+  "expression" : "Breve y conciso",
+  "translations" : [ "Short and sweet" ],
+  "language" : "spanish",
+  "included_at" : 1778185344491,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "Dando bandazos",
+  "translations" : [ "Hither and thither" ],
+  "language" : "spanish",
+  "included_at" : 1778185360456,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
-  "expression" : "Cuerpo y alma",
-  "translations" : [ "Heart and soul" ],
+  "expression" : "Viento en popa",
+  "translations" : [ "Fair and square" ],
   "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "De vez en cuando",
-  "translations" : [ "Now and then" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Binomial pairs",
-  "expression" : "Por todas partes",
-  "translations" : [ "Far and wide" ],
-  "language" : "spanish",
+  "included_at" : 1778185360451,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 3,
@@ -57,419 +72,1142 @@
   "expression" : "Poco a poco",
   "translations" : [ "Little by little" ],
   "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "A grandes rasgos",
-  "translations" : [ "Broadly speaking" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "En voz alta",
-  "translations" : [ "Loud and clear" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Binomial pairs",
-  "expression" : "Con pelos y señales",
-  "translations" : [ "Chapter and verse" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 14,
-  "database" : "Binomial pairs",
-  "expression" : "Altibajos",
-  "translations" : [ "Ups and downs" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 8,
-  "database" : "Binomial pairs",
-  "expression" : "De un lado a otro",
-  "translations" : [ "Back and forth" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 5,
-  "database" : "Binomial pairs",
-  "expression" : "Todo o nada",
-  "translations" : [ "All or nothing" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Binomial pairs",
-  "expression" : "De arriba abajo",
-  "translations" : [ "Up and down" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 19,
-  "database" : "Binomial pairs",
-  "expression" : "Pros y contras",
-  "translations" : [ "Pros and cons" ],
-  "language" : "spanish",
+  "included_at" : 1778185328075,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 7,
-  "database" : "Binomial pairs",
-  "expression" : "Trastos",
-  "translations" : [ "Odds and ends" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Binomial pairs",
-  "expression" : "En orden",
-  "translations" : [ "Shipshape and Bristol fashion" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Binomial pairs",
-  "expression" : "Tarde o temprano",
-  "translations" : [ "Sooner or later" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 3,
-  "database" : "Binomial pairs",
-  "expression" : "Blanco y negro",
-  "translations" : [ "Black and white" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 14,
-  "database" : "Binomial pairs",
-  "expression" : "Sano y salvo",
-  "translations" : [ "Safe and sound" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 7,
-  "database" : "Binomial pairs",
-  "expression" : "Ensayo y error",
-  "translations" : [ "Trial and error" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 10,
-  "database" : "Binomial pairs",
-  "expression" : "Subes y bajas",
-  "translations" : [ "Ups and downs" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 11,
-  "database" : "Binomial pairs",
-  "expression" : "Cosas sueltas",
-  "translations" : [ "Odds and ends" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 13,
-  "database" : "Binomial pairs",
-  "expression" : "Parte integrante",
-  "translations" : [ "Part and parcel" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 10,
-  "database" : "Binomial pairs",
-  "expression" : "De aquí para allá",
-  "translations" : [ "Back and forth" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Por las buenas o por las malas",
-  "translations" : [ "Like it or not" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 3,
-  "database" : "Binomial pairs",
-  "expression" : "Vivito y coleando",
-  "translations" : [ "Alive and kicking" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Lidiar con",
-  "translations" : [ "Live and learn" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 17,
-  "database" : "Binomial pairs",
-  "expression" : "Paz y tranquilidad",
-  "translations" : [ "Peace and quiet" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Binomial pairs",
-  "expression" : "Esencial",
-  "translations" : [ "Meat and drink" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 3,
-  "database" : "Binomial pairs",
-  "expression" : "De pies a cabeza",
-  "translations" : [ "Head to toe" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 17,
-  "database" : "Binomial pairs",
-  "expression" : "Hasta las narices",
-  "translations" : [ "Sick and tired" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 10,
-  "database" : "Binomial pairs",
-  "expression" : "Gajes del oficio",
-  "translations" : [ "Part and parcel" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Binomial pairs",
-  "expression" : "Guste o no",
-  "translations" : [ "Win or lose" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 20,
   "database" : "Binomial pairs",
   "expression" : "Más o menos",
   "translations" : [ "More or less" ],
   "language" : "spanish",
+  "included_at" : 1778185344497,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 18,
   "database" : "Binomial pairs",
-  "expression" : "Limpio y ordenado",
-  "translations" : [ "Neat and tidy" ],
+  "expression" : "Guste o no",
+  "translations" : [ "Win or lose" ],
   "language" : "spanish",
+  "included_at" : 1778185328110,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 7,
   "database" : "Binomial pairs",
-  "expression" : "De una forma u otra",
-  "translations" : [ "One way or another" ],
+  "expression" : "Más que suficiente",
+  "translations" : [ "Enough and to spare" ],
   "language" : "spanish",
+  "included_at" : 1778185360458,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "A vida o muerte",
+  "translations" : [ "Life or death" ],
+  "language" : "spanish",
+  "included_at" : 1778185360442,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 4,
+  "database" : "Binomial pairs",
+  "expression" : "Poco a poco",
+  "translations" : [ "Bit by bit" ],
+  "language" : "spanish",
+  "included_at" : 1778189111124,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Binomial pairs",
+  "expression" : "Todo o nada",
+  "translations" : [ "All or nothing" ],
+  "language" : "spanish",
+  "included_at" : 1778185328095,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 15,
+  "database" : "Binomial pairs",
+  "expression" : "De arriba a abajo",
+  "translations" : [ "Up and down" ],
+  "language" : "spanish",
+  "included_at" : 1778186448742,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "Lidiar con",
+  "translations" : [ "Live and breathe" ],
+  "language" : "spanish",
+  "included_at" : 1778185360443,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 4,
+  "database" : "Binomial pairs",
+  "expression" : "Desbastado",
+  "translations" : [ "Wear and tear" ],
+  "language" : "spanish",
+  "included_at" : 1778268007719,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "Por las buenas o por las malas",
+  "translations" : [ "Willy nilly" ],
+  "language" : "spanish",
+  "included_at" : 1778312635590,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Binomial pairs",
+  "expression" : "Parte integrante",
+  "translations" : [ "Part and parcel" ],
+  "language" : "spanish",
+  "included_at" : 1778185344483,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Binomial pairs",
+  "expression" : "Subes y bajas",
+  "translations" : [ "Ups and downs" ],
+  "language" : "spanish",
+  "included_at" : 1778185344478,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 16,
+  "database" : "Binomial pairs",
+  "expression" : "Hacer y deshacer",
+  "translations" : [ "Toss and turn" ],
+  "language" : "spanish",
+  "included_at" : 1778185360445,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "Por todas partes",
+  "translations" : [ "Far and wide" ],
+  "language" : "spanish",
+  "included_at" : 1778185328107,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
   "database" : "Binomial pairs",
   "expression" : "Hacer o deshacer",
   "translations" : [ "Make or break" ],
   "language" : "spanish",
+  "included_at" : 1778185328116,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 20,
+  "database" : "Binomial pairs",
+  "expression" : "De una forma u otra",
+  "translations" : [ "One way or another" ],
+  "language" : "spanish",
+  "included_at" : 1778185328111,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Binomial pairs",
+  "expression" : "Harto",
+  "translations" : [ "Sick and tired" ],
+  "language" : "spanish",
+  "included_at" : 1778185344494,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 17,
+  "database" : "Binomial pairs",
+  "expression" : "Con todas las de la ley",
+  "translations" : [ "Rules and regulations" ],
+  "language" : "spanish",
+  "included_at" : 1778185360459,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Binomial pairs",
+  "expression" : "Con pelos y señales",
+  "translations" : [ "Chapter and verse" ],
+  "language" : "spanish",
+  "included_at" : 1778185328114,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "De cabo a rabo",
+  "translations" : [ "Alpha and omega" ],
+  "language" : "spanish",
+  "included_at" : 1778185360454,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 3,
+  "database" : "Binomial pairs",
+  "expression" : "Cansado y agotado",
+  "translations" : [ "Wear and tear" ],
+  "language" : "spanish",
+  "included_at" : 1778185360434,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 16,
+  "database" : "Binomial pairs",
+  "expression" : "De un lado a otro",
+  "translations" : [ ],
+  "language" : "spanish",
+  "included_at" : 1778185344488,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "Tarde o temprano",
+  "translations" : [ "Sooner or later" ],
+  "language" : "spanish",
+  "included_at" : 1778185328080,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Binomial pairs",
+  "expression" : "En voz alta",
+  "translations" : [ "Loud and clear" ],
+  "language" : "spanish",
+  "included_at" : 1778185328105,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 0,
   "database" : "Binomial pairs",
+  "expression" : "A duras penas",
+  "translations" : [ "By the skin of one's teeth" ],
+  "language" : "spanish",
+  "included_at" : 1778185360456,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "En términos generales",
+  "translations" : [ "By and large" ],
+  "language" : "spanish",
+  "included_at" : 1778185344496,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 18,
+  "database" : "Binomial pairs",
+  "expression" : "Vivito y coleando",
+  "translations" : [ "Alive and kicking" ],
+  "language" : "spanish",
+  "included_at" : 1778185328102,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 4,
+  "database" : "Binomial pairs",
+  "expression" : "Por las buenas o por las malas",
+  "translations" : [ "Like it or not" ],
+  "language" : "spanish",
+  "included_at" : 1778312729738,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "En cuerpo y alma",
+  "translations" : [ ],
+  "language" : "spanish",
+  "included_at" : 1778185360452,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Binomial pairs",
+  "expression" : "A pan y agua",
+  "translations" : [ "Bread and water" ],
+  "language" : "spanish",
+  "included_at" : 1778185360439,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "A grandes rasgos",
+  "translations" : [ "Broadly speaking" ],
+  "language" : "spanish",
+  "included_at" : 1778185328118,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 18,
+  "database" : "Binomial pairs",
+  "expression" : "Sano y salvo",
+  "translations" : [ "Safe and sound" ],
+  "language" : "spanish",
+  "included_at" : 1778185344485,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 17,
+  "database" : "Binomial pairs",
+  "expression" : "Nulo y sin valor",
+  "translations" : [ "Null and void" ],
+  "language" : "spanish",
+  "included_at" : 1778185360429,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Binomial pairs",
+  "expression" : "Trastos",
+  "translations" : [ "Odds and ends" ],
+  "language" : "spanish",
+  "included_at" : 1778185344493,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "Paz y tranquilidad",
+  "translations" : [ "Peace and quiet" ],
+  "language" : "spanish",
+  "included_at" : 1778185344489,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "De todas formas",
+  "translations" : [ "Each and every" ],
+  "language" : "spanish",
+  "included_at" : 1778185360435,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "Limpio y ordenado",
+  "translations" : [ "Neat and tidy" ],
+  "language" : "spanish",
+  "included_at" : 1778185328092,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 16,
+  "database" : "Binomial pairs",
+  "expression" : "Hasta las narices",
+  "translations" : [ "Sick and tired" ],
+  "language" : "spanish",
+  "included_at" : 1778185344495,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 15,
+  "database" : "Binomial pairs",
+  "expression" : "Gritos y protestas",
+  "translations" : [ "Hue and cry" ],
+  "language" : "spanish",
+  "included_at" : 1778185360436,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Binomial pairs",
+  "expression" : "Blanco y negro",
+  "translations" : [ "Black and white" ],
+  "language" : "spanish",
+  "included_at" : 1778185328094,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
   "expression" : "A trompicones",
   "translations" : [ "Fits and starts" ],
   "language" : "spanish",
+  "included_at" : 1778185328112,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "De vez en cuando",
+  "translations" : [ "Now and then" ],
+  "language" : "spanish",
+  "included_at" : 1778185328090,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 17,
+  "database" : "Binomial pairs",
+  "expression" : "Cuerpo y alma",
+  "translations" : [ "Heart and soul" ],
+  "language" : "spanish",
+  "included_at" : 1778185328097,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Binomial pairs",
+  "expression" : "Lidiar con",
+  "translations" : [ "Live and learn" ],
+  "language" : "spanish",
+  "included_at" : 1778185328108,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "De punta en blanco",
+  "translations" : [ "Spick and span" ],
+  "language" : "spanish",
+  "included_at" : 1778185360457,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 20,
+  "database" : "Binomial pairs",
+  "expression" : "Ensayo y error",
+  "translations" : [ "Trial and error" ],
+  "language" : "spanish",
+  "included_at" : 1778360693009,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "Altibajos",
+  "translations" : [ "Ups and downs" ],
+  "language" : "spanish",
+  "included_at" : 1778185344480,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Binomial pairs",
+  "expression" : "De arriba a abajo",
+  "translations" : [ "High and low" ],
+  "language" : "spanish",
+  "included_at" : 1778185360446,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Binomial pairs",
+  "expression" : "Esencial",
+  "translations" : [ "Meat and drink" ],
+  "language" : "spanish",
+  "included_at" : 1778185328119,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Binomial pairs",
+  "expression" : "De pies a cabeza",
+  "translations" : [ "Head to toe" ],
+  "language" : "spanish",
+  "included_at" : 1778185328098,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Binomial pairs",
+  "expression" : "Puntos y comas",
+  "translations" : [ "Ins and outs" ],
+  "language" : "spanish",
+  "included_at" : 1778185328088,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "Binomial pairs",
+  "expression" : "Pros y contras",
+  "translations" : [ ],
+  "language" : "spanish",
+  "included_at" : 1778185344481,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Binomial pairs",
+  "expression" : "En orden",
+  "translations" : [ "Shipshape and Bristol fashion" ],
+  "language" : "spanish",
+  "included_at" : 1778185328117,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Binomial pairs",
+  "expression" : "Gajes del oficio",
+  "translations" : [ "Part and parcel" ],
+  "language" : "spanish",
+  "included_at" : 1778185344484,
+  "type" : "spanish_expression"
+} ], [ {
+  "database" : "Human body parts",
+  "created_at" : 1778361404842,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "Cara",
+  "translations" : [ "Face" ],
+  "language" : "spanish",
+  "included_at" : 1778185451451,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Pantorrilla",
+  "translations" : [ "Calf" ],
+  "language" : "spanish",
+  "included_at" : 1778185451512,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Espalda",
+  "translations" : [ "Back" ],
+  "language" : "spanish",
+  "included_at" : 1778185451505,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 4,
+  "database" : "Human body parts",
+  "expression" : "Mejilla",
+  "translations" : [ "Cheek" ],
+  "language" : "spanish",
+  "included_at" : 1778185451469,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "Dedo de la mano",
+  "translations" : [ "Finger" ],
+  "language" : "spanish",
+  "included_at" : 1778185451496,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Rodilla",
+  "translations" : [ "Knee" ],
+  "language" : "spanish",
+  "included_at" : 1778185451511,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Human body parts",
+  "expression" : "Nalga",
+  "translations" : [ "Buttock" ],
+  "language" : "spanish",
+  "included_at" : 1778185451507,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 7,
+  "database" : "Human body parts",
+  "expression" : "Muslo",
+  "translations" : [ "Thigh" ],
+  "language" : "spanish",
+  "included_at" : 1778185451510,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Pectoral",
+  "translations" : [ "Pectoral" ],
+  "language" : "spanish",
+  "included_at" : 1778185451500,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Human body parts",
+  "expression" : "Músculo",
+  "translations" : [ "Muscle" ],
+  "language" : "spanish",
+  "included_at" : 1778185451517,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Human body parts",
+  "expression" : "Hueso",
+  "translations" : [ "Bone" ],
+  "language" : "spanish",
+  "included_at" : 1778185451516,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Human body parts",
+  "expression" : "Mandíbula",
+  "translations" : [ "Jaw" ],
+  "language" : "spanish",
+  "included_at" : 1778185451478,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Human body parts",
+  "expression" : "Pestaña",
+  "translations" : [ "Eyelash" ],
+  "language" : "spanish",
+  "included_at" : 1778185451458,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Cadera",
+  "translations" : [ "Hip" ],
+  "language" : "spanish",
+  "included_at" : 1778185451506,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Human body parts",
+  "expression" : "Fosa nasal",
+  "translations" : [ "Nostril" ],
+  "language" : "spanish",
+  "included_at" : 1778185451467,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Cintura",
+  "translations" : [ "Waist" ],
+  "language" : "spanish",
+  "included_at" : 1778185451504,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Human body parts",
+  "expression" : "Pie",
+  "translations" : [ "Foot" ],
+  "language" : "spanish",
+  "included_at" : 1778185451513,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "Ojo",
+  "translations" : [ "Eye" ],
+  "language" : "spanish",
+  "included_at" : 1778185451455,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 7,
+  "database" : "Human body parts",
+  "expression" : "Párpado",
+  "translations" : [ "Eyelid" ],
+  "language" : "spanish",
+  "included_at" : 1778185451459,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Human body parts",
+  "expression" : "Cabello",
+  "translations" : [ "Hair" ],
+  "language" : "spanish",
+  "included_at" : 1778185451448,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Garganta",
+  "translations" : [ "Throat" ],
+  "language" : "spanish",
+  "included_at" : 1778185451483,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Human body parts",
+  "expression" : "Pómulo",
+  "translations" : [ "Cheekbone" ],
+  "language" : "spanish",
+  "included_at" : 1778185451471,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "Labios",
+  "translations" : [ "Lips" ],
+  "language" : "spanish",
+  "included_at" : 1778185451473,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Muñeca",
+  "translations" : [ "Wrist" ],
+  "language" : "spanish",
+  "included_at" : 1778185451493,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Tobillo",
+  "translations" : [ "Ankle" ],
+  "language" : "spanish",
+  "included_at" : 1778185451513,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Human body parts",
+  "expression" : "Sien",
+  "translations" : [ "Temple" ],
+  "language" : "spanish",
+  "included_at" : 1778185451480,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 16,
+  "database" : "Human body parts",
+  "expression" : "Abdomen",
+  "translations" : [ "Abdomen" ],
+  "language" : "spanish",
+  "included_at" : 1778185451501,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 7,
+  "database" : "Human body parts",
+  "expression" : "Columna",
+  "translations" : [ "Spine" ],
+  "language" : "spanish",
+  "included_at" : 1778185451506,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Human body parts",
+  "expression" : "Uña",
+  "translations" : [ "Nail" ],
+  "language" : "spanish",
+  "included_at" : 1778185451498,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Human body parts",
+  "expression" : "Trasero",
+  "translations" : [ "Bottom" ],
+  "language" : "spanish",
+  "included_at" : 1778185451508,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Human body parts",
+  "expression" : "Mentón",
+  "translations" : [ "Chin" ],
+  "language" : "spanish",
+  "included_at" : 1778185451478,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "Mano",
+  "translations" : [ "Hand" ],
+  "language" : "spanish",
+  "included_at" : 1778185451494,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "Cuello",
+  "translations" : [ "Neck" ],
+  "language" : "spanish",
+  "included_at" : 1778185451481,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Brazo",
+  "translations" : [ "Arm" ],
+  "language" : "spanish",
+  "included_at" : 1778185451491,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Human body parts",
+  "expression" : "Frente",
+  "translations" : [ "Forehead" ],
+  "language" : "spanish",
+  "included_at" : 1778185451453,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Seno",
+  "translations" : [ "Breast" ],
+  "language" : "spanish",
+  "included_at" : 1778185451499,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "Boca",
+  "translations" : [ "Mouth" ],
+  "language" : "spanish",
+  "included_at" : 1778185451472,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 7,
+  "database" : "Human body parts",
+  "expression" : "Nariz",
+  "translations" : [ "Nose" ],
+  "language" : "spanish",
+  "included_at" : 1778185451466,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Human body parts",
+  "expression" : "Barriga",
+  "translations" : [ "Belly" ],
+  "language" : "spanish",
+  "included_at" : 1778185451502,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Pierna",
+  "translations" : [ "Leg" ],
+  "language" : "spanish",
+  "included_at" : 1778185451509,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Human body parts",
+  "expression" : "Hombro",
+  "translations" : [ "Shoulder" ],
+  "language" : "spanish",
+  "included_at" : 1778185451486,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Human body parts",
+  "expression" : "Diente",
+  "translations" : [ "Tooth" ],
+  "language" : "spanish",
+  "included_at" : 1778185451473,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Oreja",
+  "translations" : [ "Ear" ],
+  "language" : "spanish",
+  "included_at" : 1778185451479,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Human body parts",
+  "expression" : "Lengua",
+  "translations" : [ "Tongue" ],
+  "language" : "spanish",
+  "included_at" : 1778185451475,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "Cachete",
+  "translations" : [ "Cheek" ],
+  "language" : "spanish",
+  "included_at" : 1778185451470,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Palma",
+  "translations" : [ "Palm" ],
+  "language" : "spanish",
+  "included_at" : 1778185451494,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 9,
+  "database" : "Human body parts",
+  "expression" : "Ombligo",
+  "translations" : [ "Navel" ],
+  "language" : "spanish",
+  "included_at" : 1778185451503,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Codo",
+  "translations" : [ "Elbow" ],
+  "language" : "spanish",
+  "included_at" : 1778185451491,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Talón",
+  "translations" : [ "Heel" ],
+  "language" : "spanish",
+  "included_at" : 1778185451514,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Pupila",
+  "translations" : [ "Pupil" ],
+  "language" : "spanish",
+  "included_at" : 1778185451461,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Encía",
+  "translations" : [ "Gum" ],
+  "language" : "spanish",
+  "included_at" : 1778185451476,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 7,
+  "database" : "Human body parts",
+  "expression" : "Sangre",
+  "translations" : [ "Blood" ],
+  "language" : "spanish",
+  "included_at" : 1778185451518,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "Cabeza",
+  "translations" : [ "Head" ],
+  "language" : "spanish",
+  "included_at" : 1778185451441,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Pecho",
+  "translations" : [ "Chest" ],
+  "language" : "spanish",
+  "included_at" : 1778185451498,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Human body parts",
+  "expression" : "Piel",
+  "translations" : [ "Skin" ],
+  "language" : "spanish",
+  "included_at" : 1778185451516,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Human body parts",
+  "expression" : "Barbilla",
+  "translations" : [ "Chin" ],
+  "language" : "spanish",
+  "included_at" : 1778185451477,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 14,
+  "database" : "Human body parts",
+  "expression" : "Iris",
+  "translations" : [ "Iris" ],
+  "language" : "spanish",
+  "included_at" : 1778185451465,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Pulgar",
+  "translations" : [ "Thumb" ],
+  "language" : "spanish",
+  "included_at" : 1778185451497,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 0,
+  "database" : "Human body parts",
+  "expression" : "Espinilla",
+  "translations" : [ "Shin" ],
+  "language" : "spanish",
+  "included_at" : 1778185451511,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Human body parts",
+  "expression" : "Dedo del pie",
+  "translations" : [ "Toe" ],
+  "language" : "spanish",
+  "included_at" : 1778185451515,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 3,
+  "database" : "Human body parts",
+  "expression" : "Nuca",
+  "translations" : [ "Nape" ],
+  "language" : "spanish",
+  "included_at" : 1778185451482,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Human body parts",
+  "expression" : "Antebrazo",
+  "translations" : [ "Forearm" ],
+  "language" : "spanish",
+  "included_at" : 1778185451492,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 3,
+  "database" : "Human body parts",
+  "expression" : "Ceja",
+  "translations" : [ "Eyebrow" ],
+  "language" : "spanish",
+  "included_at" : 1778185451456,
   "type" : "spanish_expression"
 } ], [ {
   "database" : "learned_words",
-  "created_at" : 1778094067228,
+  "created_at" : 1778361404842,
+  "type" : "database_metadata"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Pros and cons",
+  "language" : "english",
+  "spanish_sources" : [ "Pros y contras" ],
+  "included_at" : 1778360485865,
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Back and forth",
+  "language" : "english",
+  "spanish_sources" : [ "De un lado a otro" ],
+  "included_at" : 1778360447245,
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Heart and soul",
+  "language" : "english",
+  "spanish_sources" : [ "En cuerpo y alma" ],
+  "included_at" : 1778330583359,
+  "type" : "english_expression"
+} ], [ {
+  "database" : "lolo",
+  "created_at" : 1778361404842,
   "type" : "database_metadata"
 } ], [ {
   "database" : "Phrasal verbs",
-  "created_at" : 1778094067228,
+  "created_at" : 1778361404842,
   "type" : "database_metadata"
 } ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "Volver",
-  "translations" : [ "To come back" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Madurar",
-  "translations" : [ "To grow up" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Botar",
-  "translations" : [ "To throw away" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Presumir",
-  "translations" : [ "To show off" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Hacer ejercicio",
-  "translations" : [ "To work out" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "Posponer",
-  "translations" : [ "To put off" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Rechazar",
-  "translations" : [ "To turn down" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Entregarse",
-  "translations" : [ "To turn in" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
+  "score" : 6,
   "database" : "Phrasal verbs",
   "expression" : "Crecer",
-  "translations" : [ "To grow up" ],
+  "translations" : [ "grow up" ],
   "language" : "spanish",
+  "included_at" : 1778185262026,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 7,
   "database" : "Phrasal verbs",
-  "expression" : "Rendirse",
-  "translations" : [ "To give up" ],
+  "expression" : "Ponerse al día",
+  "translations" : [ "catch up" ],
   "language" : "spanish",
+  "included_at" : 1778185262018,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 10,
   "database" : "Phrasal verbs",
-  "expression" : "Suspender",
-  "translations" : [ "To call off" ],
+  "expression" : "Tirar",
+  "translations" : [ "throw away" ],
   "language" : "spanish",
+  "included_at" : 1778185262029,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Phrasal verbs",
+  "expression" : "Venir a casa",
+  "translations" : [ "come over" ],
+  "language" : "spanish",
+  "included_at" : 1778185262024,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 2,
   "database" : "Phrasal verbs",
-  "expression" : "Regañar",
-  "translations" : [ "To tell off" ],
+  "expression" : "Terminar una relación",
+  "translations" : [ "break up" ],
   "language" : "spanish",
+  "included_at" : 1778185262014,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 12,
   "database" : "Phrasal verbs",
   "expression" : "Encontrarse con",
-  "translations" : [ "To come across" ],
+  "translations" : [ "come across" ],
   "language" : "spanish",
+  "included_at" : 1778185262020,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "Callarse",
-  "translations" : [ "To shut up" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Ser infiel",
-  "translations" : [ "To cheat on" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Parecerse",
-  "translations" : [ "To take after" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Terminar una relación",
-  "translations" : [ "To break up" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "Entrar",
-  "translations" : [ "To come in" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "Venir a casa",
-  "translations" : [ "To come over" ],
-  "language" : "spanish",
-  "type" : "spanish_expression"
-} ], [ {
-  "score" : 0,
+  "score" : 12,
   "database" : "Phrasal verbs",
   "expression" : "Contar con",
-  "translations" : [ "To count on" ],
+  "translations" : [ "count on" ],
   "language" : "spanish",
+  "included_at" : 1778185262025,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 9,
   "database" : "Phrasal verbs",
-  "expression" : "Ponerse al día",
-  "translations" : [ "To catch up" ],
+  "expression" : "Entrar",
+  "translations" : [ "come in" ],
   "language" : "spanish",
+  "included_at" : 1778185262023,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 13,
+  "database" : "Phrasal verbs",
+  "expression" : "Hacer ejercicio",
+  "translations" : [ "work out" ],
+  "language" : "spanish",
+  "included_at" : 1778185262031,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 15,
   "database" : "Phrasal verbs",
   "expression" : "Regresar",
-  "translations" : [ "To come back" ],
+  "translations" : [ "come back" ],
   "language" : "spanish",
+  "included_at" : 1778185262022,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Phrasal verbs",
+  "expression" : "Botar",
+  "translations" : [ "throw away" ],
+  "language" : "spanish",
+  "included_at" : 1778185262030,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 11,
+  "database" : "Phrasal verbs",
+  "expression" : "Volver",
+  "translations" : [ "come back" ],
+  "language" : "spanish",
+  "included_at" : 1778185262021,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 10,
+  "database" : "Phrasal verbs",
+  "expression" : "Madurar",
+  "translations" : [ "grow up" ],
+  "language" : "spanish",
+  "included_at" : 1778185262027,
   "type" : "spanish_expression"
 } ], [ {
   "score" : 1,
   "database" : "Phrasal verbs",
-  "expression" : "Tirar",
-  "translations" : [ "To throw away" ],
+  "expression" : "Ser infiel",
+  "translations" : [ "cheat on" ],
   "language" : "spanish",
+  "included_at" : 1778185262019,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 2,
+  "database" : "Phrasal verbs",
+  "expression" : "Entregarse",
+  "translations" : [ "turn in" ],
+  "language" : "spanish",
+  "included_at" : 1778185262028,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Phrasal verbs",
+  "expression" : "Posponer",
+  "translations" : [ "put off" ],
+  "language" : "spanish",
+  "included_at" : 1778185262010,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 12,
   "database" : "Phrasal verbs",
   "expression" : "Quedarse sin",
-  "translations" : [ "To run out of" ],
+  "translations" : [ "run out of" ],
   "language" : "spanish",
+  "included_at" : 1778185262029,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 3,
   "database" : "Phrasal verbs",
-  "expression" : "Bajar la velocidad",
-  "translations" : [ "To slow down" ],
+  "expression" : "Rechazar",
+  "translations" : [ "turn down" ],
   "language" : "spanish",
+  "included_at" : 1778185262032,
   "type" : "spanish_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 4,
   "database" : "Phrasal verbs",
-  "expression" : "Toparse",
-  "translations" : [ "To run into" ],
+  "expression" : "Rendirse",
+  "translations" : [ "give up" ],
   "language" : "spanish",
+  "included_at" : 1778185262016,
+  "type" : "spanish_expression"
+} ], [ {
+  "score" : 3,
+  "database" : "Phrasal verbs",
+  "expression" : "Suspender",
+  "translations" : [ "call off" ],
+  "language" : "spanish",
+  "included_at" : 1778185262015,
   "type" : "spanish_expression"
 } ] ]

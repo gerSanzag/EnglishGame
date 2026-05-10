@@ -389,6 +389,34 @@ public class GameView extends JFrame {
         layoutOnePhrasalOptionArea(phrasalParticle1OptionsArea);
         layoutOnePhrasalOptionArea(phrasalParticle2OptionsArea);
         layoutOnePhrasalOptionArea(phrasalParticle3OptionsArea);
+        normalizePhrasalOptionHeights();
+    }
+
+    /** Fuerza misma altura visual en los 4 cuadros de opciones para no romper alineación. */
+    private void normalizePhrasalOptionHeights() {
+        JTextArea[] areas = {
+                phrasalVerbOptionsArea,
+                phrasalParticle1OptionsArea,
+                phrasalParticle2OptionsArea,
+                phrasalParticle3OptionsArea
+        };
+        int maxH = 0;
+        for (JTextArea area : areas) {
+            if (area != null) {
+                maxH = Math.max(maxH, area.getPreferredSize().height);
+            }
+        }
+        if (maxH <= 0) {
+            return;
+        }
+        for (JTextArea area : areas) {
+            if (area != null) {
+                int w = area.getPreferredSize().width;
+                area.setPreferredSize(new Dimension(w, maxH));
+                area.setMaximumSize(new Dimension(w, maxH + 14));
+                area.setMinimumSize(new Dimension(Math.min(w, 100), Math.min(maxH, 16)));
+            }
+        }
     }
 
     private void syncPhrasalInputsToColumnWidth() {
@@ -896,9 +924,9 @@ public class GameView extends JFrame {
         stickySouth.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(210, 214, 220)),
                 BorderFactory.createEmptyBorder(14, 16, 14, 16)));
-        stickySouth.add(navSection);
-        stickySouth.add(Box.createVerticalStrut(8));
         stickySouth.add(buttonPanel);
+        stickySouth.add(Box.createVerticalStrut(8));
+        stickySouth.add(navSection);
         stickySouth.add(Box.createVerticalStrut(6));
 
         mainPanel.add(dbSection);
