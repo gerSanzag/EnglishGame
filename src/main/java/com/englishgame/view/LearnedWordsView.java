@@ -64,6 +64,10 @@ public class LearnedWordsView extends JFrame {
     private JLabel recordsCountLabel;
     private JButton refreshButton;
     private JButton deleteAllButton;
+    private JButton moveSelectedButton;
+    private JButton deleteSelectedButton;
+    private JButton selectAllRowsButton;
+    private JButton clearSelectionButton;
     private JButton reviewButton;
     private JButton backToLandingButton;
     private JButton dataManagementButton;
@@ -100,7 +104,8 @@ public class LearnedWordsView extends JFrame {
         };
         learnedWordsTable = new JTable(tableModel);
         learnedWordsTable.setRowHeight(35);
-        learnedWordsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        learnedWordsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        learnedWordsTable.setToolTipText("Mantén Ctrl/Cmd o Shift para seleccionar varias filas; usa los botones de grupo.");
         
         // Set custom renderer for button columns
         learnedWordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
@@ -129,6 +134,14 @@ public class LearnedWordsView extends JFrame {
         // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the learned words list");
         deleteAllButton = createStyledButton("Delete All", "Delete all learned words");
+        moveSelectedButton = createStyledButton("Mover seleccionados",
+                "Mueve las filas seleccionadas a una base de práctica");
+        deleteSelectedButton = createStyledButton("Borrar seleccionados",
+                "Elimina las filas seleccionadas de Learned Words");
+        selectAllRowsButton = createStyledButton("Seleccionar todo",
+                "Selecciona todas las filas visibles en la tabla");
+        clearSelectionButton = createStyledButton("Quitar selección",
+                "Deselecciona todas las filas");
         reviewButton = createStyledButton("Review", "Review learned words");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
@@ -191,6 +204,12 @@ public class LearnedWordsView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Refresh")) {
             return new Color(59, 130, 246); // Vibrant blue for refresh
+        } else if (buttonText.contains("Borrar seleccionados")) {
+            return new Color(220, 38, 127);
+        } else if (buttonText.contains("Mover seleccionados")) {
+            return new Color(245, 158, 11);
+        } else if (buttonText.contains("Seleccionar") || buttonText.contains("Quitar selección")) {
+            return new Color(100, 116, 139);
         } else if (buttonText.contains("Delete") && buttonText.contains("All")) {
             return new Color(220, 38, 127); // Vibrant pink for delete all
         } else if (buttonText.contains("Review")) {
@@ -246,6 +265,12 @@ public class LearnedWordsView extends JFrame {
         
         // Learned Words Table Section
         JPanel tableSection = createSectionPanel("Learned Words and Expressions");
+        JPanel bulkSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+        bulkSelectionPanel.add(moveSelectedButton);
+        bulkSelectionPanel.add(deleteSelectedButton);
+        bulkSelectionPanel.add(selectAllRowsButton);
+        bulkSelectionPanel.add(clearSelectionButton);
+        tableSection.add(bulkSelectionPanel);
         JScrollPane tableScrollPane = new JScrollPane(learnedWordsTable);
         tableScrollPane.setPreferredSize(new Dimension(900, 400));
         tableScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -314,6 +339,10 @@ public class LearnedWordsView extends JFrame {
         dataManagementButton.addActionListener(e -> openDataManagement());
         viewWordsButton.addActionListener(e -> openViewWords());
         playGameButton.addActionListener(e -> openGame());
+        moveSelectedButton.addActionListener(e -> moveSelectedLearnedWords());
+        deleteSelectedButton.addActionListener(e -> deleteSelectedLearnedWords());
+        selectAllRowsButton.addActionListener(e -> selectAllVisibleRows());
+        clearSelectionButton.addActionListener(e -> learnedWordsTable.clearSelection());
     }
 
     private void refreshLearnedWordsTable() {
@@ -507,6 +536,124 @@ public class LearnedWordsView extends JFrame {
             refreshLearnedWordsTable();
         });
         review.setVisible(true);
+    }
+
+    private List<String> selectedExpressionsFromTable() {
+        int[] rows = learnedWordsTable.getSelectedRows();
+        List<String> expressions = new ArrayList<>();
+        for (int row : rows) {
+            Object value = learnedWordsTable.getValueAt(row, 0);
+            if (value == null) {
+                continue;
+            }
+            String expr = value.toString().trim();
+            if (!expr.isEmpty() && !expressions.contains(expr)) {
+                expressions.add(expr);
+            }
+        }
+        return expressions;
+    }
+
+    private void selectAllVisibleRows() {
+        int count = learnedWordsTable.getRowCount();
+        if (count == 0) {
+            return;
+        }
+        learnedWordsTable.clearSelection();
+        learnedWordsTable.addRowSelectionInterval(0, count - 1);
+    }
+
+    private void moveSelectedLearnedWords() {
+        List<String> expressions = selectedExpressionsFromTable();
+        if (expressions.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
+                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        List<String> targets = new ArrayList<>(gameController.getAvailableDatabases());
+        if (targets.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay ninguna base de vocabulario disponible como destino.",
+                    "Sin destino", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        String targetDatabase = (String) JOptionPane.showInputDialog(
+                this,
+                "Destino de práctica para " + expressions.size() + " expresión(es):",
+                "Mover seleccionados",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                targets.toArray(),
+                targets.get(0));
+        if (targetDatabase == null || targetDatabase.isBlank()) {
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Mover " + expressions.size() + " expresión(es) de Learned Words a \""
+                        + targetDatabase + "\"?",
+                "Confirmar movimiento en grupo",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        int moved = 0;
+        int failed = 0;
+        for (String expression : expressions) {
+            try {
+                if (gameController.moveExpression(LEARNED_WORDS_DB, targetDatabase, expression)) {
+                    moved++;
+                } else {
+                    failed++;
+                }
+            } catch (Exception e) {
+                failed++;
+                log.error("Error moving learned word '{}' in bulk", expression, e);
+            }
+        }
+        refreshLearnedWordsTable();
+        JOptionPane.showMessageDialog(this,
+                "Movidas: " + moved + (failed > 0 ? "\nNo movidas: " + failed : ""),
+                "Movimiento en grupo",
+                failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void deleteSelectedLearnedWords() {
+        List<String> expressions = selectedExpressionsFromTable();
+        if (expressions.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
+                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Borrar " + expressions.size() + " expresión(es) de Learned Words permanentemente?",
+                "Confirmar borrado en grupo",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+        int deleted = 0;
+        int failed = 0;
+        for (String expression : expressions) {
+            try {
+                if (gameController.deleteExpression(LEARNED_WORDS_DB, expression)) {
+                    deleted++;
+                } else {
+                    failed++;
+                }
+            } catch (Exception e) {
+                failed++;
+                log.error("Error deleting learned word '{}' in bulk", expression, e);
+            }
+        }
+        refreshLearnedWordsTable();
+        JOptionPane.showMessageDialog(this,
+                "Borradas: " + deleted + (failed > 0 ? "\nNo borradas: " + failed : ""),
+                "Borrado en grupo",
+                failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void moveLearnedWordToPractice(String englishExpression) {

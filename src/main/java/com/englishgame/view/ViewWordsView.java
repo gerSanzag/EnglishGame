@@ -59,6 +59,10 @@ public class ViewWordsView extends JFrame {
     private JTable wordsTable;
     private JButton refreshButton;
     private JButton deleteAllButton;
+    private JButton moveSelectedButton;
+    private JButton deleteSelectedButton;
+    private JButton selectAllRowsButton;
+    private JButton clearSelectionButton;
     private JTextField searchField;
     private JComboBox<String> sortSelector;
     private JLabel recordsCountLabel;
@@ -102,7 +106,8 @@ public class ViewWordsView extends JFrame {
         };
         wordsTable = new JTable(tableModel);
         wordsTable.setRowHeight(35);
-        wordsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        wordsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        wordsTable.setToolTipText("Mantén Ctrl/Cmd o Shift para seleccionar varias filas; usa los botones de grupo.");
         
         wordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
         wordsTable.getColumn("Delete").setCellRenderer(new ButtonRenderer("Delete"));
@@ -127,6 +132,14 @@ public class ViewWordsView extends JFrame {
         refreshButton = createStyledButton("Refresh", "Refresh the words list");
         deleteAllButton = createStyledButton("Delete All",
                 "Remove every expression from the database currently selected above");
+        moveSelectedButton = createStyledButton("Mover seleccionados",
+                "Mueve las filas seleccionadas a otra base de datos");
+        deleteSelectedButton = createStyledButton("Borrar seleccionados",
+                "Elimina las filas seleccionadas de la base actual");
+        selectAllRowsButton = createStyledButton("Seleccionar todo",
+                "Selecciona todas las filas visibles en la tabla");
+        clearSelectionButton = createStyledButton("Quitar selección",
+                "Deselecciona todas las filas");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
         playGameButton = createStyledButton("Play Game", "Start interactive game");
@@ -205,6 +218,12 @@ public class ViewWordsView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Refresh")) {
             return new Color(59, 130, 246); // Vibrant blue for refresh
+        } else if (buttonText.contains("Borrar seleccionados")) {
+            return new Color(220, 38, 127);
+        } else if (buttonText.contains("Mover seleccionados")) {
+            return new Color(245, 158, 11);
+        } else if (buttonText.contains("Seleccionar") || buttonText.contains("Quitar selección")) {
+            return new Color(100, 116, 139);
         } else if (buttonText.contains("Borrar todo")
                 || (buttonText.contains("Delete") && buttonText.contains("All"))) {
             return new Color(220, 38, 127); // Vibrant pink for delete all
@@ -272,6 +291,12 @@ public class ViewWordsView extends JFrame {
         
         // Words Table Section
         JPanel tableSection = createSectionPanel("Words and Expressions");
+        JPanel bulkSelectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+        bulkSelectionPanel.add(moveSelectedButton);
+        bulkSelectionPanel.add(deleteSelectedButton);
+        bulkSelectionPanel.add(selectAllRowsButton);
+        bulkSelectionPanel.add(clearSelectionButton);
+        tableSection.add(bulkSelectionPanel);
         JScrollPane tableScrollPane = new JScrollPane(wordsTable);
         tableScrollPane.setPreferredSize(new Dimension(900, 400));
         tableScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
@@ -340,6 +365,10 @@ public class ViewWordsView extends JFrame {
         dataManagementButton.addActionListener(e -> openDataManagement());
         playGameButton.addActionListener(e -> openGame());
         learnedWordsButton.addActionListener(e -> openLearnedWords());
+        moveSelectedButton.addActionListener(e -> moveSelectedExpressions());
+        deleteSelectedButton.addActionListener(e -> deleteSelectedExpressions());
+        selectAllRowsButton.addActionListener(e -> selectAllVisibleRows());
+        clearSelectionButton.addActionListener(e -> wordsTable.clearSelection());
     }
 
     private void refreshDatabaseSelector() {
@@ -626,6 +655,147 @@ public class ViewWordsView extends JFrame {
                 }
             }
         }
+    }
+
+    private List<String> selectedExpressionsFromTable() {
+        int[] rows = wordsTable.getSelectedRows();
+        List<String> expressions = new ArrayList<>();
+        for (int row : rows) {
+            Object value = wordsTable.getValueAt(row, 0);
+            if (value == null) {
+                continue;
+            }
+            String expr = value.toString().trim();
+            if (!expr.isEmpty() && !expressions.contains(expr)) {
+                expressions.add(expr);
+            }
+        }
+        return expressions;
+    }
+
+    private void selectAllVisibleRows() {
+        int count = wordsTable.getRowCount();
+        if (count == 0) {
+            return;
+        }
+        wordsTable.clearSelection();
+        wordsTable.addRowSelectionInterval(0, count - 1);
+    }
+
+    private void moveSelectedExpressions() {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos primero.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        List<String> expressions = selectedExpressionsFromTable();
+        if (expressions.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
+                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String selectedNorm = selectedDb.trim().toLowerCase();
+        List<String> availableDatabases = gameController.getAvailableDatabases().stream()
+                .filter(db -> db != null && !db.trim().isEmpty())
+                .filter(db -> !db.trim().toLowerCase().equals(selectedNorm))
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .toList();
+        if (availableDatabases.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "No hay otra base de datos disponible como destino.",
+                    "Sin destino", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String targetDatabase = (String) JOptionPane.showInputDialog(
+                this,
+                "Destino para " + expressions.size() + " expresión(es) desde \"" + selectedDb + "\":",
+                "Mover seleccionados",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                availableDatabases.toArray(),
+                availableDatabases.get(0));
+        if (targetDatabase == null || targetDatabase.isBlank()) {
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Mover " + expressions.size() + " expresión(es) de \"" + selectedDb + "\" a \""
+                        + targetDatabase + "\"?",
+                "Confirmar movimiento en grupo",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int moved = 0;
+        int failed = 0;
+        for (String expression : expressions) {
+            try {
+                if (gameController.moveExpression(selectedDb, targetDatabase, expression)) {
+                    moved++;
+                } else {
+                    failed++;
+                }
+            } catch (Exception e) {
+                failed++;
+                log.error("Error moving expression '{}' in bulk", expression, e);
+            }
+        }
+        refreshWordsTable();
+        JOptionPane.showMessageDialog(this,
+                "Movidas: " + moved + (failed > 0 ? "\nNo movidas: " + failed : ""),
+                "Movimiento en grupo",
+                failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void deleteSelectedExpressions() {
+        String selectedDb = (String) databaseSelector.getSelectedItem();
+        if (selectedDb == null) {
+            JOptionPane.showMessageDialog(this, "Selecciona una base de datos primero.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        List<String> expressions = selectedExpressionsFromTable();
+        if (expressions.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
+                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Borrar " + expressions.size() + " expresión(es) de \"" + selectedDb + "\"?\n\nEsta acción no se puede deshacer.",
+                "Confirmar borrado en grupo",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        int deleted = 0;
+        int failed = 0;
+        for (String expression : expressions) {
+            try {
+                if (gameController.deleteExpression(selectedDb, expression)) {
+                    deleted++;
+                } else {
+                    failed++;
+                }
+            } catch (Exception e) {
+                failed++;
+                log.error("Error deleting expression '{}' in bulk", expression, e);
+            }
+        }
+        refreshWordsTable();
+        JOptionPane.showMessageDialog(this,
+                "Borradas: " + deleted + (failed > 0 ? "\nNo borradas: " + failed : ""),
+                "Borrado en grupo",
+                failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleDeleteExpression(int row) {
