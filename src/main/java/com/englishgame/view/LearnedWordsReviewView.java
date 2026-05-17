@@ -16,10 +16,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * Repaso de {@code learned_words}: layout alineado con {@link GameView} (solo sección Interactive Game),
@@ -30,6 +31,7 @@ public class LearnedWordsReviewView extends JFrame {
 
     private static final String LEARNED_DB = "learned_words";
     private static final int CORRECT_ANSWER_NEXT_ROUND_DELAY_MS = 2000;
+    private static final long MS_PER_DAY = 86_400_000L;
 
     /** Acierto / mensaje positivo (alineado con This phrase score en verde). */
     private static final Color REVIEW_FEEDBACK_OK_FG = new Color(0, 130, 50);
@@ -48,6 +50,7 @@ public class LearnedWordsReviewView extends JFrame {
     private volatile boolean navigatedToMainMenu;
 
     private final List<EnglishExpression> deck = new ArrayList<>();
+    private final Random reviewDeckRandom = new Random();
     private int index;
 
     private JPanel topCardPanel;
@@ -112,8 +115,38 @@ public class LearnedWordsReviewView extends JFrame {
     private void reloadDeck() {
         deck.clear();
         deck.addAll(gameController.getEnglishExpressionsFromDatabase(LEARNED_DB));
-        Collections.shuffle(deck, new java.util.Random());
+        orderReviewDeckByInclusionAgeBias();
         index = 0;
+    }
+
+    /**
+     * Solo Review: orden aleatorio sesgado por antigüedad en la lista ({@code includedAtEpochMillis}).
+     * Cuanto más tiempo lleva la entrada en learned_words, más peso y más suele ir al principio del mazo,
+     * para dar tiempo a que la memoria se estabilice antes de insistir en lo recién añadido.
+     */
+    private void orderReviewDeckByInclusionAgeBias() {
+        if (deck.size() <= 1) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        deck.sort(Comparator.comparingDouble(e -> weightedReviewSortKey(now, e)));
+    }
+
+    private double weightedReviewSortKey(long nowMillis, EnglishExpression e) {
+        double w = inclusionWeightDaysSinceLearned(nowMillis, e);
+        double u = reviewDeckRandom.nextDouble();
+        u = Math.max(u, 1e-12);
+        return -Math.log(u) / w;
+    }
+
+    private static double inclusionWeightDaysSinceLearned(long nowMillis, EnglishExpression e) {
+        long inc = e.getIncludedAtEpochMillis();
+        if (inc <= 0L) {
+            inc = 0L;
+        }
+        long ageMs = Math.max(0L, nowMillis - inc);
+        double days = ageMs / (double) MS_PER_DAY;
+        return Math.max(1.0, days);
     }
 
     private JPanel createSectionPanel(String title) {
@@ -634,7 +667,7 @@ public class LearnedWordsReviewView extends JFrame {
         }
         deck.clear();
         deck.addAll(fresh);
-        Collections.shuffle(deck, new java.util.Random());
+        orderReviewDeckByInclusionAgeBias();
         index = 0;
         showCurrentRound();
     }

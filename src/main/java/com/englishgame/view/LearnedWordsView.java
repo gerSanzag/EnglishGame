@@ -30,7 +30,7 @@ public class LearnedWordsView extends JFrame {
     private final LandingPageView landingPage;
     
     private enum SortMode {
-        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC, INCLUSION_DESC, INCLUSION_ASC
+        SPANISH_AZ, ENGLISH_AZ, SCORE_DESC, INCLUSION_DESC, INCLUSION_ASC, SOURCE_DB_AZ
     }
 
     private static final class RowData {
@@ -40,15 +40,17 @@ public class LearnedWordsView extends JFrame {
         private final String spanishKey;
         private final String englishKey;
         private final long includedAtMillis;
+        private final String practiceSourceDatabase;
 
         private RowData(String expression, String translation, int score, String spanishKey, String englishKey,
-                long includedAtMillis) {
+                long includedAtMillis, String practiceSourceDatabase) {
             this.expression = expression;
             this.translation = translation;
             this.score = score;
             this.spanishKey = spanishKey;
             this.englishKey = englishKey;
             this.includedAtMillis = includedAtMillis;
+            this.practiceSourceDatabase = practiceSourceDatabase;
         }
     }
 
@@ -89,11 +91,11 @@ public class LearnedWordsView extends JFrame {
 
     private void initComponents() {
         // Learned words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Inclusión", "Move", "Delete"};
+        String[] columnNames = {"Expression", "Translation", "Score", "Inclusión", "BBDD origen", "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 4 || column == 5;
+                return column == 5 || column == 6;
             }
         };
         learnedWordsTable = new JTable(tableModel);
@@ -114,10 +116,11 @@ public class LearnedWordsView extends JFrame {
 
         sortSelector = new JComboBox<>(new String[] {
                 "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)",
-                "Inclusión (reciente primero)", "Inclusión (antigua primero)"
+                "Inclusión (reciente primero)", "Inclusión (antigua primero)",
+                "BBDD origen (A-Z)"
         });
-        sortSelector.setPreferredSize(new Dimension(280, 30));
-        sortSelector.setToolTipText("Ordena por español, inglés, score o fecha de inclusión");
+        sortSelector.setPreferredSize(new Dimension(300, 30));
+        sortSelector.setToolTipText("Ordena por español, inglés, score, inclusión o base de práctica de origen");
 
         recordsCountLabel = new JLabel("Registros: 0");
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
@@ -328,20 +331,14 @@ public class LearnedWordsView extends JFrame {
                     .reduce((a, b) -> a + ", " + b)
                     .orElse("None");
                 
-                Object[] rowData = {
-                    learnedWord.getExpression(),
-                    spanishTranslations,
-                    learnedWord.getScore(),
-                    "Move",
-                    "Delete"
-                };
                 allData.add(new RowData(
-                        rowData[0].toString(),
-                        rowData[1].toString(),
-                        (Integer) rowData[2],
+                        learnedWord.getExpression(),
+                        spanishTranslations,
+                        learnedWord.getScore(),
                         spanishTranslations,
                         learnedWord.getExpression(),
-                        learnedWord.getIncludedAtEpochMillis()));
+                        learnedWord.getIncludedAtEpochMillis(),
+                        formatPracticeSourceForDisplay(learnedWord.getPracticeSourceDatabase())));
             }
 
             filterLearnedWordsTable();
@@ -391,7 +388,9 @@ public class LearnedWordsView extends JFrame {
         for (RowData rowData : allData) {
             String expression = rowData.expression.toLowerCase();
             String translation = rowData.translation.toLowerCase();
-            if (searchText.isEmpty() || expression.contains(searchText) || translation.contains(searchText)) {
+            String sourceDb = rowData.practiceSourceDatabase.toLowerCase();
+            if (searchText.isEmpty() || expression.contains(searchText) || translation.contains(searchText)
+                    || sourceDb.contains(searchText)) {
                 filtered.add(rowData);
             }
         }
@@ -404,6 +403,7 @@ public class LearnedWordsView extends JFrame {
                     rowData.translation,
                     rowData.score,
                     InclusionDisplay.formatIncludedAt(rowData.includedAtMillis),
+                    rowData.practiceSourceDatabase,
                     "Move",
                     "Delete"
             });
@@ -429,7 +429,16 @@ public class LearnedWordsView extends JFrame {
                     .thenComparing(byExpression);
             case SPANISH_AZ -> Comparator.comparing((RowData r) -> r.spanishKey, String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(byExpression);
+            case SOURCE_DB_AZ -> Comparator.comparing((RowData r) -> r.practiceSourceDatabase, String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(byExpression);
         };
+    }
+
+    private static String formatPracticeSourceForDisplay(String practiceSourceDatabase) {
+        if (practiceSourceDatabase == null || practiceSourceDatabase.isBlank()) {
+            return "—";
+        }
+        return practiceSourceDatabase.trim();
     }
 
     private SortMode selectedSortMode() {
@@ -448,6 +457,9 @@ public class LearnedWordsView extends JFrame {
                 return SortMode.INCLUSION_DESC;
             }
             return SortMode.INCLUSION_ASC;
+        }
+        if (selected.startsWith("BBDD origen")) {
+            return SortMode.SOURCE_DB_AZ;
         }
         return SortMode.SPANISH_AZ;
     }
@@ -611,10 +623,10 @@ public class LearnedWordsView extends JFrame {
                 String expr = englishExpression;
                 int col = editedColumn;
                 fireEditingStopped();
-                if (col == 4) {
+                if (col == 5) {
                     log.info("Move learned word: {}", expr);
                     moveLearnedWordToPractice(expr);
-                } else if (col == 5) {
+                } else if (col == 6) {
                     log.info("Delete learned word: {}", expr);
                     deleteLearnedWord(expr);
                 }
