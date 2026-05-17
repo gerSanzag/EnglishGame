@@ -1,12 +1,12 @@
 package com.englishgame.model;
 
 /**
- * Resultado de evaluar una tirada en Review (learned_words): +1 acierto / -5 fallo, con reglas de reingreso y dominio.
+ * Resultado de evaluar una tirada en Review ({@code learned_words} / {@code words_definitely_learned}).
  */
 public record LearnedWordsReviewResult(
         LearnedWordsReviewResult.Outcome outcome,
         boolean answeredCorrectly,
-        /** Score mostrado al usuario: aprendido hasta 27, o el de práctica si se reincorporó, o 28 al dominar. */
+        /** Puntuación tras la tirada (o la de práctica si se reincorporó). */
         int scoreAfter,
         String expectedEnglish,
         String userEntered,
@@ -17,8 +17,14 @@ public record LearnedWordsReviewResult(
         String restoredToPracticeDatabase
 ) {
     public enum Outcome {
+        /** Sigue en la misma BBDD de review en la que se jugó la tirada. */
         STILL_IN_LEARNED,
         DEMOTED_TO_PRACTICE,
-        MASTERED_REMOVED_EVERYWHERE
+        /** Dominio final en {@code words_definitely_learned} (puntuación 35): purga en todas las BBDD. */
+        MASTERED_REMOVED_EVERYWHERE,
+        /** {@code learned_words} alcanzó 28: pasa a {@code words_definitely_learned} con 28. */
+        PROMOTED_TO_DEFINITELY_LEARNED,
+        /** Fallo en {@code words_definitely_learned}: vuelve a {@code learned_words} con el score penalizado. */
+        RETURNED_TO_LEARNED
     }
 }

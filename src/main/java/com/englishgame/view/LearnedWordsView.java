@@ -522,12 +522,10 @@ public class LearnedWordsView extends JFrame {
 
     private void reviewLearnedWords() {
         log.info("Review learned words requested");
-        List<EnglishExpression> pending =
-                gameController.getEnglishExpressionsFromDatabase(LEARNED_WORDS_DB);
-        if (pending.isEmpty()) {
+        if (!gameController.hasAnyReviewContent()) {
             JOptionPane.showMessageDialog(this,
-                    "No hay ninguna expresión en Learned Words para repasar.", "Review",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    "No hay expresiones en Learned words ni en Words definitely learned para repasar.",
+                    "Review", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         setVisible(false);
@@ -571,7 +569,7 @@ public class LearnedWordsView extends JFrame {
                     "Sin selección", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        List<String> targets = new ArrayList<>(gameController.getAvailableDatabases());
+        List<String> targets = new ArrayList<>(gameController.getMoveTargetsFromLearnedWordsDatabase());
         if (targets.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "No hay ninguna base de vocabulario disponible como destino.",
@@ -580,7 +578,7 @@ public class LearnedWordsView extends JFrame {
         }
         String targetDatabase = (String) JOptionPane.showInputDialog(
                 this,
-                "Destino de práctica para " + expressions.size() + " expresión(es):",
+                "Destino para " + expressions.size() + " expresión(es):",
                 "Mover seleccionados",
                 JOptionPane.QUESTION_MESSAGE,
                 null,
@@ -660,7 +658,7 @@ public class LearnedWordsView extends JFrame {
         if (englishExpression == null || englishExpression.isBlank()) {
             return;
         }
-        List<String> targets = new ArrayList<>(gameController.getAvailableDatabases());
+        List<String> targets = new ArrayList<>(gameController.getMoveTargetsFromLearnedWordsDatabase());
         if (targets.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "No other vocabulary database is available to move this word into.",

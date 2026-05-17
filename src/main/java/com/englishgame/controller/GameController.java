@@ -4,6 +4,7 @@ import com.englishgame.model.AnswerResult;
 import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.LearnedWordsReviewResult;
+import com.englishgame.model.ReviewDatabases;
 import com.englishgame.model.SpanishExpression;
 import com.englishgame.service.interfaces.DatabaseService;
 import com.englishgame.service.interfaces.GameDataService;
@@ -40,6 +41,19 @@ public class GameController {
         }
         
         initializeGame();
+        registerShutdownSaveHook();
+    }
+
+    private void registerShutdownSaveHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (gameDataService.saveGameData()) {
+                    log.info("Game data saved on application shutdown");
+                }
+            } catch (Exception e) {
+                log.error("Failed to save game data on shutdown: {}", e.getMessage());
+            }
+        }, "english-game-shutdown-save"));
     }
 
     private void initializeGame() {
@@ -54,8 +68,39 @@ public class GameController {
 
     public List<String> getAvailableDatabases() {
         return databaseService.getAvailableDatabases().stream()
-                .filter(dbName -> !"learned_words".equals(dbName))
+                .filter(dbName -> !databaseService.isReviewOnlyDatabase(dbName))
                 .collect(Collectors.toList());
+    }
+
+    /** Claves canónicas de las bases solo usadas en Review. */
+    public List<String> getReviewDatabaseKeys() {
+        return ReviewDatabases.allKeys();
+    }
+
+    public List<String> getReviewDatabaseDisplayNames() {
+        return ReviewDatabases.allDisplayNames();
+    }
+
+    public boolean isReviewOnlyDatabase(String databaseName) {
+        return databaseService.isReviewOnlyDatabase(databaseName);
+    }
+
+    public boolean hasAnyReviewContent() {
+        return getReviewDatabaseKeys().stream()
+                .anyMatch(key -> !getEnglishExpressionsFromDatabase(key).isEmpty());
+    }
+
+    /**
+     * Destinos al mover desde Learned words: vocabulario de práctica + Words definitely learned (solo review).
+     */
+    public List<String> getMoveTargetsFromLearnedWordsDatabase() {
+        List<String> targets = new ArrayList<>(getAvailableDatabases());
+        String definitely = ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY;
+        if (targets.stream().noneMatch(d -> definitely.equalsIgnoreCase(d))) {
+            targets.add(definitely);
+        }
+        targets.sort(String.CASE_INSENSITIVE_ORDER);
+        return targets;
     }
 
     public boolean selectDatabase(String databaseName) {
@@ -324,7 +369,8 @@ public class GameController {
 
     public void loadGameState() {
         gameDataService.loadGameData();
-        log.debug("Game state loaded successfully");
+        databaseService.synchronizeWithRepository();
+        log.debug("Game state loaded and synchronized successfully");
     }
 
     /**
@@ -349,8 +395,8 @@ public class GameController {
      * Review de learned_words (+1 / −5, reingreso bajo 21, dominio en 28).
      */
     public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAnswer(EnglishExpression learnedCard,
-            String userAnswer) {
-        return databaseService.submitLearnedWordsReviewAttempt(learnedCard, userAnswer);
+            String userAnswer, String reviewDatabaseName) {
+        return databaseService.submitLearnedWordsReviewAttempt(learnedCard, userAnswer, reviewDatabaseName);
     }
     
     /**

@@ -4,6 +4,7 @@ import com.englishgame.AppVersion;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.LearnedWordsReviewResult;
+import com.englishgame.model.ReviewDatabases;
 import com.englishgame.model.SpanishExpression;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,13 +24,11 @@ import java.util.Optional;
 import java.util.Random;
 
 /**
- * Repaso de {@code learned_words}: layout alineado con {@link GameView} (solo sección Interactive Game),
- * sin selector de BBDD ni controles de práctica/revelar.
+ * Repaso de bases {@link ReviewDatabases}: layout alineado con {@link GameView} (solo sección Interactive Game),
+ * con selector de BBDD de review y sin controles de práctica/revelar.
  */
 @Slf4j
 public class LearnedWordsReviewView extends JFrame {
-
-    private static final String LEARNED_DB = "learned_words";
     private static final int CORRECT_ANSWER_NEXT_ROUND_DELAY_MS = 2000;
     private static final long MS_PER_DAY = 86_400_000L;
 
@@ -52,7 +51,9 @@ public class LearnedWordsReviewView extends JFrame {
     private final List<EnglishExpression> deck = new ArrayList<>();
     private final Random reviewDeckRandom = new Random();
     private int index;
+    private String currentReviewDatabaseKey = ReviewDatabases.LEARNED_WORDS_KEY;
 
+    private JComboBox<String> reviewDatabaseSelector;
     private JPanel topCardPanel;
     private JPanel scoreCardPanel;
     private JScrollPane feedbackScrollPane;
@@ -83,15 +84,16 @@ public class LearnedWordsReviewView extends JFrame {
         this.landingPage = landingPage;
         this.whenClosed = whenClosed == null ? () -> {} : whenClosed;
 
-        setTitle("Review Learned Words [" + AppVersion.getDisplayVersion() + "]");
+        setTitle("Review — " + ReviewDatabases.displayNameForKey(currentReviewDatabaseKey) + " ["
+                + AppVersion.getDisplayVersion() + "]");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setSize(1080, 920);
         setMinimumSize(new Dimension(960, 720));
         setLocationRelativeTo(null);
         setResizable(true);
 
-        reloadDeck();
         buildUi();
+        reloadDeck();
         showCurrentRound();
 
         addWindowListener(new WindowAdapter() {
@@ -109,14 +111,18 @@ public class LearnedWordsReviewView extends JFrame {
             }
         });
 
-        log.info("LearnedWordsReviewView opened with {} entries", deck.size());
+        log.info("LearnedWordsReviewView opened ({}): {} entries", currentReviewDatabaseKey, deck.size());
     }
 
     private void reloadDeck() {
         deck.clear();
-        deck.addAll(gameController.getEnglishExpressionsFromDatabase(LEARNED_DB));
+        deck.addAll(gameController.getEnglishExpressionsFromDatabase(currentReviewDatabaseKey));
         orderReviewDeckByInclusionAgeBias();
         index = 0;
+    }
+
+    private String currentReviewDisplayName() {
+        return ReviewDatabases.displayNameForKey(currentReviewDatabaseKey);
     }
 
     /**
@@ -250,10 +256,10 @@ public class LearnedWordsReviewView extends JFrame {
                 BorderFactory.createLineBorder(new Color(207, 218, 232), 1),
                 BorderFactory.createEmptyBorder(22, 22, 22, 22)));
         promptLabel.setFont(new Font("Arial", Font.BOLD, 36));
-        answerField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 52));
-        answerField.setPreferredSize(new Dimension(640, 102));
-        answerField.setMinimumSize(new Dimension(200, 88));
-        answerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 124));
+        answerField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 39));
+        answerField.setPreferredSize(new Dimension(640, 77));
+        answerField.setMinimumSize(new Dimension(200, 66));
+        answerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 93));
         feedbackScrollPane.setPreferredSize(new Dimension(320, 170));
         feedbackScrollPane.setMinimumSize(new Dimension(120, 120));
         scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 29));
@@ -303,6 +309,19 @@ public class LearnedWordsReviewView extends JFrame {
         };
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JPanel reviewDbSection = createSectionPanel("Review database");
+        JPanel reviewDbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+        JLabel reviewDbLabel = new JLabel("Database:");
+        reviewDbLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        reviewDatabaseSelector = new JComboBox<>(gameController.getReviewDatabaseDisplayNames().toArray(new String[0]));
+        reviewDatabaseSelector.setPreferredSize(new Dimension(320, 30));
+        reviewDatabaseSelector.setToolTipText("Elige la base de datos para este repaso");
+        reviewDatabaseSelector.setSelectedItem(ReviewDatabases.displayNameForKey(currentReviewDatabaseKey));
+        reviewDatabaseSelector.addActionListener(e -> onReviewDatabaseChanged());
+        reviewDbPanel.add(reviewDbLabel);
+        reviewDbPanel.add(reviewDatabaseSelector);
+        reviewDbSection.add(reviewDbPanel);
 
         JPanel gameSection = createSectionPanel("Interactive Game");
         gameSection.setLayout(new BorderLayout());
@@ -391,6 +410,8 @@ public class LearnedWordsReviewView extends JFrame {
         gameUpperScroll.getVerticalScrollBar().setUnitIncrement(24);
         gameSection.add(gameUpperScroll, BorderLayout.CENTER);
 
+        mainPanel.add(reviewDbSection);
+        mainPanel.add(Box.createVerticalStrut(12));
         mainPanel.add(gameSection);
 
         JScrollPane mainScrollPane = new JScrollPane(mainPanel);
@@ -475,6 +496,23 @@ public class LearnedWordsReviewView extends JFrame {
         new LearnedWordsView(gameController, landingPage).setVisible(true);
     }
 
+    private void onReviewDatabaseChanged() {
+        String selected = (String) reviewDatabaseSelector.getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        String newKey = ReviewDatabases.keyForDisplayName(selected);
+        if (newKey.equalsIgnoreCase(currentReviewDatabaseKey)) {
+            return;
+        }
+        cancelPendingAutoAdvanceAfterCorrect();
+        currentReviewDatabaseKey = newKey;
+        setTitle("Review — " + selected + " [" + AppVersion.getDisplayVersion() + "]");
+        reloadDeck();
+        showCurrentRound();
+        log.info("Review database switched to {}", currentReviewDatabaseKey);
+    }
+
     private void returnToMainMenu() {
         log.info("Returning to landing from LearnedWordsReviewView");
         cancelPendingAutoAdvanceAfterCorrect();
@@ -545,7 +583,8 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     private static boolean isPenaltyFeedback(LearnedWordsReviewResult r) {
-        if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE) {
+        if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE
+                || r.outcome() == LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED) {
             return true;
         }
         return r.outcome() == LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED && !r.answeredCorrectly();
@@ -611,17 +650,19 @@ public class LearnedWordsReviewView extends JFrame {
         }
         EnglishExpression current = deck.get(Math.max(0, Math.min(index, deck.size() - 1)));
         Optional<LearnedWordsReviewResult> res =
-                gameController.submitLearnedWordsReviewAnswer(current, answerField.getText());
+                gameController.submitLearnedWordsReviewAnswer(current, answerField.getText(), currentReviewDatabaseKey);
 
         if (res.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "No se ha podido aplicar la corrección (la entrada ya no está en Learned Words).",
+                    "No se ha podido aplicar la corrección (la entrada ya no está en "
+                            + currentReviewDisplayName() + ").",
                     "Review", JOptionPane.WARNING_MESSAGE);
             reloadDeckIfStillAnyOrClose();
             return;
         }
 
         LearnedWordsReviewResult r = res.get();
+        showReviewMilestoneCongratulations(r);
         feedbackArea.setText(buildFeedbackLines(r));
         if (isPenaltyFeedback(r)) {
             applyFeedbackAreaTonePenalty();
@@ -632,7 +673,9 @@ public class LearnedWordsReviewView extends JFrame {
         scoreLabel.setForeground(REVIEW_FEEDBACK_OK_FG);
 
         if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE
-                || r.outcome() == LearnedWordsReviewResult.Outcome.MASTERED_REMOVED_EVERYWHERE) {
+                || r.outcome() == LearnedWordsReviewResult.Outcome.MASTERED_REMOVED_EVERYWHERE
+                || r.outcome() == LearnedWordsReviewResult.Outcome.PROMOTED_TO_DEFINITELY_LEARNED
+                || r.outcome() == LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED) {
             deck.remove(current);
             if (!deck.isEmpty()) {
                 index = Math.min(index, deck.size() - 1);
@@ -660,7 +703,7 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     private void reloadDeckIfStillAnyOrClose() {
-        List<EnglishExpression> fresh = gameController.getEnglishExpressionsFromDatabase(LEARNED_DB);
+        List<EnglishExpression> fresh = gameController.getEnglishExpressionsFromDatabase(currentReviewDatabaseKey);
         if (fresh.isEmpty()) {
             dispose();
             return;
@@ -672,10 +715,37 @@ public class LearnedWordsReviewView extends JFrame {
         showCurrentRound();
     }
 
+    private void showReviewMilestoneCongratulations(LearnedWordsReviewResult r) {
+        if (!r.answeredCorrectly()) {
+            return;
+        }
+        String word = Optional.ofNullable(r.expectedEnglish()).map(String::trim).orElse("");
+        if (word.isEmpty()) {
+            return;
+        }
+        switch (r.outcome()) {
+            case PROMOTED_TO_DEFINITELY_LEARNED -> JOptionPane.showMessageDialog(this,
+                    "Congratulations! \"" + word
+                            + "\" reached score 28 in Learned words and is now in Words definitely learned.\nKeep it up!",
+                    "Word learned",
+                    JOptionPane.INFORMATION_MESSAGE);
+            case MASTERED_REMOVED_EVERYWHERE -> JOptionPane.showMessageDialog(this,
+                    "Congratulations! \"" + word
+                            + "\" reached the maximum review score (35) and is mastered.\nKeep it up!",
+                    "Word learned",
+                    JOptionPane.INFORMATION_MESSAGE);
+            default -> { }
+        }
+    }
+
     private String buildFeedbackLines(LearnedWordsReviewResult r) {
         List<String> parts = new ArrayList<>();
         switch (r.outcome()) {
-            case MASTERED_REMOVED_EVERYWHERE -> parts.add("Dominado: la expresión sale de todas las bases.");
+            case MASTERED_REMOVED_EVERYWHERE -> parts.add("Dominado (35): la expresión sale de todas las bases.");
+            case PROMOTED_TO_DEFINITELY_LEARNED ->
+                    parts.add("28 puntos: pasa a Words definitely learned para seguir repaso (29–35).");
+            case RETURNED_TO_LEARNED ->
+                    parts.add("Incorrecto (−5): vuelve a Learned words con el nuevo score.");
             case DEMOTED_TO_PRACTICE -> {
                 String db = r.restoredToPracticeDatabase();
                 if (db != null && !db.isBlank()) {

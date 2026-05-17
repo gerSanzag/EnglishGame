@@ -81,7 +81,7 @@ public class LandingPageView extends JFrame {
         viewWordsButton.addActionListener(e -> openViewWords());
         playGameButton.addActionListener(e -> openGame());
         learnedWordsButton.addActionListener(e -> openLearnedWords());
-        exitButton.addActionListener(e -> System.exit(0));
+        exitButton.addActionListener(e -> exitApplication());
         
         // Store buttons for layout
         this.dataManagementButton = dataManagementButton;
@@ -241,8 +241,7 @@ public class LandingPageView extends JFrame {
         addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
             public void windowClosing(java.awt.event.WindowEvent e) {
-                log.info("Application closing from landing page");
-                System.exit(0);
+                exitApplication();
             }
         });
         
@@ -328,6 +327,12 @@ public class LandingPageView extends JFrame {
     public void returnToLanding() {
         log.info("Returning to landing page");
         this.setVisible(true);
+    }
+
+    private void exitApplication() {
+        log.info("Application closing from landing page");
+        gameController.saveGameState();
+        System.exit(0);
     }
 
     // UI Components

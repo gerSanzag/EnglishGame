@@ -59,6 +59,12 @@ public interface DatabaseService {
     boolean isSystemDatabase(String databaseName);
 
     /**
+     * Bases de datos exclusivas de Review ({@code learned_words}, {@code words_definitely_learned}).
+     * No deben listarse en juego, View Words ni Manage Data.
+     */
+    boolean isReviewOnlyDatabase(String databaseName);
+
+    /**
      * Gets all Spanish expressions from a specific database
      * @param databaseName name of the database
      * @return list of Spanish expressions
@@ -189,9 +195,13 @@ public interface DatabaseService {
                                          EnglishExpression englishTranslation);
 
     /**
-     * Review de learned_words: +1 si acierta, -5 si falla; reingreso a práctica si baja de 21; purga si llega a 28.
+     * Review: {@code learned_words} (+1/−5, práctica si &lt; 21, pasa a definitely en 28);
+     * {@code words_definitely_learned} (+1/−5, vuelve a learned si falla, purga en 35).
+     *
+     * @param reviewDatabaseName {@code learned_words} o {@code words_definitely_learned} (clave canónica o nombre mostrado).
      */
-    Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard, String userAnswer);
+    Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard, String userAnswer,
+            String reviewDatabaseName);
     
     /**
      * Gets all learned expressions
