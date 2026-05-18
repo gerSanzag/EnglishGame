@@ -1,5 +1,6 @@
 package com.englishgame.service.implementations;
 
+import com.englishgame.model.ReviewDatabases;
 import com.englishgame.repository.interfaces.DBRepository;
 import com.englishgame.service.interfaces.GameDataService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -357,6 +358,10 @@ public class GameDataServiceImpl implements GameDataService {
             metadata.put("type", "database_metadata");
             metadata.put("database", databaseName);
             metadata.put("created_at", System.currentTimeMillis());
+            if (ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY.equalsIgnoreCase(databaseName)) {
+                metadata.put(ReviewDatabases.METADATA_DEFINITELY_MASTERED_TOTAL,
+                        databaseService.getWordsDefinitelyMasteredTotal());
+            }
             currentState.add(Arrays.asList(metadata));
             
             // Add all Spanish expressions from this database
@@ -417,7 +422,7 @@ public class GameDataServiceImpl implements GameDataService {
                 currentState.add(Arrays.asList(row));
             }
         }
-        
+
         log.debug("Built current state with {} records from {} databases", currentState.size(), databases.size());
         return currentState;
     }

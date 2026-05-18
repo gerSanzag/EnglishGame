@@ -65,6 +65,12 @@ public interface DatabaseService {
     boolean isReviewOnlyDatabase(String databaseName);
 
     /**
+     * Total histórico de expresiones eliminadas del juego al dominar en
+     * {@link com.englishgame.model.ReviewDatabases#WORDS_DEFINITELY_LEARNED_KEY} (score 35).
+     */
+    int getWordsDefinitelyMasteredTotal();
+
+    /**
      * Gets all Spanish expressions from a specific database
      * @param databaseName name of the database
      * @return list of Spanish expressions

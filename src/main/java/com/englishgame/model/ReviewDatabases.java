@@ -18,6 +18,9 @@ public final class ReviewDatabases {
     /** Puntuación de dominio final en {@link #WORDS_DEFINITELY_LEARNED_KEY}. */
     public static final int DEFINITELY_REVIEW_MASTER_SCORE = 35;
 
+    /** Campo en {@code database_metadata} de {@link #WORDS_DEFINITELY_LEARNED_KEY}: total histórico dominado (35). */
+    public static final String METADATA_DEFINITELY_MASTERED_TOTAL = "definitely_mastered_total";
+
     private ReviewDatabases() {
     }
 

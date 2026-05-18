@@ -90,6 +90,18 @@ public class GameController {
                 .anyMatch(key -> !getEnglishExpressionsFromDatabase(key).isEmpty());
     }
 
+    public int getWordsDefinitelyMasteredTotal() {
+        return databaseService.getWordsDefinitelyMasteredTotal();
+    }
+
+    public int getWordsDefinitelyCurrentCount() {
+        return databaseService.getEnglishExpressionCount(ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY);
+    }
+
+    public int getLearnedWordsCurrentCount() {
+        return databaseService.getEnglishExpressionCount(ReviewDatabases.LEARNED_WORDS_KEY);
+    }
+
     /**
      * Destinos al mover desde Learned words: vocabulario de práctica + Words definitely learned (solo review).
      */

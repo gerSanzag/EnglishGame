@@ -36,6 +36,12 @@ public class DatabaseServiceImpl implements DatabaseService {
     // In-memory storage for databases
     private final Map<String, Set<SpanishExpression>> spanishDatabases;
     private final Map<String, Set<EnglishExpression>> englishDatabases;
+
+    /** Dominadas en words_definitely_learned (35) y purgadas; persiste en metadata de la BBDD. */
+    private int definitelyMasteredTotal;
+
+    /** Evita escrituras parciales a JSON mientras se rehidrata desde el repositorio. */
+    private boolean loadingFromRepository;
     
     public DatabaseServiceImpl(GameDataService gameDataService) {
         this.gameDataService = gameDataService;
@@ -177,6 +183,11 @@ public class DatabaseServiceImpl implements DatabaseService {
     }
 
     @Override
+    public int getWordsDefinitelyMasteredTotal() {
+        return definitelyMasteredTotal;
+    }
+
+    @Override
     public boolean deleteDatabase(String databaseName) {
         return resolveCanonicalDatabaseKey(databaseName)
                 .filter(canonical -> !isSystemDatabase(canonical))
@@ -307,8 +318,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                             boolean added = spanishDatabases.get(dbKey).add(expr);
                             
                             if (added) {
-                                saveExpressionToRepository(dbKey, expr);
-                                gameDataService.saveGameData();
+                                if (!loadingFromRepository) {
+                                    saveExpressionToRepository(dbKey, expr);
+                                    gameDataService.saveGameData();
+                                }
                                 log.debug("Added Spanish expression '{}' to database '{}'",
                                         trimmedPhrase, dbKey);
                             } else {
@@ -523,7 +536,10 @@ public class DatabaseServiceImpl implements DatabaseService {
     @Override
     public int getEnglishExpressionCount(String databaseName) {
         return resolveCanonicalDatabaseKey(databaseName)
-                .map(k -> englishDatabases.get(k).size())
+                .map(k -> {
+                    Set<EnglishExpression> bucket = englishDatabases.get(k);
+                    return bucket != null ? bucket.size() : 0;
+                })
                 .orElse(0);
     }
     
@@ -711,6 +727,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             if (definitelyReview) {
                 if (s >= DEFINITELY_REVIEW_MASTER_AT) {
                     learnedBucket.remove(learnedCard);
+                    definitelyMasteredTotal++;
                     purgeEnglishLemmaEverywhere(expectedRaw);
                     pruneSpanishRowsWithoutTranslations();
                     gameDataService.saveGameData();
@@ -1054,11 +1071,17 @@ public class DatabaseServiceImpl implements DatabaseService {
     @Override
     public void synchronizeWithRepository() {
         log.info("Synchronizing database service with repository data...");
-        spanishDatabases.clear();
-        englishDatabases.clear();
-        initializeDefaultDatabases();
-        loadDataFromRepository();
-        log.info("Database synchronization completed. Available databases: {}", getAvailableDatabases());
+        loadingFromRepository = true;
+        try {
+            spanishDatabases.clear();
+            englishDatabases.clear();
+            definitelyMasteredTotal = 0;
+            initializeDefaultDatabases();
+            loadDataFromRepository();
+            log.info("Database synchronization completed. Available databases: {}", getAvailableDatabases());
+        } finally {
+            loadingFromRepository = false;
+        }
     }
 
     /** Solo memoria: usado al cargar JSON; no persiste (evita sobrescribir game_data.json a medias). */
@@ -1126,6 +1149,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                     String databaseName = (String) firstMap.get("database");
                     if (databaseName != null && !databaseName.trim().isEmpty()) {
                         ensureDatabaseBucketsInMemory(databaseName);
+                        if (WORDS_DEFINITELY_LEARNED_DATABASE.equalsIgnoreCase(databaseName.trim())) {
+                            definitelyMasteredTotal = getIntValue(firstMap,
+                                    ReviewDatabases.METADATA_DEFINITELY_MASTERED_TOTAL, definitelyMasteredTotal);
+                        }
                         log.debug("Ensured database '{}' from loaded metadata", databaseName);
                     }
                 } else {
@@ -1238,13 +1265,20 @@ public class DatabaseServiceImpl implements DatabaseService {
     /**
      * Saves database metadata to the repository for persistence
      */
+    private void enrichReviewDatabaseMetadata(String databaseName, Map<String, Object> metadata) {
+        if (WORDS_DEFINITELY_LEARNED_DATABASE.equalsIgnoreCase(databaseName)) {
+            metadata.put(ReviewDatabases.METADATA_DEFINITELY_MASTERED_TOTAL, definitelyMasteredTotal);
+        }
+    }
+
     private void saveDatabaseMetadataToRepository(String databaseName) {
         try {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("type", "database_metadata");
             metadata.put("database", databaseName);
             metadata.put("created_at", System.currentTimeMillis());
-            
+            enrichReviewDatabaseMetadata(databaseName, metadata);
+
             List<Map<String, Object>> record = Arrays.asList(metadata);
             gameDataService.getRepository().save(record);
             
@@ -1310,10 +1344,11 @@ public class DatabaseServiceImpl implements DatabaseService {
                 metadata.put("type", "database_metadata");
                 metadata.put("database", dbName);
                 metadata.put("created_at", System.currentTimeMillis());
-                
+                enrichReviewDatabaseMetadata(dbName, metadata);
+
                 List<Map<String, Object>> record = Arrays.asList(metadata);
                 gameDataService.getRepository().save(record);
-                
+
                 // Add all Spanish expressions from this database
                 List<SpanishExpression> spanishExpressions = getSpanishExpressions(dbName);
                 for (SpanishExpression spanishExpr : spanishExpressions) {
@@ -1465,10 +1500,11 @@ public class DatabaseServiceImpl implements DatabaseService {
                 metadata.put("type", "database_metadata");
                 metadata.put("database", dbName);
                 metadata.put("created_at", System.currentTimeMillis());
-                
+                enrichReviewDatabaseMetadata(dbName, metadata);
+
                 List<Map<String, Object>> record = Arrays.asList(metadata);
                 gameDataService.getRepository().save(record);
-                
+
                 // Add all Spanish expressions from this database
                 List<SpanishExpression> spanishExpressions = getSpanishExpressions(dbName);
                 for (SpanishExpression spanishExpr : spanishExpressions) {

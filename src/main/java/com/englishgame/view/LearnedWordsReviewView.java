@@ -18,7 +18,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -70,6 +72,11 @@ public class LearnedWordsReviewView extends JFrame {
     private JButton viewWordsButton;
     private JButton learnedWordsButton;
 
+    private JPanel reviewStatsSection;
+    private JPanel reviewStatsPanel;
+    private JLabel reviewStatsPrimaryLabel;
+    private JLabel reviewStatsSecondaryLabel;
+
     /** Igual que GameView: tras acierto pasa sola a la siguiente tarjeta. */
     private Timer correctAnswerNextRoundTimer;
 
@@ -114,9 +121,36 @@ public class LearnedWordsReviewView extends JFrame {
         log.info("LearnedWordsReviewView opened ({}): {} entries", currentReviewDatabaseKey, deck.size());
     }
 
+    private void refreshReviewStatsLabels() {
+        if (reviewStatsSection == null || reviewStatsPrimaryLabel == null || reviewStatsSecondaryLabel == null) {
+            return;
+        }
+        boolean definitelyDb = ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY.equalsIgnoreCase(currentReviewDatabaseKey);
+        reviewStatsSection.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
+                definitelyDb ? "Words definitely learned — totals" : "Learned words — totals"));
+        if (definitelyDb) {
+            int mastered = gameController.getWordsDefinitelyMasteredTotal();
+            int current = gameController.getEnglishExpressionsFromDatabase(
+                    ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY).size();
+            reviewStatsPrimaryLabel.setVisible(true);
+            reviewStatsSecondaryLabel.setVisible(true);
+            reviewStatsPrimaryLabel.setText("Words definitely learned: " + mastered);
+            reviewStatsSecondaryLabel.setText("Actualmente en Words definitely learned: " + current);
+        } else {
+            int current = gameController.getEnglishExpressionsFromDatabase(ReviewDatabases.LEARNED_WORDS_KEY).size();
+            reviewStatsPrimaryLabel.setVisible(true);
+            reviewStatsSecondaryLabel.setVisible(false);
+            reviewStatsPrimaryLabel.setText("Learned words: " + current);
+        }
+        reviewStatsPanel.revalidate();
+        reviewStatsPanel.repaint();
+    }
+
     private void reloadDeck() {
         deck.clear();
         deck.addAll(gameController.getEnglishExpressionsFromDatabase(currentReviewDatabaseKey));
+        refreshReviewStatsLabels();
         orderReviewDeckByInclusionAgeBias();
         index = 0;
     }
@@ -135,7 +169,11 @@ public class LearnedWordsReviewView extends JFrame {
             return;
         }
         long now = System.currentTimeMillis();
-        deck.sort(Comparator.comparingDouble(e -> weightedReviewSortKey(now, e)));
+        Map<EnglishExpression, Double> sortKeys = new HashMap<>(deck.size());
+        for (EnglishExpression e : deck) {
+            sortKeys.put(e, weightedReviewSortKey(now, e));
+        }
+        deck.sort(Comparator.comparingDouble(e -> sortKeys.getOrDefault(e, 0.0)));
     }
 
     private double weightedReviewSortKey(long nowMillis, EnglishExpression e) {
@@ -323,6 +361,20 @@ public class LearnedWordsReviewView extends JFrame {
         reviewDbPanel.add(reviewDatabaseSelector);
         reviewDbSection.add(reviewDbPanel);
 
+        reviewStatsSection = createSectionPanel("Learned words — totals");
+        reviewStatsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 64, 10));
+        reviewStatsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        reviewStatsPanel.setBorder(BorderFactory.createEmptyBorder(6, 4, 10, 4));
+        reviewStatsPrimaryLabel = new JLabel();
+        reviewStatsSecondaryLabel = new JLabel();
+        Font statsFont = new Font("Arial", Font.PLAIN, 14);
+        reviewStatsPrimaryLabel.setFont(statsFont);
+        reviewStatsSecondaryLabel.setFont(statsFont);
+        reviewStatsPanel.add(reviewStatsPrimaryLabel);
+        reviewStatsPanel.add(reviewStatsSecondaryLabel);
+        reviewStatsSection.add(reviewStatsPanel);
+        refreshReviewStatsLabels();
+
         JPanel gameSection = createSectionPanel("Interactive Game");
         gameSection.setLayout(new BorderLayout());
 
@@ -411,6 +463,8 @@ public class LearnedWordsReviewView extends JFrame {
         gameSection.add(gameUpperScroll, BorderLayout.CENTER);
 
         mainPanel.add(reviewDbSection);
+        mainPanel.add(Box.createVerticalStrut(8));
+        mainPanel.add(reviewStatsSection);
         mainPanel.add(Box.createVerticalStrut(12));
         mainPanel.add(gameSection);
 
@@ -681,6 +735,7 @@ public class LearnedWordsReviewView extends JFrame {
                 index = Math.min(index, deck.size() - 1);
             }
         }
+        refreshReviewStatsLabels();
 
         answerField.setEditable(false);
         submitButton.setEnabled(false);
