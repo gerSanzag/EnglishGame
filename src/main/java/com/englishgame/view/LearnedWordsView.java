@@ -119,13 +119,14 @@ public class LearnedWordsView extends JFrame {
         searchField.setToolTipText("Search learned words...");
         searchField.setPreferredSize(new Dimension(200, 30));
 
+        String promptSort = gameController.getAppGameMode().getBrowseSortPromptLabel() + " (A-Z)";
         sortSelector = new JComboBox<>(new String[] {
-                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)",
+                promptSort, "Inglés (A-Z)", "Score (mayor a menor)",
                 "Inclusión (reciente primero)", "Inclusión (antigua primero)",
                 "BBDD origen (A-Z)"
         });
         sortSelector.setPreferredSize(new Dimension(300, 30));
-        sortSelector.setToolTipText("Ordena por español, inglés, score, inclusión o base de práctica de origen");
+        sortSelector.setToolTipText("Ordena por prompt, inglés, score, inclusión o base de práctica de origen");
 
         recordsCountLabel = new JLabel("Registros: 0");
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));

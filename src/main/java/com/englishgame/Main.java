@@ -1,6 +1,7 @@
 package com.englishgame;
 
 import com.englishgame.controller.GameController;
+import com.englishgame.AppGameMode;
 import com.englishgame.repository.implementations.DBRepositoryImpl;
 import com.englishgame.repository.implementations.DataBaseImpl;
 import com.englishgame.repository.implementations.ExpressionsImpl;
@@ -21,19 +22,54 @@ import javax.swing.*;
 public class Main {
     
     public static void main(String[] args) {
-        // Initialize application on EDT
         SwingUtilities.invokeLater(() -> {
             try {
-                initializeAndStartApplication();
+                AppGameMode mode = resolveGameMode(args);
+                if (mode == null) {
+                    log.info("Application closed before mode selection");
+                    return;
+                }
+                initializeAndStartApplication(mode);
             } catch (Exception e) {
                 log.error("Failed to start application", e);
                 showErrorDialog("Failed to start application: " + e.getMessage());
             }
         });
     }
+
+    private static AppGameMode resolveGameMode(String[] args) {
+        AppGameMode fromArgs = parseModeFromArgs(args);
+        if (fromArgs != null) {
+            return fromArgs;
+        }
+        return GameModeSelector.show();
+    }
+
+    private static AppGameMode parseModeFromArgs(String[] args) {
+        if (args == null) {
+            return null;
+        }
+        for (String arg : args) {
+            if (arg == null) {
+                continue;
+            }
+            String trimmed = arg.trim();
+            if (trimmed.startsWith("--mode=")) {
+                return AppGameMode.fromProgramArgument(trimmed.substring("--mode=".length()));
+            }
+            if ("--classic".equalsIgnoreCase(trimmed)) {
+                return AppGameMode.CLASSIC;
+            }
+            if ("--definition".equalsIgnoreCase(trimmed)) {
+                return AppGameMode.DEFINITION;
+            }
+        }
+        return null;
+    }
     
-    private static void initializeAndStartApplication() {
-        log.info("Initializing English Learning Game (build {})...", AppVersion.getDisplayVersion());
+    private static void initializeAndStartApplication(AppGameMode mode) {
+        log.info("Initializing English Learning Game (build {}, mode {})...",
+                AppVersion.getDisplayVersion(), mode.getTitleSuffix());
         
         try {
             // Initialize repositories
@@ -42,16 +78,14 @@ public class Main {
             ExpressionsImpl expressions = new ExpressionsImpl();
             
             // Initialize services
-            GameDataServiceImpl gameDataService = new GameDataServiceImpl(dbRepository);
+            GameDataServiceImpl gameDataService = new GameDataServiceImpl(dbRepository, mode);
             DatabaseServiceImpl databaseService = new DatabaseServiceImpl(gameDataService);
             ScoreServiceImpl scoreService = new ScoreServiceImpl();
             GameLogicServiceImpl gameLogicService = new GameLogicServiceImpl(gameDataService, databaseService);
             
-            // Initialize controller
-            GameController gameController = new GameController(gameLogicService, databaseService, gameDataService);
+            GameController gameController = new GameController(gameLogicService, databaseService, gameDataService, mode);
             
-            // Initialize and show landing page
-            LandingPageView landingPageView = new LandingPageView(gameController);
+            LandingPageView landingPageView = new LandingPageView(gameController, mode);
             landingPageView.setVisible(true);
             
             log.info("English Learning Game started successfully");

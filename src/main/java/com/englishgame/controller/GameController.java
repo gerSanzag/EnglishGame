@@ -1,5 +1,6 @@
 package com.englishgame.controller;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.model.AnswerResult;
 import com.englishgame.model.CorrectAnswerOutcome;
 import com.englishgame.model.EnglishExpression;
@@ -26,14 +27,22 @@ public class GameController {
     private final GameLogicService gameLogicService;
     private final DatabaseService databaseService;
     private final GameDataService gameDataService;
+    private final AppGameMode appGameMode;
 
     private String currentDatabase;
     private SpanishExpression currentSpanishExpression;
 
-    public GameController(GameLogicService gameLogicService, DatabaseService databaseService, GameDataService gameDataService) {
+    public GameController(GameLogicService gameLogicService, DatabaseService databaseService,
+                          GameDataService gameDataService) {
+        this(gameLogicService, databaseService, gameDataService, AppGameMode.CLASSIC);
+    }
+
+    public GameController(GameLogicService gameLogicService, DatabaseService databaseService,
+                          GameDataService gameDataService, AppGameMode appGameMode) {
         this.gameLogicService = gameLogicService;
         this.databaseService = databaseService;
         this.gameDataService = gameDataService;
+        this.appGameMode = appGameMode != null ? appGameMode : AppGameMode.CLASSIC;
         
         // Set database service reference in game data service
         if (gameDataService instanceof com.englishgame.service.implementations.GameDataServiceImpl) {
@@ -42,6 +51,10 @@ public class GameController {
         
         initializeGame();
         registerShutdownSaveHook();
+    }
+
+    public AppGameMode getAppGameMode() {
+        return appGameMode;
     }
 
     private void registerShutdownSaveHook() {
@@ -100,6 +113,11 @@ public class GameController {
 
     public int getLearnedWordsCurrentCount() {
         return databaseService.getEnglishExpressionCount(ReviewDatabases.LEARNED_WORDS_KEY);
+    }
+
+    /** Frases español en una BBDD de práctica (lo que usa Interactive Game). */
+    public int getDatabaseExpressionCount(String databaseName) {
+        return databaseService.getSpanishExpressionCount(databaseName);
     }
 
     /**

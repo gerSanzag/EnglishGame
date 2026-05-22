@@ -1,5 +1,6 @@
 package com.englishgame.service.implementations;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.model.LearnedWordsReviewResult;
 import com.englishgame.model.ReviewDatabases;
 import com.englishgame.model.SpanishExpression;
@@ -1170,8 +1171,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                             continue;
                         }
                         
-                        if ("spanish".equals(language)) {
-                            // Create Spanish expression
+                        if (resolveAppGameMode().matchesPromptLanguage(language)) {
+                            // Prompt card (Spanish in classic mode, English definition in definition mode)
                             SpanishExpression spanishExpr = new SpanishExpression();
                             spanishExpr.setExpression(expression);
                             spanishExpr.setScore(getIntValue(firstMap, "score", 0));
@@ -1294,24 +1295,12 @@ public class DatabaseServiceImpl implements DatabaseService {
     private void saveExpressionToRepository(String databaseName, SpanishExpression spanishExpression) {
         try {
             Map<String, Object> expressionData = new HashMap<>();
-            expressionData.put("type", "spanish_expression");
-            expressionData.put("database", databaseName);
-            expressionData.put("language", "spanish");
-            expressionData.put("expression", spanishExpression.getExpression());
-            expressionData.put("score", spanishExpression.getScore());
-            
-            // Add translations
-            List<String> translations = new ArrayList<>();
-            for (EnglishExpression translation : spanishExpression.getTranslations()) {
-                translations.add(translation.getExpression());
-            }
-            expressionData.put("translations", translations);
-            expressionData.put("included_at", spanishExpression.getIncludedAtEpochMillis());
+            populatePromptExpressionMap(expressionData, databaseName, spanishExpression);
 
             List<Map<String, Object>> record = Arrays.asList(expressionData);
             gameDataService.getRepository().save(record);
 
-            log.debug("Spanish expression '{}' saved to repository", spanishExpression.getExpression());
+            log.debug("Prompt expression '{}' saved to repository", spanishExpression.getExpression());
         } catch (Exception e) {
             log.error("Error saving Spanish expression to repository: {}", e.getMessage());
         }
@@ -1353,19 +1342,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                 List<SpanishExpression> spanishExpressions = getSpanishExpressions(dbName);
                 for (SpanishExpression spanishExpr : spanishExpressions) {
                     Map<String, Object> expressionData = new HashMap<>();
-                    expressionData.put("type", "spanish_expression");
-                    expressionData.put("database", dbName);
-                    expressionData.put("language", "spanish");
-                    expressionData.put("expression", spanishExpr.getExpression());
-                    expressionData.put("score", spanishExpr.getScore());
-                    
-                    // Add translations
-                    List<String> translations = new ArrayList<>();
-                    for (EnglishExpression translation : spanishExpr.getTranslations()) {
-                        translations.add(translation.getExpression());
-                    }
-                    expressionData.put("translations", translations);
-                    expressionData.put("included_at", spanishExpr.getIncludedAtEpochMillis());
+                    populatePromptExpressionMap(expressionData, dbName, spanishExpr);
 
                     List<Map<String, Object>> exprRecord = Arrays.asList(expressionData);
                     gameDataService.getRepository().save(exprRecord);
@@ -1558,5 +1535,33 @@ public class DatabaseServiceImpl implements DatabaseService {
         } catch (Exception e) {
             log.error("Error saving English expression to repository: {}", e.getMessage());
         }
+    }
+
+    private AppGameMode resolveAppGameMode() {
+        if (gameDataService instanceof GameDataServiceImpl impl) {
+            return impl.getAppGameMode();
+        }
+        return AppGameMode.CLASSIC;
+    }
+
+    private void populatePromptExpressionMap(Map<String, Object> expressionData, String databaseName,
+                                             SpanishExpression spanishExpression) {
+        AppGameMode mode = resolveAppGameMode();
+        expressionData.put("type", mode.getPromptExpressionType());
+        expressionData.put("database", databaseName);
+        expressionData.put("language", mode.getPromptLanguage());
+        expressionData.put("expression", spanishExpression.getExpression());
+        expressionData.put("score", spanishExpression.getScore());
+
+        List<String> translations = new ArrayList<>();
+        if (spanishExpression.getTranslations() != null) {
+            for (EnglishExpression translation : spanishExpression.getTranslations()) {
+                if (translation != null && translation.getExpression() != null) {
+                    translations.add(translation.getExpression());
+                }
+            }
+        }
+        expressionData.put("translations", translations);
+        expressionData.put("included_at", spanishExpression.getIncludedAtEpochMillis());
     }
 }

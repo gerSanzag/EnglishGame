@@ -1,5 +1,6 @@
 package com.englishgame.service.implementations;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.model.ReviewDatabases;
 import com.englishgame.repository.interfaces.DBRepository;
 import com.englishgame.service.interfaces.GameDataService;
@@ -28,6 +29,7 @@ public class GameDataServiceImpl implements GameDataService {
     
     private final DBRepository repository;
     private final ObjectMapper objectMapper;
+    private final AppGameMode appGameMode;
     private String dataDirectory;
     private com.englishgame.service.interfaces.DatabaseService databaseService;
     private static final String DEFAULT_DATA_DIR = "data";
@@ -35,10 +37,19 @@ public class GameDataServiceImpl implements GameDataService {
     private static final String BACKUP_DIR = "backups";
     
     public GameDataServiceImpl(DBRepository repository) {
+        this(repository, AppGameMode.CLASSIC);
+    }
+
+    public GameDataServiceImpl(DBRepository repository, AppGameMode appGameMode) {
         this.repository = repository;
+        this.appGameMode = appGameMode != null ? appGameMode : AppGameMode.CLASSIC;
         this.objectMapper = new ObjectMapper();
         this.dataDirectory = getAbsoluteDataDirectory();
         initializeDataDirectory();
+    }
+
+    public AppGameMode getAppGameMode() {
+        return appGameMode;
     }
     
     /**
@@ -308,21 +319,29 @@ public class GameDataServiceImpl implements GameDataService {
             
             // If JAR is in target/ directory, go up one level to find the data directory
             String absoluteDataDir;
+            File dataRoot;
             if (jarDirectory.getName().equals("target")) {
-                // JAR is in target/, data directory is in parent directory
-                absoluteDataDir = new File(jarDirectory.getParentFile(), DEFAULT_DATA_DIR).getAbsolutePath();
+                dataRoot = new File(jarDirectory.getParentFile(), DEFAULT_DATA_DIR);
             } else {
-                // JAR is elsewhere, data directory is next to JAR
-                absoluteDataDir = new File(jarDirectory, DEFAULT_DATA_DIR).getAbsolutePath();
+                dataRoot = new File(jarDirectory, DEFAULT_DATA_DIR);
             }
+            absoluteDataDir = resolveModeDataDirectory(dataRoot).getAbsolutePath();
             
             log.info("Using absolute data directory: {}", absoluteDataDir);
             return absoluteDataDir;
             
         } catch (Exception e) {
             log.warn("Could not determine JAR location, using relative path: {}", e.getMessage());
-            return DEFAULT_DATA_DIR;
+            return resolveModeDataDirectory(new File(DEFAULT_DATA_DIR)).getPath();
         }
+    }
+
+    private File resolveModeDataDirectory(File dataRoot) {
+        String sub = appGameMode.getDataSubdirectory();
+        if (sub == null || sub.isBlank()) {
+            return dataRoot;
+        }
+        return new File(dataRoot, sub);
     }
     
     private void initializeDataDirectory() {
@@ -385,9 +404,9 @@ public class GameDataServiceImpl implements GameDataService {
                 }
 
                 Map<String, Object> expressionData = new HashMap<>();
-                expressionData.put("type", "spanish_expression");
+                expressionData.put("type", appGameMode.getPromptExpressionType());
                 expressionData.put("database", databaseName);
-                expressionData.put("language", "spanish");
+                expressionData.put("language", appGameMode.getPromptLanguage());
                 expressionData.put("expression", spanishExpr.getExpression());
                 expressionData.put("score", spanishExpr.getScore());
                 expressionData.put("translations", translations);

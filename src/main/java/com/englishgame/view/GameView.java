@@ -1,5 +1,6 @@
 package com.englishgame.view;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.AppVersion;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.AnswerResult;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.CardLayout;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -48,7 +50,14 @@ public class GameView extends JFrame {
 
     // Game components
     private JComboBox<String> databaseSelector;
+    private JLabel databaseExpressionCountLabel;
     private JLabel spanishExpressionLabel;
+    private JLabel promptDefinitionInstructionLabel;
+    private JTextArea promptDefinitionArea;
+    private JScrollPane promptDefinitionScroll;
+    private JPanel definitionPromptBlockPanel;
+    private JPanel promptDisplayPanel;
+    private CardLayout promptCardLayout;
     private JTextField englishTranslationField;
     private JButton submitButton;
     private JButton newRoundButton;
@@ -117,6 +126,24 @@ public class GameView extends JFrame {
     private static final int PHRASAL_INPUT_TEXT_PX = 18;
     /** Separación horizontal entre las cuatro columnas del bloque phrasal. */
     private static final int PHRASAL_COL_HGAP = 10;
+    /** Contador «BBDD: N expressions» (~+57 % frente a 14 px). */
+    private static final int DATABASE_COUNT_FONT_PX = 22;
+    private static final Color DATABASE_COUNT_FG = new Color(12, 92, 168);
+    private static final int PROMPT_DEFINITION_FONT_PX = 23;
+    private static final Color PROMPT_DEFINITION_FG = new Color(0, 118, 92);
+    private static final int PROMPT_DEFINITION_INSTRUCTION_FONT_PX = 20;
+    private static final Color PROMPT_DEFINITION_INSTRUCTION_FG = new Color(88, 98, 118);
+    /** ~2 líneas visibles; el resto con scroll para no tapar score/feedback. */
+    private static final int PROMPT_DEFINITION_SCROLL_PREF_H = 68;
+    private static final int PROMPT_DEFINITION_SCROLL_MAX_H = 88;
+    private static final int PROMPT_DEFINITION_SCROLL_PREF_H_PHRASAL = 56;
+    private static final int PROMPT_DEFINITION_SCROLL_MAX_H_PHRASAL = 76;
+    private static final int REVEAL_SCROLL_W_PHRASAL = 860;
+    private static final int REVEAL_SCROLL_MAX_W_PHRASAL = 920;
+    private static final int REVEAL_SCROLL_W_NORMAL = 1020;
+    private static final int REVEAL_SCROLL_MAX_W_NORMAL = 1120;
+    private static final int SCORE_CARD_W_PHRASAL = 640;
+    private static final int SCORE_CARD_W_NORMAL = 820;
     private static final Color PHRASAL_OPTIONS_FG = new Color(52, 56, 64);
     private static final Color PHRASAL_OPTIONS_FG_MUTED = new Color(118, 125, 140);
     private JScrollPane mainGameScrollPane;
@@ -133,9 +160,15 @@ public class GameView extends JFrame {
         this.gameController = gameController;
         this.landingPage = landingPage;
         
-        setTitle("Interactive Game [" + AppVersion.getDisplayVersion() + "]");
-        setSize(1080, 920);
-        setMinimumSize(new Dimension(960, 720));
+        AppGameMode mode = gameController.getAppGameMode();
+        setTitle("Interactive Game [" + AppVersion.getDisplayVersion() + "] [" + mode.getTitleSuffix() + "]");
+        if (mode == AppGameMode.DEFINITION) {
+            setSize(1120, 980);
+            setMinimumSize(new Dimension(1000, 780));
+        } else {
+            setSize(1080, 920);
+            setMinimumSize(new Dimension(960, 720));
+        }
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
@@ -155,7 +188,66 @@ public class GameView extends JFrame {
         });
         
         installGameWindowLayoutRefreshOnResize();
-        log.info("Game window initialized");
+        applyPromptDisplayMode();
+        log.info("Game window initialized (mode {})", gameController.getAppGameMode().getTitleSuffix());
+    }
+
+    private boolean isDefinitionMode() {
+        return gameController.getAppGameMode() == AppGameMode.DEFINITION;
+    }
+
+    private void applyPromptDefinitionTextStyle() {
+        if (promptDefinitionInstructionLabel != null) {
+            promptDefinitionInstructionLabel.setFont(
+                    new Font("Segoe UI", Font.PLAIN, PROMPT_DEFINITION_INSTRUCTION_FONT_PX));
+            promptDefinitionInstructionLabel.setForeground(PROMPT_DEFINITION_INSTRUCTION_FG);
+        }
+        if (promptDefinitionArea != null) {
+            promptDefinitionArea.setFont(new Font("Segoe UI", Font.BOLD, PROMPT_DEFINITION_FONT_PX));
+            promptDefinitionArea.setForeground(PROMPT_DEFINITION_FG);
+        }
+    }
+
+    private void applyDefinitionPromptScrollSize(boolean phrasalMode) {
+        if (promptDefinitionScroll == null) {
+            return;
+        }
+        int h = phrasalMode ? PROMPT_DEFINITION_SCROLL_PREF_H_PHRASAL : PROMPT_DEFINITION_SCROLL_PREF_H;
+        int maxH = phrasalMode ? PROMPT_DEFINITION_SCROLL_MAX_H_PHRASAL : PROMPT_DEFINITION_SCROLL_MAX_H;
+        int w = phrasalMode ? 860 : 980;
+        promptDefinitionScroll.setPreferredSize(new Dimension(w, h));
+        promptDefinitionScroll.setMinimumSize(new Dimension(360, 44));
+        promptDefinitionScroll.setMaximumSize(new Dimension(1200, maxH));
+        if (definitionPromptBlockPanel != null) {
+            definitionPromptBlockPanel.setMaximumSize(new Dimension(1200, maxH + 44));
+        }
+    }
+
+    private void applyPromptDisplayMode() {
+        if (promptCardLayout == null || promptDisplayPanel == null) {
+            return;
+        }
+        if (isDefinitionMode()) {
+            applyPromptDefinitionTextStyle();
+            applyDefinitionPromptScrollSize(isPhrasalRound());
+            promptCardLayout.show(promptDisplayPanel, "scroll");
+        } else {
+            promptCardLayout.show(promptDisplayPanel, "label");
+        }
+        promptDisplayPanel.revalidate();
+    }
+
+    private void setRoundPromptText(String expression) {
+        if (isDefinitionMode()) {
+            promptDefinitionInstructionLabel.setText(
+                    gameController.getAppGameMode().getRoundPromptInstructionLine());
+            String definition = expression == null ? "" : expression;
+            promptDefinitionArea.setText(definition);
+            promptDefinitionArea.setCaretPosition(0);
+        } else {
+            spanishExpressionLabel.setText(
+                    gameController.getAppGameMode().formatRoundPrompt(expression));
+        }
     }
 
     /**
@@ -182,10 +274,41 @@ public class GameView extends JFrame {
         spanishExpressionLabel = new JLabel("Select a database and start a new round!", SwingConstants.CENTER);
         spanishExpressionLabel.setFont(new Font("Arial", Font.BOLD, 28));
         spanishExpressionLabel.setForeground(new Color(0, 102, 204));
+
+        promptDefinitionInstructionLabel = new JLabel(" ", SwingConstants.CENTER);
+        promptDefinitionInstructionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        promptDefinitionInstructionLabel.setBorder(BorderFactory.createEmptyBorder(0, 8, 8, 8));
+
+        promptDefinitionArea = new JTextArea(2, 40);
+        promptDefinitionArea.setEditable(false);
+        promptDefinitionArea.setLineWrap(true);
+        promptDefinitionArea.setWrapStyleWord(true);
+        applyPromptDefinitionTextStyle();
+        promptDefinitionArea.setBackground(new Color(252, 254, 255));
+        promptDefinitionArea.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+        promptDefinitionScroll = new JScrollPane(promptDefinitionArea);
+        promptDefinitionScroll.setBorder(BorderFactory.createLineBorder(new Color(202, 214, 228), 1));
+        promptDefinitionScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        promptDefinitionScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        promptDefinitionScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        definitionPromptBlockPanel = new JPanel();
+        definitionPromptBlockPanel.setLayout(new BoxLayout(definitionPromptBlockPanel, BoxLayout.Y_AXIS));
+        definitionPromptBlockPanel.setOpaque(false);
+        definitionPromptBlockPanel.add(promptDefinitionInstructionLabel);
+        definitionPromptBlockPanel.add(promptDefinitionScroll);
+
+        promptCardLayout = new CardLayout();
+        promptDisplayPanel = new JPanel(promptCardLayout);
+        promptDisplayPanel.setOpaque(false);
+        promptDisplayPanel.add(spanishExpressionLabel, "label");
+        promptDisplayPanel.add(definitionPromptBlockPanel, "scroll");
         
         englishTranslationField = new JTextField(20);
         englishTranslationField.setFont(new Font("Arial", Font.PLAIN, 23));
-        englishTranslationField.setToolTipText("Enter your English translation here");
+        englishTranslationField.setToolTipText(isDefinitionMode()
+                ? "Enter the English expression that matches the definition"
+                : "Enter your English translation here");
         englishTranslationField.setBackground(new Color(248, 252, 255));
         englishTranslationField.setForeground(new Color(34, 45, 58));
         englishTranslationField.setCaretColor(new Color(34, 45, 58));
@@ -761,18 +884,18 @@ public class GameView extends JFrame {
         dbPanel.add(dbLabel);
         dbPanel.add(databaseSelector);
         dbSection.add(dbPanel);
-        JLabel buildHint = new JLabel("Build " + AppVersion.getDisplayVersion()
-                + " — Phrasal: 3) siempre visible; 4) solo si la tarjeta tiene cuarta pieza.");
-        buildHint.setFont(new Font("Arial", Font.PLAIN, 12));
-        buildHint.setForeground(new Color(95, 100, 115));
-        JPanel buildHintRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 2));
-        buildHintRow.setOpaque(false);
-        buildHintRow.add(buildHint);
-        dbSection.add(buildHintRow);
 
         // Game Area Section: scroll interno para el contenido alto; acciones y navegación fuera del scroll central.
         JPanel gameSection = createSectionPanel("Interactive Game");
         gameSection.setLayout(new BorderLayout());
+        JPanel databaseCountPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        databaseCountPanel.setBorder(BorderFactory.createEmptyBorder(10, 8, 14, 8));
+        databaseCountPanel.setOpaque(false);
+        databaseExpressionCountLabel = new JLabel(" ", SwingConstants.CENTER);
+        databaseExpressionCountLabel.setFont(new Font("Segoe UI", Font.BOLD, DATABASE_COUNT_FONT_PX));
+        databaseExpressionCountLabel.setForeground(DATABASE_COUNT_FG);
+        databaseCountPanel.add(databaseExpressionCountLabel);
+        gameSection.add(databaseCountPanel, BorderLayout.NORTH);
         JPanel gameUpperPanel = new JPanel(new BorderLayout());
         gameUpperPanel.setOpaque(false);
         gameUpperPanel.setBorder(BorderFactory.createEmptyBorder(24, 12, 14, 12));
@@ -797,7 +920,10 @@ public class GameView extends JFrame {
         spanishExpressionLabel.setForeground(new Color(27, 84, 138));
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 10, 0);
-        topCard.add(spanishExpressionLabel, gbc);
+        gbc.fill = isDefinitionMode() ? GridBagConstraints.HORIZONTAL : GridBagConstraints.BOTH;
+        gbc.weighty = 0.0;
+        topCard.add(promptDisplayPanel, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         englishTranslationField.setPreferredSize(new Dimension(620, 44));
         englishTranslationField.setMinimumSize(new Dimension(500, 44));
@@ -847,14 +973,14 @@ public class GameView extends JFrame {
 
         JScrollPane revealScroll = new JScrollPane(revealAnswerArea);
         revealAnswerScrollPane = revealScroll;
-        revealScroll.setPreferredSize(new Dimension(860, 112));
-        revealScroll.setMaximumSize(new Dimension(920, 150));
+        revealScroll.setPreferredSize(new Dimension(REVEAL_SCROLL_W_PHRASAL, 88));
+        revealScroll.setMaximumSize(new Dimension(REVEAL_SCROLL_MAX_W_PHRASAL, 108));
         revealScroll.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
         JPanel revealRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         revealRow.setOpaque(false);
         revealRow.add(revealScroll);
         gbc.gridy = 7;
-        gbc.insets = new Insets(14, 0, 0, 0);
+        gbc.insets = new Insets(6, 0, 0, 0);
         topCard.add(revealRow, gbc);
 
         // No forzar preferred size: Swing calcula altura según contenido visible.
@@ -868,7 +994,7 @@ public class GameView extends JFrame {
         JPanel centerScoreWrap = new JPanel();
         centerScoreWrap.setLayout(new BoxLayout(centerScoreWrap, BoxLayout.Y_AXIS));
         centerScoreWrap.setOpaque(false);
-        centerScoreWrap.setBorder(BorderFactory.createEmptyBorder(28, 0, 12, 0));
+        centerScoreWrap.setBorder(BorderFactory.createEmptyBorder(12, 0, 8, 0));
 
         JPanel scoreCenterPill = new JPanel(new BorderLayout());
         scoreCardPanel = scoreCenterPill;
@@ -876,9 +1002,9 @@ public class GameView extends JFrame {
         scoreCenterPill.setBackground(new Color(248, 251, 255));
         scoreCenterPill.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(186, 201, 219), 1),
-                BorderFactory.createEmptyBorder(10, 18, 10, 18)));
-        scoreCenterPill.setMaximumSize(new Dimension(640, 92));
-        scoreCenterPill.setPreferredSize(new Dimension(640, 92));
+                BorderFactory.createEmptyBorder(6, 18, 6, 18)));
+        scoreCenterPill.setMaximumSize(new Dimension(SCORE_CARD_W_PHRASAL, 74));
+        scoreCenterPill.setPreferredSize(new Dimension(SCORE_CARD_W_PHRASAL, 74));
         scoreCenterPill.add(scoreLabel, BorderLayout.CENTER);
         centerScoreWrap.add(scoreCenterPill);
 
@@ -1037,6 +1163,20 @@ public class GameView extends JFrame {
          * because ActionListener firing is not guaranteed for every LAF once removeAllItems() ran.
          */
         syncControllerWithComboSelection(false);
+        refreshDatabaseExpressionCountLabel();
+    }
+
+    private void refreshDatabaseExpressionCountLabel() {
+        if (databaseExpressionCountLabel == null) {
+            return;
+        }
+        String db = (String) databaseSelector.getSelectedItem();
+        if (db == null || db.isBlank()) {
+            databaseExpressionCountLabel.setText("Expressions in database: —");
+            return;
+        }
+        int count = gameController.getDatabaseExpressionCount(db);
+        databaseExpressionCountLabel.setText(db + ": " + count + " expressions");
     }
 
     /**
@@ -1052,6 +1192,7 @@ public class GameView extends JFrame {
             }
             log.info("Database selected: {}", selectedDb);
         }
+        refreshDatabaseExpressionCountLabel();
     }
 
     private void startNewRound() {
@@ -1071,7 +1212,7 @@ public class GameView extends JFrame {
         
         currentSpanishExpression = gameController.startNewRound();
         if (currentSpanishExpression != null) {
-            spanishExpressionLabel.setText("Translate: \"" + currentSpanishExpression.getExpression() + "\"");
+            setRoundPromptText(currentSpanishExpression.getExpression());
             englishTranslationField.setText("");
             configurePhrasalRoundUi();
             showFeedbackInRevealArea("", new Color(40, 40, 40));
@@ -1080,7 +1221,14 @@ public class GameView extends JFrame {
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         } else {
-            spanishExpressionLabel.setText("No expressions available. Add some words or select another database.");
+            if (isDefinitionMode()) {
+                promptDefinitionInstructionLabel.setText("");
+                promptDefinitionArea.setText(
+                        "No expressions available. Add some words or select another database.");
+            } else {
+                spanishExpressionLabel.setText(
+                        "No expressions available. Add some words or select another database.");
+            }
             showFeedbackInRevealArea("Please add expressions to this database or select another one.", Color.RED);
             updatePracticeDependentUi();
             refreshCurrentWordScores();
@@ -1372,6 +1520,36 @@ public class GameView extends JFrame {
     }
 
     /**
+     * Altura del feedback (reveal) y del score; el ancho no se modifica aquí.
+     */
+    private void applyFeedbackAndScoreHeights(boolean phrasalMode) {
+        if (revealAnswerScrollPane == null) {
+            return;
+        }
+        int revealW = phrasalMode ? REVEAL_SCROLL_W_PHRASAL : REVEAL_SCROLL_W_NORMAL;
+        int revealMaxW = phrasalMode ? REVEAL_SCROLL_MAX_W_PHRASAL : REVEAL_SCROLL_MAX_W_NORMAL;
+        int revealH = phrasalMode ? 88 : 104;
+        int revealMaxH = phrasalMode ? 108 : 128;
+        int scoreW = phrasalMode ? SCORE_CARD_W_PHRASAL : SCORE_CARD_W_NORMAL;
+        int scoreH = phrasalMode ? 74 : 108;
+
+        if (isDefinitionMode()) {
+            revealH = phrasalMode ? 92 : 108;
+            revealMaxH = phrasalMode ? 116 : 132;
+            scoreH = phrasalMode ? 64 : 96;
+        }
+
+        revealAnswerScrollPane.setPreferredSize(new Dimension(revealW, revealH));
+        revealAnswerScrollPane.setMaximumSize(new Dimension(revealMaxW, revealMaxH));
+        revealAnswerScrollPane.setMinimumSize(new Dimension(revealW, 32));
+
+        if (scoreCardPanel != null) {
+            scoreCardPanel.setPreferredSize(new Dimension(scoreW, scoreH));
+            scoreCardPanel.setMaximumSize(new Dimension(scoreW, scoreH));
+        }
+    }
+
+    /**
      * Modelos de diseño desacoplados por modo: normal vs phrasal.
      * Esto evita que un ajuste visual de un modo afecte al otro.
      */
@@ -1390,13 +1568,7 @@ public class GameView extends JFrame {
             englishTranslationField.setMaximumSize(new Dimension(760, 44));
             revealAnswerButton.setPreferredSize(new Dimension(200, 40));
             revealAllButton.setPreferredSize(new Dimension(130, 40));
-            revealAnswerScrollPane.setPreferredSize(new Dimension(860, 112));
-            revealAnswerScrollPane.setMaximumSize(new Dimension(920, 150));
             scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
-            if (scoreCardPanel != null) {
-                scoreCardPanel.setPreferredSize(new Dimension(640, 92));
-                scoreCardPanel.setMaximumSize(new Dimension(640, 92));
-            }
         } else {
             // Perfil normal separado: escalado visual más amplio.
             topCardPanel.setBackground(new Color(253, 254, 255));
@@ -1409,14 +1581,14 @@ public class GameView extends JFrame {
             englishTranslationField.setMaximumSize(new Dimension(900, 60));
             revealAnswerButton.setPreferredSize(new Dimension(250, 52));
             revealAllButton.setPreferredSize(new Dimension(188, 52));
-            revealAnswerScrollPane.setPreferredSize(new Dimension(1020, 170));
-            revealAnswerScrollPane.setMaximumSize(new Dimension(1120, 210));
             scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 29));
-            if (scoreCardPanel != null) {
-                scoreCardPanel.setPreferredSize(new Dimension(820, 132));
-                scoreCardPanel.setMaximumSize(new Dimension(820, 132));
-            }
         }
+        applyFeedbackAndScoreHeights(phrasalMode);
+        if (isDefinitionMode()) {
+            applyPromptDefinitionTextStyle();
+            applyDefinitionPromptScrollSize(phrasalMode);
+        }
+        applyPromptDisplayMode();
         revealAnswerArea.setFont(new Font("Arial", Font.PLAIN, phrasalMode ? 16 : 19));
         topCardPanel.revalidate();
         topCardPanel.repaint();
@@ -1966,7 +2138,13 @@ public class GameView extends JFrame {
         postIncorrectPhrasalLock = false;
         cancelPendingAutoNextRound();
         applyGameLayoutModel(false);
-        spanishExpressionLabel.setText("Select a database and start a new round!");
+        if (isDefinitionMode()) {
+            promptDefinitionInstructionLabel.setText(
+                    gameController.getAppGameMode().getRoundPromptInstructionLine());
+            promptDefinitionArea.setText("Select a database and start a new round!");
+        } else {
+            spanishExpressionLabel.setText("Select a database and start a new round!");
+        }
         englishTranslationField.setText("");
         showFeedbackInRevealArea("", new Color(40, 40, 40));
         preparePracticeRevealStateForNewRound();

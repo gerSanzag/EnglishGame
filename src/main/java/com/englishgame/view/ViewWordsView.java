@@ -151,12 +151,13 @@ public class ViewWordsView extends JFrame {
         searchField.setToolTipText("Search expressions...");
         searchField.setPreferredSize(new Dimension(200, 30));
 
+        String promptSort = gameController.getAppGameMode().getBrowseSortPromptLabel() + " (A-Z)";
         sortSelector = new JComboBox<>(new String[] {
-                "Español (A-Z)", "Inglés (A-Z)", "Score (mayor a menor)",
+                promptSort, "Inglés (A-Z)", "Score (mayor a menor)",
                 "Inclusión (reciente primero)", "Inclusión (antigua primero)"
         });
         sortSelector.setPreferredSize(new Dimension(280, 30));
-        sortSelector.setToolTipText("Ordena por español, inglés, score o fecha de inclusión");
+        sortSelector.setToolTipText("Ordena por prompt, inglés, score o fecha de inclusión");
 
         recordsCountLabel = new JLabel("Registros: 0");
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));

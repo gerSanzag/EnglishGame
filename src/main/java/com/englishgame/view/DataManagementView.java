@@ -1,5 +1,6 @@
 package com.englishgame.view;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
@@ -38,6 +39,11 @@ public class DataManagementView extends JFrame {
 
     // Individual entry components
     private JTextField spanishField;
+    private JTextArea definitionPromptField;
+    private JScrollPane definitionPromptScroll;
+    private JLabel individualPromptLabel;
+    private JLabel bulkFormatLabel;
+    private JLabel bulkExampleLabel;
     private JTextField englishField;
     private JButton addIndividualButton;
 
@@ -56,19 +62,56 @@ public class DataManagementView extends JFrame {
         this.gameController = gameController;
         this.landingPage = landingPage;
         
-        setTitle("Data Management - English Learning Game");
-        setSize(1000, 800);
+        AppGameMode mode = gameController.getAppGameMode();
+        setTitle("Data Management - English Learning Game [" + mode.getTitleSuffix() + "]");
+        if (mode == AppGameMode.DEFINITION) {
+            setSize(1050, 920);
+            setMinimumSize(new Dimension(920, 720));
+        } else {
+            setSize(1000, 800);
+            setMinimumSize(new Dimension(900, 600));
+        }
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(true);
-        setMinimumSize(new Dimension(900, 600));
         
         initComponents();
         setupLayout();
         addListeners();
         refreshDatabaseSelector();
+        configureForGameMode();
         
-        log.info("Data management window initialized");
+        log.info("Data management window initialized (mode {})", mode.getTitleSuffix());
+    }
+
+    private boolean isDefinitionMode() {
+        return gameController.getAppGameMode() == AppGameMode.DEFINITION;
+    }
+
+    private String readPromptInput() {
+        if (isDefinitionMode()) {
+            return definitionPromptField.getText().trim();
+        }
+        return spanishField.getText().trim();
+    }
+
+    private void clearPromptInput() {
+        if (isDefinitionMode()) {
+            definitionPromptField.setText("");
+        } else {
+            spanishField.setText("");
+        }
+    }
+
+    private void configureForGameMode() {
+        AppGameMode mode = gameController.getAppGameMode();
+        individualPromptLabel.setText(mode.getPromptFieldLabel() + ":");
+        bulkFormatLabel.setText(mode.getBulkFormatHint());
+        bulkExampleLabel.setText(mode.getBulkExampleHint());
+        if (isDefinitionMode()) {
+            bulkTextArea.setRows(14);
+            bulkTextArea.setToolTipText("Enter definition - English expression pairs (one per line)");
+        }
     }
 
     private void initComponents() {
@@ -83,16 +126,28 @@ public class DataManagementView extends JFrame {
         // Individual Entry Section
         spanishField = new JTextField(25);
         spanishField.setToolTipText("Enter Spanish expression");
+
+        definitionPromptField = new JTextArea(5, 48);
+        definitionPromptField.setLineWrap(true);
+        definitionPromptField.setWrapStyleWord(true);
+        definitionPromptField.setToolTipText("Enter an English dictionary-style definition");
+        definitionPromptScroll = new JScrollPane(definitionPromptField);
+        definitionPromptScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        definitionPromptScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        definitionPromptScroll.setPreferredSize(new Dimension(520, 118));
+        definitionPromptScroll.setMinimumSize(new Dimension(400, 88));
         
         englishField = new JTextField(25);
-        englishField.setToolTipText("Enter English translation");
+        englishField.setToolTipText(isDefinitionMode()
+                ? "Enter the English expression"
+                : "Enter English translation");
         
         addIndividualButton = createStyledButton("Add Expression", "Add individual expression pair");
         
         // Bulk Entry Section
         bulkTextArea = new JTextArea(10, 60);
         bulkTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        bulkTextArea.setToolTipText("Enter expressions in format: Spanish - English\\nSupported separators: -, =, ,\\nExample: Casa - house, home");
+        bulkTextArea.setToolTipText("Enter prompt - English pairs (one per line). Separators: -, =, ,");
         
         loadFileButton = createStyledButton("Load File", "Load expressions from file");
         processBulkButton = createStyledButton("Add Expressions", "Add all entered expressions to database");
@@ -212,14 +267,23 @@ public class DataManagementView extends JFrame {
         
         // Individual Entry Section
         JPanel individualSection = createSectionPanel("Individual Expression Entry");
-        JPanel individualPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        individualPanel.add(new JLabel("Spanish:"));
-        individualPanel.add(spanishField);
-        individualPanel.add(Box.createHorizontalStrut(10));
-        individualPanel.add(new JLabel("English:"));
-        individualPanel.add(englishField);
-        individualPanel.add(Box.createHorizontalStrut(10));
-        individualPanel.add(addIndividualButton);
+        JPanel individualPanel = new JPanel();
+        individualPanel.setLayout(new BoxLayout(individualPanel, BoxLayout.Y_AXIS));
+        JPanel individualPromptRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        individualPromptLabel = new JLabel("Spanish:");
+        individualPromptRow.add(individualPromptLabel);
+        if (isDefinitionMode()) {
+            individualPromptRow.add(definitionPromptScroll);
+        } else {
+            individualPromptRow.add(spanishField);
+        }
+        individualPanel.add(individualPromptRow);
+        JPanel individualEnglishRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        individualEnglishRow.add(new JLabel("English:"));
+        individualEnglishRow.add(englishField);
+        individualEnglishRow.add(Box.createHorizontalStrut(10));
+        individualEnglishRow.add(addIndividualButton);
+        individualPanel.add(individualEnglishRow);
         individualSection.add(individualPanel);
         
         // Bulk Entry Section
@@ -229,18 +293,22 @@ public class DataManagementView extends JFrame {
         bulkTopPanel.add(processBulkButton);
         
         JScrollPane scrollPane = new JScrollPane(bulkTextArea);
-        scrollPane.setPreferredSize(new Dimension(900, 200));
+        int bulkHeight = isDefinitionMode() ? 280 : 200;
+        scrollPane.setPreferredSize(new Dimension(900, bulkHeight));
+        scrollPane.setMinimumSize(new Dimension(700, isDefinitionMode() ? 200 : 160));
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         
         JPanel bulkInstructions = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
         bulkInstructions.add(new JLabel("Paste your list directly into the text box or load it from a file with Load File."));
         
         JPanel bulkFormat = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-        bulkFormat.add(new JLabel("Format: Spanish - English (one per line)"));
+        bulkFormatLabel = new JLabel("Format: Spanish - English (one per line)");
+        bulkFormat.add(bulkFormatLabel);
         bulkFormat.add(Box.createHorizontalStrut(10));
         bulkFormat.add(new JLabel("Separators: -, =, ,"));
         bulkFormat.add(Box.createHorizontalStrut(10));
-        bulkFormat.add(new JLabel("Example: Casa - house, home"));
+        bulkExampleLabel = new JLabel("Example: Casa - house, home");
+        bulkFormat.add(bulkExampleLabel);
         
         bulkSection.add(bulkTopPanel);
         bulkSection.add(bulkInstructions);
@@ -498,11 +566,11 @@ public class DataManagementView extends JFrame {
     }
 
     private void addIndividualExpression() {
-        String spanish = spanishField.getText().trim();
+        String spanish = readPromptInput();
         String english = englishField.getText().trim();
         
         if (spanish.isEmpty() || english.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter both Spanish and English expressions", 
+            JOptionPane.showMessageDialog(this, gameController.getAppGameMode().emptyPairMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -517,10 +585,7 @@ public class DataManagementView extends JFrame {
 
         if (existsExactPairDuplicate(selectedDb, spanish, english)) {
             JOptionPane.showMessageDialog(this,
-                    "Registro rechazado por duplicado exacto.\n\n"
-                            + "Ya existe en la base \"" + selectedDb + "\" el mismo par:\n"
-                            + "• Español: " + spanish + "\n"
-                            + "• Inglés: " + english,
+                    gameController.getAppGameMode().duplicatePairMessage(selectedDb, spanish, english),
                     "Duplicado exacto",
                     JOptionPane.WARNING_MESSAGE);
             return;
@@ -542,7 +607,7 @@ public class DataManagementView extends JFrame {
             JOptionPane.showMessageDialog(this, "Individual expression added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             
             // Clear fields
-            spanishField.setText("");
+            clearPromptInput();
             englishField.setText("");
             
             log.info("Individual expression added: '{}' - '{}'", spanish, english);

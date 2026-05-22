@@ -1,5 +1,6 @@
 package com.englishgame.view;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.controller.GameController;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,10 +18,16 @@ import java.awt.RenderingHints;
 public class LandingPageView extends JFrame {
 
     private final GameController gameController;
+    private final AppGameMode appGameMode;
 
     public LandingPageView(GameController gameController) {
+        this(gameController, AppGameMode.CLASSIC);
+    }
+
+    public LandingPageView(GameController gameController, AppGameMode appGameMode) {
         this.gameController = gameController;
-        setTitle("English Learning Game - Main Menu");
+        this.appGameMode = appGameMode != null ? appGameMode : AppGameMode.CLASSIC;
+        setTitle("English Learning Game - Main Menu [" + this.appGameMode.getTitleSuffix() + "]");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(true);
         setMinimumSize(new Dimension(600, 500));
@@ -45,8 +52,10 @@ public class LandingPageView extends JFrame {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 32));
         titleLabel.setForeground(Color.WHITE);
         
-        // Subtitle
-        JLabel subtitleLabel = new JLabel("Master English through interactive learning", SwingConstants.CENTER);
+        String subtitleText = appGameMode == AppGameMode.DEFINITION
+                ? "Practice English expressions from dictionary-style definitions"
+                : "Master English through interactive learning";
+        JLabel subtitleLabel = new JLabel(subtitleText, SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Arial", Font.ITALIC, 18));
         subtitleLabel.setForeground(Color.WHITE);
         
