@@ -1,5 +1,6 @@
 package com.englishgame.view;
 
+import com.englishgame.AppGameMode;
 import com.englishgame.AppVersion;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
@@ -42,6 +43,11 @@ public class LearnedWordsReviewView extends JFrame {
     private static final Color REVIEW_FEEDBACK_ERR_FG = new Color(231, 76, 60);
     private static final Color REVIEW_FEEDBACK_ERR_BG = new Color(253, 242, 242);
     private static final Color REVIEW_FEEDBACK_ERR_BORDER = new Color(230, 165, 158);
+    private static final int REVIEW_PROMPT_SCROLL_W = 980;
+    private static final int REVIEW_PROMPT_SCROLL_MAX_W = 1120;
+    private static final int REVIEW_FEEDBACK_SCROLL_W = 980;
+    private static final int REVIEW_FEEDBACK_SCROLL_MAX_W = 1120;
+    private static final int REVIEW_SCORE_CARD_W = 560;
 
     private final GameController gameController;
     private final LearnedWordsView learnedWordsOwner;
@@ -60,7 +66,8 @@ public class LearnedWordsReviewView extends JFrame {
     private JPanel scoreCardPanel;
     private JScrollPane feedbackScrollPane;
 
-    private JLabel promptLabel;
+    private JTextArea promptTextArea;
+    private JScrollPane promptScrollPane;
     private JLabel scoreLabel;
     private JTextField answerField;
     private JTextArea feedbackArea;
@@ -285,27 +292,47 @@ public class LearnedWordsReviewView extends JFrame {
                 + "</span>" + safeSuffix + "</html>";
     }
 
+    private boolean isDefinitionMode() {
+        return gameController.getAppGameMode() == AppGameMode.DEFINITION;
+    }
+
     private void applyNormalVisualProfile() {
-        if (topCardPanel == null || feedbackScrollPane == null) {
+        if (topCardPanel == null || feedbackScrollPane == null || promptScrollPane == null) {
             return;
         }
         topCardPanel.setBackground(new Color(253, 254, 255));
         topCardPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(207, 218, 232), 1),
-                BorderFactory.createEmptyBorder(22, 22, 22, 22)));
-        promptLabel.setFont(new Font("Arial", Font.BOLD, 36));
+                BorderFactory.createEmptyBorder(16, 16, 16, 16)));
+
+        if (isDefinitionMode()) {
+            promptTextArea.setFont(new Font("Segoe UI", Font.BOLD, 23));
+            promptTextArea.setForeground(new Color(0, 118, 92));
+            promptScrollPane.setPreferredSize(new Dimension(REVIEW_PROMPT_SCROLL_W, 76));
+            promptScrollPane.setMaximumSize(new Dimension(REVIEW_PROMPT_SCROLL_MAX_W, 96));
+        } else {
+            promptTextArea.setFont(new Font("Arial", Font.BOLD, 28));
+            promptTextArea.setForeground(new Color(27, 84, 138));
+            promptScrollPane.setPreferredSize(new Dimension(REVIEW_PROMPT_SCROLL_W, 56));
+            promptScrollPane.setMaximumSize(new Dimension(REVIEW_PROMPT_SCROLL_MAX_W, 72));
+        }
+        promptScrollPane.setMinimumSize(new Dimension(360, 44));
+
         answerField.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 39));
         answerField.setPreferredSize(new Dimension(640, 77));
         answerField.setMinimumSize(new Dimension(200, 66));
-        answerField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 93));
-        feedbackScrollPane.setPreferredSize(new Dimension(320, 170));
-        feedbackScrollPane.setMinimumSize(new Dimension(120, 120));
-        scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 29));
+        answerField.setMaximumSize(new Dimension(REVIEW_PROMPT_SCROLL_MAX_W, 93));
+
+        feedbackScrollPane.setPreferredSize(new Dimension(REVIEW_FEEDBACK_SCROLL_W, 88));
+        feedbackScrollPane.setMinimumSize(new Dimension(360, 44));
+        feedbackScrollPane.setMaximumSize(new Dimension(REVIEW_FEEDBACK_SCROLL_MAX_W, 108));
+
+        scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         if (scoreCardPanel != null) {
-            scoreCardPanel.setPreferredSize(new Dimension(560, 132));
-            scoreCardPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 132));
+            scoreCardPanel.setPreferredSize(new Dimension(REVIEW_SCORE_CARD_W, 74));
+            scoreCardPanel.setMaximumSize(new Dimension(REVIEW_SCORE_CARD_W, 74));
         }
-        feedbackArea.setFont(new Font("Arial", Font.PLAIN, 19));
+        feedbackArea.setFont(new Font("Arial", Font.PLAIN, 17));
         topCardPanel.revalidate();
         topCardPanel.repaint();
     }
@@ -392,12 +419,21 @@ public class LearnedWordsReviewView extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.CENTER;
 
-        promptLabel = new JLabel("", SwingConstants.CENTER);
-        promptLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        promptLabel.setForeground(new Color(27, 84, 138));
+        promptTextArea = new JTextArea(2, 40);
+        promptTextArea.setEditable(false);
+        promptTextArea.setLineWrap(true);
+        promptTextArea.setWrapStyleWord(true);
+        promptTextArea.setBackground(new Color(252, 254, 255));
+        promptTextArea.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        promptScrollPane = new JScrollPane(promptTextArea);
+        promptScrollPane.setBorder(BorderFactory.createLineBorder(new Color(202, 214, 228), 1));
+        promptScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        promptScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 10, 0);
-        topCard.add(promptLabel, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weighty = 0.0;
+        topCard.add(promptScrollPane, gbc);
 
         answerField = new JTextField();
         answerField.setToolTipText("Enter your English translation here");
@@ -427,15 +463,9 @@ public class LearnedWordsReviewView extends JFrame {
         feedbackScrollPane = new JScrollPane(feedbackArea);
         feedbackScrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
         gbc.gridy = 2;
-        gbc.insets = new Insets(14, 0, 0, 0);
+        gbc.insets = new Insets(8, 0, 8, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         topCard.add(feedbackScrollPane, gbc);
-
-        gameUpperPanel.add(topCard, BorderLayout.NORTH);
-
-        JPanel centerScoreWrap = new JPanel();
-        centerScoreWrap.setLayout(new BoxLayout(centerScoreWrap, BoxLayout.Y_AXIS));
-        centerScoreWrap.setOpaque(false);
-        centerScoreWrap.setBorder(BorderFactory.createEmptyBorder(28, 0, 12, 0));
 
         scoreCardPanel = new JPanel(new BorderLayout());
         JPanel scoreCenterPill = scoreCardPanel;
@@ -443,17 +473,26 @@ public class LearnedWordsReviewView extends JFrame {
         scoreCenterPill.setBackground(new Color(248, 251, 255));
         scoreCenterPill.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(186, 201, 219), 1),
-                BorderFactory.createEmptyBorder(10, 18, 10, 18)));
-        scoreCenterPill.setAlignmentX(Component.CENTER_ALIGNMENT);
+                BorderFactory.createEmptyBorder(6, 18, 6, 18)));
 
         scoreLabel = new JLabel("This phrase score", SwingConstants.CENTER);
         scoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
         scoreLabel.setVerticalAlignment(SwingConstants.CENTER);
         scoreLabel.setForeground(new Color(90, 90, 90));
         scoreCenterPill.add(scoreLabel, BorderLayout.CENTER);
-        centerScoreWrap.add(scoreCenterPill);
 
-        gameUpperPanel.add(centerScoreWrap, BorderLayout.CENTER);
+        JPanel scoreRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        scoreRow.setOpaque(false);
+        scoreRow.add(scoreCenterPill);
+        gbc.gridy = 3;
+        gbc.insets = new Insets(4, 0, 0, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        topCard.add(scoreRow, gbc);
+
+        JPanel topCardWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        topCardWrap.setOpaque(false);
+        topCardWrap.add(topCard);
+        gameUpperPanel.add(topCardWrap, BorderLayout.CENTER);
 
         JScrollPane gameUpperScroll = new JScrollPane(gameUpperPanel);
         gameUpperScroll.setBorder(BorderFactory.createEmptyBorder());
@@ -653,7 +692,7 @@ public class LearnedWordsReviewView extends JFrame {
         submitButton.setEnabled(true);
         newRoundButton.setEnabled(!deck.isEmpty());
         if (deck.isEmpty()) {
-            promptLabel.setText("<html><div style='text-align:center;'>No quedan entradas.</div></html>");
+            promptTextArea.setText("No quedan entradas.");
             refreshScoreLabel(null);
             submitButton.setEnabled(false);
             newRoundButton.setEnabled(false);
@@ -662,7 +701,8 @@ public class LearnedWordsReviewView extends JFrame {
         index = Math.max(0, Math.min(index, deck.size() - 1));
         EnglishExpression en = deck.get(index);
         String es = summarizeSpanish(esSourceLines(en));
-        promptLabel.setText("<html><div style='text-align:center;'>" + escapeHtml(es) + "</div></html>");
+        promptTextArea.setText(es);
+        promptTextArea.setCaretPosition(0);
         refreshScoreLabel(en);
         answerField.requestFocusInWindow();
         SwingUtilities.invokeLater(() -> getRootPane().setDefaultButton(submitButton));
@@ -679,7 +719,9 @@ public class LearnedWordsReviewView extends JFrame {
                     .forEach(list::add);
         }
         if (list.isEmpty()) {
-            list.add("(Sin referencia en español en esta entrada)");
+            list.add(isDefinitionMode()
+                    ? "(Sin definición de referencia en esta entrada)"
+                    : "(Sin referencia en español en esta entrada)");
         }
         return list;
     }
@@ -689,13 +731,6 @@ public class LearnedWordsReviewView extends JFrame {
             return String.join(" · ", lines);
         }
         return lines.get(0) + " · … +" + (lines.size() - 1);
-    }
-
-    private static String escapeHtml(String plain) {
-        if (plain == null) {
-            return "";
-        }
-        return plain.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private void onSubmit() {
