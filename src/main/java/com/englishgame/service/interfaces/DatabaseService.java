@@ -201,13 +201,15 @@ public interface DatabaseService {
                                          EnglishExpression englishTranslation);
 
     /**
-     * Review: {@code learned_words} (+1/−5, práctica si &lt; 21, pasa a definitely en 28);
-     * {@code words_definitely_learned} (+1/−5, vuelve a learned si falla, purga en 35).
+     * Review en cualquier BBDD de {@link com.englishgame.model.ReviewDatabases}: +1/−5 y vuelta a práctica si el score
+     * queda por debajo de 21. En {@code learned_words} pasa a definitely en 28; en {@code words_definitely_learned} purga en 35.
      *
-     * @param reviewDatabaseName {@code learned_words} o {@code words_definitely_learned} (clave canónica o nombre mostrado).
+     * @param reviewDatabaseName clave canónica o nombre mostrado de una BBDD de review.
+     * @param requirePracticeSourceMatch si {@code true} (modo definición), también debe acertar la BBDD de origen.
+     * @param userSelectedPracticeDatabase nombre de BBDD elegido; ignorado si {@code requirePracticeSourceMatch} es {@code false}.
      */
     Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard, String userAnswer,
-            String reviewDatabaseName);
+            String reviewDatabaseName, boolean requirePracticeSourceMatch, String userSelectedPracticeDatabase);
     
     /**
      * Gets all learned expressions

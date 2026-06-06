@@ -426,7 +426,14 @@ public class GameController {
      */
     public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAnswer(EnglishExpression learnedCard,
             String userAnswer, String reviewDatabaseName) {
-        return databaseService.submitLearnedWordsReviewAttempt(learnedCard, userAnswer, reviewDatabaseName);
+        return submitLearnedWordsReviewAnswer(learnedCard, userAnswer, reviewDatabaseName, null);
+    }
+
+    public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAnswer(EnglishExpression learnedCard,
+            String userAnswer, String reviewDatabaseName, String userSelectedPracticeDatabase) {
+        boolean requireSource = appGameMode == AppGameMode.DEFINITION;
+        return databaseService.submitLearnedWordsReviewAttempt(
+                learnedCard, userAnswer, reviewDatabaseName, requireSource, userSelectedPracticeDatabase);
     }
     
     /**

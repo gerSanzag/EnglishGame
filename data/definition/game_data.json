@@ -1,17 +1,9 @@
 [ [ {
   "database" : "Binomial pairs",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
-  "score" : 15,
-  "database" : "Binomial pairs",
-  "expression" : "a badly organized mixture:",
-  "translations" : [ "Mishmash" ],
-  "language" : "english_definition",
-  "included_at" : 1779539105809,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 1,
+  "score" : 3,
   "database" : "Binomial pairs",
   "expression" : "gradually:",
   "translations" : [ "little by little" ],
@@ -19,7 +11,7 @@
   "included_at" : 1779997601359,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 7,
+  "score" : 13,
   "database" : "Binomial pairs",
   "expression" : "moving first in one direction and then in the opposite one:",
   "translations" : [ "back and forth" ],
@@ -27,7 +19,23 @@
   "included_at" : 1779539376212,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "completely:",
+  "translations" : [ "through and through" ],
+  "language" : "english_definition",
+  "included_at" : 1780686997634,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Binomial pairs",
+  "expression" : "a source of pleasure",
+  "translations" : [ "meat and drink" ],
+  "language" : "english_definition",
+  "included_at" : 1780686653181,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 18,
   "database" : "Binomial pairs",
   "expression" : "gradually:",
   "translations" : [ "Bit by bit" ],
@@ -35,15 +43,7 @@
   "included_at" : 1779539856251,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 13,
-  "database" : "Binomial pairs",
-  "expression" : "Continually",
-  "translations" : [ "On and on" ],
-  "language" : "english_definition",
-  "included_at" : 1779540282499,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 12,
+  "score" : 8,
   "database" : "Binomial pairs",
   "expression" : "very often:",
   "translations" : [ "Time and time" ],
@@ -51,15 +51,7 @@
   "included_at" : 1779540431646,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 16,
-  "database" : "Binomial pairs",
-  "expression" : "happening or existing only some of the time:",
-  "translations" : [ "Off and on" ],
-  "language" : "english_definition",
-  "included_at" : 1779540509108,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 2,
+  "score" : 14,
   "database" : "Binomial pairs",
   "expression" : "in a confused, badly organized, or difficult situation:",
   "translations" : [ "At sixes and sevens" ],
@@ -67,15 +59,47 @@
   "included_at" : 1779554619097,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 10,
+  "score" : 2,
   "database" : "Binomial pairs",
-  "expression" : "in a careful and consistent manner",
-  "translations" : [ "Slow and steady" ],
+  "expression" : "someone who is quite certain to get or do something, or something that is quite certain to happen:",
+  "translations" : [ "dead cert" ],
   "language" : "english_definition",
-  "included_at" : 1779540194299,
+  "included_at" : 1780687357631,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 9,
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "without any doubt",
+  "translations" : [ "as sure as eggs are eggs" ],
+  "language" : "english_definition",
+  "included_at" : 1780687460900,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "still full of energy and activity:",
+  "translations" : [ "alive and well" ],
+  "language" : "english_definition",
+  "included_at" : 1780686083562,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "to be a feature of something, especially a feature that cannot be avoided:",
+  "translations" : [ "be part and parcel of something" ],
+  "language" : "english_definition",
+  "included_at" : 1780686762067,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 1,
+  "database" : "Binomial pairs",
+  "expression" : "not having a problem or difficulty any longer:",
+  "translations" : [ "out of the woods" ],
+  "language" : "english_definition",
+  "included_at" : 1780686006046,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 15,
   "database" : "Binomial pairs",
   "expression" : "from a large number of places:",
   "translations" : [ "From far and wide" ],
@@ -83,15 +107,15 @@
   "included_at" : 1779539484419,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 10,
+  "score" : 1,
   "database" : "Binomial pairs",
-  "expression" : "moving at a consistent and deliberate pace",
-  "translations" : [ "Slow and steady" ],
+  "expression" : "(especially of old people) healthy and strong:",
+  "translations" : [ "hale and hearty" ],
   "language" : "english_definition",
-  "included_at" : 1779540173211,
+  "included_at" : 1780686386486,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 10,
+  "score" : 20,
   "database" : "Binomial pairs",
   "expression" : "If a place is chock-a-block, it is very full of people or things:",
   "translations" : [ "Chock-a-block" ],
@@ -99,15 +123,15 @@
   "included_at" : 1779538856963,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 8,
+  "score" : 17,
   "database" : "Binomial pairs",
   "expression" : "in many directions:",
   "translations" : [ "HIther and thither" ],
   "language" : "english_definition",
-  "included_at" : 1779539444366,
+  "included_at" : 0,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 16,
   "database" : "Binomial pairs",
   "expression" : "used after a noun to mean \"and nothing else\":",
   "translations" : [ "Pure and simple" ],
@@ -115,15 +139,23 @@
   "included_at" : 1779538657064,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 16,
+  "score" : 1,
   "database" : "Binomial pairs",
-  "expression" : "a confused mixture:",
-  "translations" : [ "Mishmash" ],
+  "expression" : "very early in the morning",
+  "translations" : [ "bright and early" ],
   "language" : "english_definition",
-  "included_at" : 1779539122572,
+  "included_at" : 1780686317884,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "used to emphasize that you are referring to all the members of a group:",
+  "translations" : [ "each and every" ],
+  "language" : "english_definition",
+  "included_at" : 1780687492040,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 7,
   "database" : "Binomial pairs",
   "expression" : "sometimes, but not very often:",
   "translations" : [ "Now and again" ],
@@ -139,63 +171,47 @@
   "included_at" : 1779540461794,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 18,
+  "score" : 1,
   "database" : "Binomial pairs",
-  "expression" : "used to say that you do not know exactly when something will happen, but you are certain that it will happen:",
-  "translations" : [ "Sooner or later" ],
+  "expression" : "prevalent and very active",
+  "translations" : [ "alive and kicking" ],
   "language" : "english_definition",
-  "included_at" : 1779540585174,
+  "included_at" : 1780686213552,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 18,
+  "score" : 1,
   "database" : "Binomial pairs",
-  "expression" : "clean, well organized, and with everything in its place:",
-  "translations" : [ "Neat and tidy" ],
+  "expression" : "completely finished:",
+  "translations" : [ "over and done with" ],
   "language" : "english_definition",
-  "included_at" : 1779538404166,
+  "included_at" : 1780687231880,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 14,
+  "score" : 1,
   "database" : "Binomial pairs",
-  "expression" : "surprisingly short in a way that is pleasing:",
-  "translations" : [ "short and sweet" ],
+  "expression" : "as much as possible or completely:",
+  "translations" : [ "all the way" ],
   "language" : "english_definition",
-  "included_at" : 1779660795590,
+  "included_at" : 1780687069882,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 16,
-  "database" : "Binomial pairs",
-  "expression" : "the parts of something that are hidden or difficult to find:",
-  "translations" : [ "Nooks and crannies" ],
-  "language" : "english_definition",
-  "included_at" : 1779539777898,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 18,
-  "database" : "Binomial pairs",
-  "expression" : "at some time in the future:",
-  "translations" : [ "Sooner or later" ],
-  "language" : "english_definition",
-  "included_at" : 1779540607190,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 9,
-  "database" : "Binomial pairs",
-  "expression" : "from many places:",
-  "translations" : [ "From far and wide" ],
-  "language" : "english_definition",
-  "included_at" : 1779539504122,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 12,
+  "score" : 19,
   "database" : "Binomial pairs",
   "expression" : "the advantages and disadvantages of something, especially something that you are considering doing:",
   "translations" : [ "The pros and cons" ],
   "language" : "english_definition",
-  "included_at" : 1779623514806,
+  "included_at" : 0,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 5,
+  "score" : 2,
+  "database" : "Binomial pairs",
+  "expression" : "to be complete and finished:",
+  "translations" : [ "be done and dusted" ],
+  "language" : "english_definition",
+  "included_at" : 1780687169315,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 11,
   "database" : "Binomial pairs",
   "expression" : "used to describe a situation that seems simple and easy to understand, with clear characteristics:",
   "translations" : [ "Neat and tidy" ],
@@ -204,10 +220,10 @@
   "type" : "english_definition_expression"
 } ], [ {
   "database" : "General vocabulary",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
-  "score" : 6,
+  "score" : 14,
   "database" : "General vocabulary",
   "expression" : "to crush food into smaller, softer pieces with the teeth so that it can be swallowed:",
   "translations" : [ "chew" ],
@@ -215,7 +231,7 @@
   "included_at" : 1779621686512,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 6,
+  "score" : 12,
   "database" : "General vocabulary",
   "expression" : "calm and under control:",
   "translations" : [ "steady" ],
@@ -223,7 +239,7 @@
   "included_at" : 1779739228189,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 6,
+  "score" : 15,
   "database" : "General vocabulary",
   "expression" : "a condition in which the body or mind is harmed because an organ or part is unable to work as it usually does; a disease or sickness:",
   "translations" : [ "illness" ],
@@ -231,7 +247,7 @@
   "included_at" : 1779650838321,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 7,
+  "score" : 15,
   "database" : "General vocabulary",
   "expression" : "happening in a smooth, gradual, and regular way, not suddenly or unexpectedly:",
   "translations" : [ "steady" ],
@@ -239,7 +255,7 @@
   "included_at" : 1779739122305,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 7,
+  "score" : 13,
   "database" : "General vocabulary",
   "expression" : "not moving or changing suddenly:",
   "translations" : [ "steady" ],
@@ -247,7 +263,7 @@
   "included_at" : 1779739134424,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 4,
+  "score" : 12,
   "database" : "General vocabulary",
   "expression" : "the state of being ill:",
   "translations" : [ "illness" ],
@@ -255,7 +271,7 @@
   "included_at" : 1779650894854,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 4,
+  "score" : 11,
   "database" : "General vocabulary",
   "expression" : "under control:",
   "translations" : [ "steady" ],
@@ -263,7 +279,7 @@
   "included_at" : 1779739147719,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 6,
+  "score" : 7,
   "database" : "General vocabulary",
   "expression" : "a small, narrow opening in something solid:",
   "translations" : [ "cranny" ],
@@ -272,26 +288,42 @@
   "type" : "english_definition_expression"
 } ], [ {
   "database" : "Human body parts",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
   "score" : 15,
   "database" : "Human body parts",
-  "expression" : "The pink tissue inside the mouth that covers the bones that hold the teeth.",
-  "translations" : [ "Gum" ],
+  "expression" : "an organ in the body where food is digested",
+  "translations" : [ "Stomach" ],
   "language" : "english_definition",
-  "included_at" : 1779488142028,
+  "included_at" : 1779557755752,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 17,
+  "score" : 18,
   "database" : "Human body parts",
-  "expression" : "One of the two organs in your face with which you can see.",
-  "translations" : [ "Eye" ],
+  "expression" : "The front part of the head, where the eyes, nose, and mouth are.",
+  "translations" : [ "Face" ],
   "language" : "english_definition",
-  "included_at" : 1779488142009,
+  "included_at" : 1779488141993,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 10,
+  "score" : 16,
+  "database" : "Human body parts",
+  "expression" : "The circular black area in the centre of the eye that standardizes the amount of light entering.",
+  "translations" : [ "Pupil" ],
+  "language" : "english_definition",
+  "included_at" : 0,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 12,
+  "database" : "Human body parts",
+  "expression" : "The line of short hairs above each of your eyes.",
+  "translations" : [ "Eyebrow" ],
+  "language" : "english_definition",
+  "included_at" : 1779488142011,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 19,
   "database" : "Human body parts",
   "expression" : "One of the hard, white objects in the mouth that are used for biting and chewing.",
   "translations" : [ "Tooth" ],
@@ -299,15 +331,47 @@
   "included_at" : 1779488142026,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 9,
+  "score" : 2,
   "database" : "Human body parts",
-  "expression" : "an organ in the body that produces insulin (= a chemical substance that controls the amount of sugar in the blood) and substances that help to digest food so that it can be used by the body",
-  "translations" : [ "pancreas" ],
+  "expression" : "The upper front part of the body of a human or animal, between the neck and the stomach.",
+  "translations" : [ "Chest" ],
   "language" : "english_definition",
-  "included_at" : 1779622381902,
+  "included_at" : 1780685281817,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 19,
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "The part of the body in humans between the ribs and the hips, usually the narrowest part of the torso.",
+  "translations" : [ "Waist" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281822,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 13,
+  "database" : "Human body parts",
+  "expression" : "either of the two round male sex organs that produce sperm and are contained in the scrotum (= bag of skin) below and behind the penis",
+  "translations" : [ "testicle" ],
+  "language" : "english_definition",
+  "included_at" : 1779622432195,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Human body parts",
+  "expression" : "The part of your body that is opposite to the front, from your neck to the top of your legs.",
+  "translations" : [ "Back" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281821,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 15,
+  "database" : "Human body parts",
+  "expression" : "The part of the face that sticks out above the mouth, used for breathing and smelling.",
+  "translations" : [ "Nose" ],
+  "language" : "english_definition",
+  "included_at" : 1779488142018,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 17,
   "database" : "Human body parts",
   "expression" : "The soft part of your face that is below your eye and between your mouth and ear.",
   "translations" : [ "Cheek" ],
@@ -315,52 +379,20 @@
   "included_at" : 1779488142002,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 12,
+  "score" : 7,
   "database" : "Human body parts",
-  "expression" : "The front part of the neck, or the tube inside it that leads to the stomach and lungs.",
-  "translations" : [ "Throat" ],
+  "expression" : "Either of the two soft, rounded parts of the body that grow on the chest of a woman.",
+  "translations" : [ "Breast" ],
   "language" : "english_definition",
-  "included_at" : 1779488142030,
+  "included_at" : 1780685281820,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 17,
+  "score" : 7,
   "database" : "Human body parts",
-  "expression" : "The large, soft piece of flesh in the mouth that you can move, used for tasting, speaking, etc.",
-  "translations" : [ "Tongue" ],
+  "expression" : "The back of the neck.",
+  "translations" : [ "Nape" ],
   "language" : "english_definition",
-  "included_at" : 1779488142027,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 13,
-  "database" : "Human body parts",
-  "expression" : "The mass of thin, thread-like structures that grows on a person's head.",
-  "translations" : [ "Hair" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142000,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 17,
-  "database" : "Human body parts",
-  "expression" : "Either of the two organs, one on each side of the head, by which people and animals hear.",
-  "translations" : [ "Ear" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142021,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 17,
-  "database" : "Human body parts",
-  "expression" : "The opening on the face through which a person or animal eats and speaks.",
-  "translations" : [ "Mouth" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142023,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 14,
-  "database" : "Human body parts",
-  "expression" : "the flat area on each side of your head in front of the top of your ear",
-  "translations" : [ "Temple" ],
-  "language" : "english_definition",
-  "included_at" : 1779556201857,
+  "included_at" : 1780685281817,
   "type" : "english_definition_expression"
 } ], [ {
   "score" : 9,
@@ -371,103 +403,39 @@
   "included_at" : 1779661341179,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 18,
-  "database" : "Human body parts",
-  "expression" : "The two soft, red parts of the mouth through which food is taken and sounds are made.",
-  "translations" : [ "Lips" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142024,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 10,
-  "database" : "Human body parts",
-  "expression" : "Either of the two pieces of skin that can close over each of your eyes.",
-  "translations" : [ "Eyelid" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142012,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 7,
-  "database" : "Human body parts",
-  "expression" : "either of the two organs in the chest with which people and some animals breathe:",
-  "translations" : [ "lung" ],
-  "language" : "english_definition",
-  "included_at" : 1779622240360,
-  "type" : "english_definition_expression"
-} ], [ {
   "score" : 8,
   "database" : "Human body parts",
-  "expression" : "an organ in the body where food is digested",
-  "translations" : [ "Stomach" ],
+  "expression" : "The small, round, hollow place or small lump in the middle of the stomach.",
+  "translations" : [ "Navel" ],
   "language" : "english_definition",
-  "included_at" : 1779557755752,
+  "included_at" : 1780685281820,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 14,
-  "database" : "Human body parts",
-  "expression" : "The front part of the head, where the eyes, nose, and mouth are.",
-  "translations" : [ "Face" ],
-  "language" : "english_definition",
-  "included_at" : 1779488141993,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 8,
-  "database" : "Human body parts",
-  "expression" : "The line of short hairs above each of your eyes.",
-  "translations" : [ "Eyebrow" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142011,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 15,
-  "database" : "Human body parts",
-  "expression" : "(either of the two parts of) a long tube through which food travels from the stomach and out of the body while it is being digested:",
-  "translations" : [ "intestine" ],
-  "language" : "english_definition",
-  "included_at" : 1779622506730,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 6,
-  "database" : "Human body parts",
-  "expression" : "either of the two round male sex organs that produce sperm and are contained in the scrotum (= bag of skin) below and behind the penis",
-  "translations" : [ "testicle" ],
-  "language" : "english_definition",
-  "included_at" : 1779622432195,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 10,
-  "database" : "Human body parts",
-  "expression" : "The part of the face that sticks out above the mouth, used for breathing and smelling.",
-  "translations" : [ "Nose" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142018,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 13,
-  "database" : "Human body parts",
-  "expression" : "Any of the short hairs that grow along the edges of the eye.",
-  "translations" : [ "Eyelash" ],
-  "language" : "english_definition",
-  "included_at" : 1779488142014,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 20,
+  "score" : 19,
   "database" : "Human body parts",
   "expression" : "The part of a person's face below their mouth.",
   "translations" : [ "Chin" ],
   "language" : "english_definition",
-  "included_at" : 1779488142006,
+  "included_at" : 0,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 17,
+  "score" : 7,
   "database" : "Human body parts",
-  "expression" : "The flat part of the face, above the eyes and below the hair.",
-  "translations" : [ "Forehead" ],
+  "expression" : "The part of your body that you sit on.",
+  "translations" : [ "Bottom" ],
   "language" : "english_definition",
-  "included_at" : 1779488141997,
+  "included_at" : 1780685281822,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 12,
+  "score" : 2,
+  "database" : "Human body parts",
+  "expression" : "Either of the two round parts of the human body that you sit on.",
+  "translations" : [ "Buttock" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281823,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 15,
   "database" : "Human body parts",
   "expression" : "a large organ in the body that cleans the blood and produces bile, or this organ from an animal used as meat",
   "translations" : [ "liver" ],
@@ -475,24 +443,48 @@
   "included_at" : 1779622298479,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 15,
+  "score" : 17,
   "database" : "Human body parts",
-  "expression" : "The part of the body above the neck where the eyes, nose, mouth, ears, and brain are.",
-  "translations" : [ "Head" ],
+  "expression" : "Either of the two pieces of skin that can close over each of your eyes.",
+  "translations" : [ "Eyelid" ],
   "language" : "english_definition",
-  "included_at" : 1779488141986,
+  "included_at" : 1779488142012,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 16,
+  "score" : 15,
   "database" : "Human body parts",
-  "expression" : "The coloured circular part of the eye that surrounds the black pupil.",
-  "translations" : [ "Iris" ],
+  "expression" : "either of the two organs in the chest with which people and some animals breathe:",
+  "translations" : [ "lung" ],
   "language" : "english_definition",
-  "included_at" : 1779488142015,
+  "included_at" : 1779622240360,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 5,
+  "database" : "Human body parts",
+  "expression" : "The part of the body that joins the head to the shoulders.",
+  "translations" : [ "Neck" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281815,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 6,
+  "database" : "Human body parts",
+  "expression" : "The lower part of a person's or animal's body, containing the stomach, bowels, and other organs.",
+  "translations" : [ "Abdomen" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281818,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 3,
+  "database" : "Human body parts",
+  "expression" : "The stomach or the front part of the body between the chest and the legs.",
+  "translations" : [ "Belly" ],
+  "language" : "english_definition",
+  "included_at" : 1780685281819,
   "type" : "english_definition_expression"
 } ], [ {
   "database" : "Idioms",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
   "score" : 0,
@@ -744,133 +736,115 @@
   "type" : "english_definition_expression"
 } ], [ {
   "database" : "learned_words",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
   "score" : 22,
   "database" : "learned_words",
-  "expression" : "anti",
+  "expression" : "Iris",
   "language" : "english",
-  "spanish_sources" : [ "opposed to or against" ],
-  "included_at" : 1779915197794,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "On and on",
-  "language" : "english",
-  "spanish_sources" : [ "At tedios lengh" ],
-  "included_at" : 1779998058113,
-  "practice_source_database" : "Binomial pairs",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 21,
-  "database" : "learned_words",
-  "expression" : "as",
-  "language" : "english",
-  "spanish_sources" : [ "in the role of; with the identity of" ],
-  "included_at" : 1779996301059,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "Now and then",
-  "language" : "english",
-  "spanish_sources" : [ "sometimes, but not very often:" ],
-  "included_at" : 1780084839735,
-  "practice_source_database" : "Binomial pairs",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 23,
-  "database" : "learned_words",
-  "expression" : "at",
-  "language" : "english",
-  "spanish_sources" : [ "used to show an exact position or place" ],
-  "included_at" : 1779915342712,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "Nooks and crannies",
-  "language" : "english",
-  "spanish_sources" : [ "small spaces in something or parts of something that are difficult to reach:" ],
-  "included_at" : 1780084876462,
-  "practice_source_database" : "Binomial pairs",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 21,
-  "database" : "learned_words",
-  "expression" : "Nostril",
-  "language" : "english",
-  "spanish_sources" : [ "Either of the two openings at the end of the nose with which you smell and breathe." ],
-  "included_at" : 1780181515455,
-  "practice_source_database" : "Human body parts",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 23,
-  "database" : "learned_words",
-  "expression" : "aboard",
-  "language" : "english",
-  "spanish_sources" : [ "on or onto a ship, aircraft, bus, or train" ],
-  "included_at" : 1779915385056,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "about",
-  "language" : "english",
-  "spanish_sources" : [ "on the subject of, or connected with" ],
-  "included_at" : 1779915428183,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "after",
-  "language" : "english",
-  "spanish_sources" : [ "later than someone or something" ],
-  "included_at" : 1779996295776,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 22,
-  "database" : "learned_words",
-  "expression" : "around",
-  "language" : "english",
-  "spanish_sources" : [ "in a position or direction surrounding, or in a circle around, something" ],
-  "included_at" : 1779996261310,
-  "practice_source_database" : "Prepositions",
-  "type" : "english_expression"
-} ], [ {
-  "score" : 21,
-  "database" : "learned_words",
-  "expression" : "Pupil",
-  "language" : "english",
-  "spanish_sources" : [ "The circular black area in the centre of the eye that standardizes the amount of light entering." ],
-  "included_at" : 1780085544373,
+  "spanish_sources" : [ "The coloured circular part of the eye that surrounds the black pupil." ],
+  "included_at" : 1780612353354,
   "practice_source_database" : "Human body parts",
   "type" : "english_expression"
 } ], [ {
   "score" : 21,
   "database" : "learned_words",
-  "expression" : "Spick and span",
+  "expression" : "Head",
   "language" : "english",
-  "spanish_sources" : [ "Very clean and tidy" ],
-  "included_at" : 1780181142615,
-  "practice_source_database" : "Binomial pairs",
+  "spanish_sources" : [ "The part of the body above the neck where the eyes, nose, mouth, ears, and brain are." ],
+  "included_at" : 1780731124699,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "intestine",
+  "language" : "english",
+  "spanish_sources" : [ "(either of the two parts of) a long tube through which food travels from the stomach and out of the body while it is being digested:" ],
+  "included_at" : 1780731108382,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "get in",
+  "language" : "english",
+  "spanish_sources" : [ "to arrive at your home or the place where you work:" ],
+  "included_at" : 1780730676929,
+  "practice_source_database" : "Phrasal verbs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Forehead",
+  "language" : "english",
+  "spanish_sources" : [ "The flat part of the face, above the eyes and below the hair." ],
+  "included_at" : 1780731299862,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Lips",
+  "language" : "english",
+  "spanish_sources" : [ "The two soft, red parts of the mouth through which food is taken and sounds are made." ],
+  "included_at" : 1780685161858,
+  "practice_source_database" : "Human body parts",
   "type" : "english_expression"
 } ], [ {
   "score" : 23,
   "database" : "learned_words",
-  "expression" : "among",
+  "expression" : "Off and on",
   "language" : "english",
-  "spanish_sources" : [ "in the middle of or surrounded by other things" ],
-  "included_at" : 1779915324199,
-  "practice_source_database" : "Prepositions",
+  "spanish_sources" : [ "happening or existing only some of the time:" ],
+  "included_at" : 1780729133219,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Throat",
+  "language" : "english",
+  "spanish_sources" : [ "The front part of the neck, or the tube inside it that leads to the stomach and lungs." ],
+  "included_at" : 1780731706564,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Ear",
+  "language" : "english",
+  "spanish_sources" : [ "Either of the two organs, one on each side of the head, by which people and animals hear." ],
+  "included_at" : 1780685361453,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Hair",
+  "language" : "english",
+  "spanish_sources" : [ "The mass of thin, thread-like structures that grows on a person's head." ],
+  "included_at" : 1780763044596,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 23,
+  "database" : "learned_words",
+  "expression" : "Mishmash",
+  "language" : "english",
+  "spanish_sources" : [ "a confused mixture:" ],
+  "included_at" : 1780684087076,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 24,
+  "database" : "learned_words",
+  "expression" : "Sooner or later",
+  "language" : "english",
+  "spanish_sources" : [ "used to say that you do not know exactly when something will happen, but you are certain that it will happen:" ],
+  "included_at" : 1780523538425,
+  "practice_source_database" : "Binomial pairs",
   "type" : "english_expression"
 } ], [ {
   "score" : 22,
@@ -882,19 +856,172 @@
   "practice_source_database" : "Prepositions",
   "type" : "english_expression"
 } ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "pancreas",
+  "language" : "english",
+  "spanish_sources" : [ "an organ in the body that produces insulin (= a chemical substance that controls the amount of sugar in the blood) and substances that help to digest food so that it can be used by the body" ],
+  "included_at" : 1780731961883,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 25,
+  "database" : "learned_words",
+  "expression" : "Tongue",
+  "language" : "english",
+  "spanish_sources" : [ "The large, soft piece of flesh in the mouth that you can move, used for tasting, speaking, etc." ],
+  "included_at" : 1780521290117,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Slow and steady",
+  "language" : "english",
+  "spanish_sources" : [ "moving at a consistent and deliberate pace" ],
+  "included_at" : 1780729152666,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 23,
+  "database" : "learned_words",
+  "expression" : "get up",
+  "language" : "english",
+  "spanish_sources" : [ "to stand up:" ],
+  "included_at" : 1780730335462,
+  "practice_source_database" : "Phrasal verbs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "as",
+  "language" : "english",
+  "spanish_sources" : [ "in the role of; with the identity of" ],
+  "included_at" : 1779996301059,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "short and sweet",
+  "language" : "english",
+  "spanish_sources" : [ "surprisingly short in a way that is pleasing:" ],
+  "included_at" : 1780729269949,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "Gum",
+  "language" : "english",
+  "spanish_sources" : [ "The pink tissue inside the mouth that covers the bones that hold the teeth." ],
+  "included_at" : 1780762935918,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 21,
+  "database" : "learned_words",
+  "expression" : "From far and wide",
+  "language" : "english",
+  "spanish_sources" : [ "from many places:" ],
+  "included_at" : 1780729559322,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 25,
+  "database" : "learned_words",
+  "expression" : "Nooks and crannies",
+  "language" : "english",
+  "spanish_sources" : [ "the parts of something that are hidden or difficult to find:" ],
+  "included_at" : 1780523446776,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Temple",
+  "language" : "english",
+  "spanish_sources" : [ "the flat area on each side of your head in front of the top of your ear" ],
+  "included_at" : 1780731980986,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 23,
+  "database" : "learned_words",
+  "expression" : "On and on",
+  "language" : "english",
+  "spanish_sources" : [ "Continually" ],
+  "included_at" : 1780684349607,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Nostril",
+  "language" : "english",
+  "spanish_sources" : [ "Either of the two openings at the end of the nose with which you smell and breathe." ],
+  "included_at" : 1780731198548,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 23,
+  "database" : "learned_words",
+  "expression" : "Eye",
+  "language" : "english",
+  "spanish_sources" : [ "One of the two organs in your face with which you can see." ],
+  "included_at" : 1780521380222,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Mouth",
+  "language" : "english",
+  "spanish_sources" : [ "The opening on the face through which a person or animal eats and speaks." ],
+  "included_at" : 1780685659419,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Spick and span",
+  "language" : "english",
+  "spanish_sources" : [ "Very clean and tidy" ],
+  "included_at" : 1780181142615,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 22,
+  "database" : "learned_words",
+  "expression" : "Eyelash",
+  "language" : "english",
+  "spanish_sources" : [ "Any of the short hairs that grow along the edges of the eye." ],
+  "included_at" : 1780731724277,
+  "practice_source_database" : "Human body parts",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 24,
+  "database" : "learned_words",
+  "expression" : "Neat and tidy",
+  "language" : "english",
+  "spanish_sources" : [ "clean, well organized, and with everything in its place:" ],
+  "included_at" : 1780520978181,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
   "database" : "Phrasal verbs",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717865,
   "type" : "database_metadata"
 } ], [ {
-  "score" : 0,
+  "score" : 14,
   "database" : "Phrasal verbs",
-  "expression" : "to leave a train, bus, or aircraft:",
-  "translations" : [ "get off (something)" ],
+  "expression" : "to be able to live or deal with a situation with difficulty, usually by having just enough of something you need, such as money:",
+  "translations" : [ "get by" ],
   "language" : "english_definition",
-  "included_at" : 1779994670156,
+  "included_at" : 1779994479791,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 20,
   "database" : "Phrasal verbs",
   "expression" : "to leave or escape:",
   "translations" : [ "get away" ],
@@ -902,7 +1029,7 @@
   "included_at" : 1779994335149,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 3,
+  "score" : 17,
   "database" : "Phrasal verbs",
   "expression" : "to leave work with permission, usually at the end of the day:",
   "translations" : [ "get off" ],
@@ -918,95 +1045,15 @@
   "included_at" : 1779994369173,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 6,
-  "database" : "Phrasal verbs",
-  "expression" : "to return, esp. to your home:",
-  "translations" : [ "get back" ],
-  "language" : "english_definition",
-  "included_at" : 1779994447423,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Phrasal verbs",
-  "expression" : "to stand up:",
-  "translations" : [ "get up" ],
-  "language" : "english_definition",
-  "included_at" : 1779995324691,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Phrasal verbs",
-  "expression" : "to arrive at a place:",
-  "translations" : [ "get in" ],
-  "language" : "english_definition",
-  "included_at" : 1779995043157,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "to rise from bed, or to cause someone to rise from bed:",
-  "translations" : [ "get (someone) up" ],
-  "language" : "english_definition",
-  "included_at" : 1779995446193,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 3,
-  "database" : "Phrasal verbs",
-  "expression" : "to have a good relationship:",
-  "translations" : [ "get on" ],
-  "language" : "english_definition",
-  "included_at" : 1779994726140,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "to go out to different places, spend time with people, and enjoy yourself:",
-  "translations" : [ "get out" ],
-  "language" : "english_definition",
-  "included_at" : 1779994895809,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 4,
-  "database" : "Phrasal verbs",
-  "expression" : "to be able to live or deal with a situation with difficulty, usually by having just enough of something you need, such as money:",
-  "translations" : [ "get by" ],
-  "language" : "english_definition",
-  "included_at" : 1779994479791,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 2,
-  "database" : "Phrasal verbs",
-  "expression" : "to send a letter or parcel to someone:",
-  "translations" : [ "get something off" ],
-  "language" : "english_definition",
-  "included_at" : 1779994701375,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "to get better after an illness, or feel better after something or someone has made you unhappy:",
-  "translations" : [ "get over something/someone" ],
-  "language" : "english_definition",
-  "included_at" : 1779995191525,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 4,
+  "score" : 16,
   "database" : "Phrasal verbs",
   "expression" : "to return to a place after you have been somewhere else:",
   "translations" : [ "get back" ],
   "language" : "english_definition",
-  "included_at" : 1779994395390,
+  "included_at" : 0,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
-  "database" : "Phrasal verbs",
-  "expression" : "to wake up and get out of bed, or to tell or help someone to do this:",
-  "translations" : [ "get (someone) up" ],
-  "language" : "english_definition",
-  "included_at" : 1779995357008,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 2,
+  "score" : 16,
   "database" : "Phrasal verbs",
   "expression" : "to leave or escape from a person or place, often when it is difficult to do this:",
   "translations" : [ "get away" ],
@@ -1014,7 +1061,7 @@
   "included_at" : 1779994310040,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 14,
   "database" : "Phrasal verbs",
   "expression" : "to continue doing something, especially work:",
   "translations" : [ "get on" ],
@@ -1022,7 +1069,7 @@
   "included_at" : 1779994782990,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 4,
   "database" : "Phrasal verbs",
   "expression" : "to leave a place, usually in order to start a journey:",
   "translations" : [ "get off" ],
@@ -1030,7 +1077,7 @@
   "included_at" : 1779994558375,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 4,
+  "score" : 18,
   "database" : "Phrasal verbs",
   "expression" : "to succeed in entering a place, especially by using force or a trick:",
   "translations" : [ "get in" ],
@@ -1038,15 +1085,15 @@
   "included_at" : 1779994969645,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 3,
+  "score" : 18,
   "database" : "Phrasal verbs",
-  "expression" : "to arrive at your home or the place where you work:",
-  "translations" : [ "get in" ],
+  "expression" : "to return, esp. to your home:",
+  "translations" : [ "get back" ],
   "language" : "english_definition",
-  "included_at" : 1779994987642,
+  "included_at" : 1779994447423,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 8,
   "database" : "Phrasal verbs",
   "expression" : "to manage or continue to exist in a state or situation where something is lacking:",
   "translations" : [ "get by" ],
@@ -1054,7 +1101,7 @@
   "included_at" : 1779994503840,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 9,
   "database" : "Phrasal verbs",
   "expression" : "to grow old:",
   "translations" : [ "get on" ],
@@ -1062,7 +1109,7 @@
   "included_at" : 1779994827607,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 3,
+  "score" : 9,
   "database" : "Phrasal verbs",
   "expression" : "to manage or deal with a situation, especially successfully:",
   "translations" : [ "get on" ],
@@ -1070,7 +1117,15 @@
   "included_at" : 1779994754141,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 10,
+  "database" : "Phrasal verbs",
+  "expression" : "to arrive at a place:",
+  "translations" : [ "get in" ],
+  "language" : "english_definition",
+  "included_at" : 1779995043157,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 10,
   "database" : "Phrasal verbs",
   "expression" : "to leave a closed vehicle, building, etc.:",
   "translations" : [ "get out" ],
@@ -1078,7 +1133,23 @@
   "included_at" : 1779994868592,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 5,
+  "score" : 9,
+  "database" : "Phrasal verbs",
+  "expression" : "to have a good relationship:",
+  "translations" : [ "get on" ],
+  "language" : "english_definition",
+  "included_at" : 1779994726140,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 8,
+  "database" : "Phrasal verbs",
+  "expression" : "to go out to different places, spend time with people, and enjoy yourself:",
+  "translations" : [ "get out" ],
+  "language" : "english_definition",
+  "included_at" : 1779994895809,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 17,
   "database" : "Phrasal verbs",
   "expression" : "to communicate with someone, esp. by telephone:",
   "translations" : [ "get through" ],
@@ -1086,7 +1157,7 @@
   "included_at" : 1779995261309,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 3,
+  "score" : 17,
   "database" : "Phrasal verbs",
   "expression" : "to be able to live or deal with a situation by having very little of something you need, such as money:",
   "translations" : [ "get by" ],
@@ -1094,15 +1165,7 @@
   "included_at" : 1779994529706,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
-  "database" : "Phrasal verbs",
-  "expression" : "to go onto a bus, train, aircraft, or boat:",
-  "translations" : [ "get on (something)" ],
-  "language" : "english_definition",
-  "included_at" : 1779994804976,
-  "type" : "english_definition_expression"
-} ], [ {
-  "score" : 4,
+  "score" : 14,
   "database" : "Phrasal verbs",
   "expression" : "to succeed in talking to someone on the phone:",
   "translations" : [ "get through" ],
@@ -1111,7 +1174,7 @@
   "type" : "english_definition_expression"
 } ], [ {
   "database" : "Prepositions",
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717866,
   "type" : "database_metadata"
 } ], [ {
   "score" : 1,
@@ -1122,7 +1185,7 @@
   "included_at" : 1779996497047,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "except; not including",
   "translations" : [ "but" ],
@@ -1138,7 +1201,7 @@
   "included_at" : 1779996570457,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "not including something",
   "translations" : [ "excluding" ],
@@ -1146,7 +1209,7 @@
   "included_at" : 1779996497057,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "in or to a lower position than something, or directly under something",
   "translations" : [ "beneath" ],
@@ -1154,7 +1217,7 @@
   "included_at" : 1779996497037,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "towards the inside or middle of something and about to be contained, surrounded, or enclosed by it",
   "translations" : [ "into" ],
@@ -1162,7 +1225,7 @@
   "included_at" : 1779996570459,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 2,
   "database" : "Prepositions",
   "expression" : "reduced by a stated number or amount",
   "translations" : [ "minus" ],
@@ -1170,7 +1233,7 @@
   "included_at" : 1779996570462,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 5,
   "database" : "Prepositions",
   "expression" : "in the space that separates two places, people, or objects",
   "translations" : [ "between" ],
@@ -1178,7 +1241,7 @@
   "included_at" : 1779996497043,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 4,
   "database" : "Prepositions",
   "expression" : "used to show the place where someone or something starts",
   "translations" : [ "from" ],
@@ -1186,7 +1249,7 @@
   "included_at" : 1779996570448,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 12,
+  "score" : 16,
   "database" : "Prepositions",
   "expression" : "disagreeing with or opposing a plan, law, system, or organization",
   "translations" : [ "against" ],
@@ -1202,7 +1265,7 @@
   "included_at" : 1779996497024,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 1,
+  "score" : 3,
   "database" : "Prepositions",
   "expression" : "about or relating to",
   "translations" : [ "concerning" ],
@@ -1210,7 +1273,7 @@
   "included_at" : 1779996497049,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "from the beginning to the end of a period of time",
   "translations" : [ "during" ],
@@ -1218,7 +1281,7 @@
   "included_at" : 1779996497054,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "intended to be given to or used by; because of or for the reason of",
   "translations" : [ "for" ],
@@ -1226,7 +1289,7 @@
   "included_at" : 1779996570445,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 3,
+  "score" : 6,
   "database" : "Prepositions",
   "expression" : "approximately or about a particular time",
   "translations" : [ "around" ],
@@ -1234,15 +1297,15 @@
   "included_at" : 1779642232307,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 19,
+  "score" : 17,
   "database" : "Prepositions",
   "expression" : "in or to a higher position than something else",
   "translations" : [ "above" ],
   "language" : "english_definition",
-  "included_at" : 1779642232294,
+  "included_at" : 0,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "during a period of time",
   "translations" : [ "in" ],
@@ -1250,7 +1313,7 @@
   "included_at" : 1779996570455,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "used to show the person or thing that does something, or the means used",
   "translations" : [ "by" ],
@@ -1258,7 +1321,15 @@
   "included_at" : 1779996497048,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 2,
+  "score" : 20,
+  "database" : "Prepositions",
+  "expression" : "in a position or direction surrounding, or in a circle around, something",
+  "translations" : [ "around" ],
+  "language" : "english_definition",
+  "included_at" : 0,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 4,
   "database" : "Prepositions",
   "expression" : "further away in the distance than something",
   "translations" : [ "beyond" ],
@@ -1282,7 +1353,7 @@
   "included_at" : 1779996497053,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 13,
+  "score" : 12,
   "database" : "Prepositions",
   "expression" : "in the middle of or surrounded by",
   "translations" : [ "amid" ],
@@ -1290,7 +1361,7 @@
   "included_at" : 1779642232303,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "at the back of someone or something",
   "translations" : [ "behind" ],
@@ -1298,7 +1369,7 @@
   "included_at" : 1779996497033,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "below or lower than something else, or covered by it",
   "translations" : [ "below" ],
@@ -1306,7 +1377,7 @@
   "included_at" : 1779996497035,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "after thinking about or taking into account",
   "translations" : [ "considering" ],
@@ -1314,7 +1385,15 @@
   "included_at" : 1779996497051,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 20,
+  "database" : "Prepositions",
+  "expression" : "in the middle of or surrounded by other things",
+  "translations" : [ "among" ],
+  "language" : "english_definition",
+  "included_at" : 0,
+  "type" : "english_definition_expression"
+} ], [ {
+  "score" : 2,
   "database" : "Prepositions",
   "expression" : "used to show the time when something starts",
   "translations" : [ "from" ],
@@ -1346,7 +1425,7 @@
   "included_at" : 1779996497056,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 0,
+  "score" : 1,
   "database" : "Prepositions",
   "expression" : "in addition to; also",
   "translations" : [ "besides" ],
@@ -1370,7 +1449,7 @@
   "included_at" : 1779996497055,
   "type" : "english_definition_expression"
 } ], [ {
-  "score" : 14,
+  "score" : 18,
   "database" : "Prepositions",
   "expression" : "from one side to the other side of something",
   "translations" : [ "across" ],
@@ -1388,6 +1467,60 @@
 } ], [ {
   "database" : "words_definitely_learned",
   "definitely_mastered_total" : 0,
-  "created_at" : 1780432574163,
+  "created_at" : 1780766717866,
   "type" : "database_metadata"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "anti",
+  "language" : "english",
+  "spanish_sources" : [ "opposed to or against" ],
+  "included_at" : 1779915197794,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "about",
+  "language" : "english",
+  "spanish_sources" : [ "on the subject of, or connected with" ],
+  "included_at" : 1779915428183,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "aboard",
+  "language" : "english",
+  "spanish_sources" : [ "on or onto a ship, aircraft, bus, or train" ],
+  "included_at" : 1779915385056,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "after",
+  "language" : "english",
+  "spanish_sources" : [ "later than someone or something" ],
+  "included_at" : 1779996295776,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "Now and then",
+  "language" : "english",
+  "spanish_sources" : [ "sometimes, but not very often:" ],
+  "included_at" : 1780084839735,
+  "practice_source_database" : "Binomial pairs",
+  "type" : "english_expression"
+} ], [ {
+  "score" : 28,
+  "database" : "words_definitely_learned",
+  "expression" : "at",
+  "language" : "english",
+  "spanish_sources" : [ "used to show an exact position or place" ],
+  "included_at" : 1779915342712,
+  "practice_source_database" : "Prepositions",
+  "type" : "english_expression"
 } ] ]

@@ -4,6 +4,9 @@ import java.util.List;
 
 /**
  * Bases de datos usadas solo en el flujo Review (no aparecen en juego, View Words ni Manage Data).
+ * <p>
+ * Reglas compartidas al fallar en cualquier BBDD de review: −5 al score; si queda por debajo de
+ * {@link #REVIEW_DEMOTION_UNDER_SCORE}, la expresión vuelve a su BBDD de práctica de origen.
  */
 public final class ReviewDatabases {
 
@@ -12,6 +15,9 @@ public final class ReviewDatabases {
 
     public static final String LEARNED_WORDS_DISPLAY = "Learned words";
     public static final String WORDS_DEFINITELY_LEARNED_DISPLAY = "Words definitely learned";
+
+    /** Tras un fallo en review, score por debajo de este umbral → vuelta a práctica (todas las BBDD de review). */
+    public static final int REVIEW_DEMOTION_UNDER_SCORE = 21;
 
     /** Al alcanzar esta puntuación en {@link #LEARNED_WORDS_KEY} pasa a {@link #WORDS_DEFINITELY_LEARNED_KEY}. */
     public static final int LEARNED_REVIEW_GRADUATE_SCORE = 28;

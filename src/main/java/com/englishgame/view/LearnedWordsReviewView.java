@@ -43,10 +43,14 @@ public class LearnedWordsReviewView extends JFrame {
     private static final Color REVIEW_FEEDBACK_ERR_FG = new Color(231, 76, 60);
     private static final Color REVIEW_FEEDBACK_ERR_BG = new Color(253, 242, 242);
     private static final Color REVIEW_FEEDBACK_ERR_BORDER = new Color(230, 165, 158);
+    private static final String PRACTICE_SOURCE_PLACEHOLDER = "— Selecciona la base de origen —";
     private static final int REVIEW_PROMPT_SCROLL_W = 980;
     private static final int REVIEW_PROMPT_SCROLL_MAX_W = 1120;
     private static final int REVIEW_FEEDBACK_SCROLL_W = 980;
     private static final int REVIEW_FEEDBACK_SCROLL_MAX_W = 1120;
+    private static final int REVIEW_FEEDBACK_SCROLL_MIN_H = 44;
+    private static final int REVIEW_FEEDBACK_SCROLL_DEFAULT_H = 88;
+    private static final int REVIEW_FEEDBACK_SCROLL_MAX_H = 260;
     private static final int REVIEW_SCORE_CARD_W = 560;
 
     private final GameController gameController;
@@ -62,6 +66,8 @@ public class LearnedWordsReviewView extends JFrame {
     private String currentReviewDatabaseKey = ReviewDatabases.LEARNED_WORDS_KEY;
 
     private JComboBox<String> reviewDatabaseSelector;
+    private JComboBox<String> practiceSourceSelector;
+    private JPanel practiceSourceRow;
     private JPanel topCardPanel;
     private JPanel scoreCardPanel;
     private JScrollPane feedbackScrollPane;
@@ -105,6 +111,7 @@ public class LearnedWordsReviewView extends JFrame {
         setMinimumSize(new Dimension(960, 720));
         setLocationRelativeTo(null);
         setResizable(true);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         buildUi();
         reloadDeck();
@@ -323,9 +330,10 @@ public class LearnedWordsReviewView extends JFrame {
         answerField.setMinimumSize(new Dimension(200, 66));
         answerField.setMaximumSize(new Dimension(REVIEW_PROMPT_SCROLL_MAX_W, 93));
 
-        feedbackScrollPane.setPreferredSize(new Dimension(REVIEW_FEEDBACK_SCROLL_W, 88));
-        feedbackScrollPane.setMinimumSize(new Dimension(360, 44));
-        feedbackScrollPane.setMaximumSize(new Dimension(REVIEW_FEEDBACK_SCROLL_MAX_W, 108));
+        feedbackScrollPane.setPreferredSize(new Dimension(REVIEW_FEEDBACK_SCROLL_W, REVIEW_FEEDBACK_SCROLL_DEFAULT_H));
+        feedbackScrollPane.setMinimumSize(new Dimension(360, REVIEW_FEEDBACK_SCROLL_MIN_H));
+        feedbackScrollPane.setMaximumSize(new Dimension(REVIEW_FEEDBACK_SCROLL_MAX_W, REVIEW_FEEDBACK_SCROLL_MAX_H));
+        feedbackScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 
         scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         if (scoreCardPanel != null) {
@@ -333,8 +341,53 @@ public class LearnedWordsReviewView extends JFrame {
             scoreCardPanel.setMaximumSize(new Dimension(REVIEW_SCORE_CARD_W, 74));
         }
         feedbackArea.setFont(new Font("Arial", Font.PLAIN, 17));
+        updatePracticeSourceUiVisibility();
         topCardPanel.revalidate();
         topCardPanel.repaint();
+    }
+
+    private void updatePracticeSourceUiVisibility() {
+        if (practiceSourceRow == null) {
+            return;
+        }
+        boolean show = isDefinitionMode();
+        practiceSourceRow.setVisible(show);
+        if (show) {
+            refreshPracticeSourceSelector();
+        }
+    }
+
+    private void refreshPracticeSourceSelector() {
+        if (practiceSourceSelector == null) {
+            return;
+        }
+        String previous = (String) practiceSourceSelector.getSelectedItem();
+        practiceSourceSelector.removeAllItems();
+        practiceSourceSelector.addItem(PRACTICE_SOURCE_PLACEHOLDER);
+        gameController.getAvailableDatabases().stream()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .forEach(practiceSourceSelector::addItem);
+        if (previous != null && !PRACTICE_SOURCE_PLACEHOLDER.equals(previous)) {
+            for (int i = 0; i < practiceSourceSelector.getItemCount(); i++) {
+                String item = practiceSourceSelector.getItemAt(i);
+                if (item != null && item.equalsIgnoreCase(previous.trim())) {
+                    practiceSourceSelector.setSelectedIndex(i);
+                    return;
+                }
+            }
+        }
+        practiceSourceSelector.setSelectedIndex(0);
+    }
+
+    private String selectedPracticeSourceOrNull() {
+        if (!isDefinitionMode() || practiceSourceSelector == null) {
+            return null;
+        }
+        String selected = (String) practiceSourceSelector.getSelectedItem();
+        if (selected == null || PRACTICE_SOURCE_PLACEHOLDER.equals(selected)) {
+            return null;
+        }
+        return selected.trim();
     }
 
     private void bindEnterOnAnswerField() {
@@ -453,7 +506,20 @@ public class LearnedWordsReviewView extends JFrame {
         gbc.insets = new Insets(0, 0, 10, 0);
         topCard.add(answerRow, gbc);
 
-        feedbackArea = new JTextArea(4, 32);
+        practiceSourceSelector = new JComboBox<>();
+        practiceSourceSelector.setPreferredSize(new Dimension(420, 34));
+        practiceSourceSelector.setToolTipText("Elige la base de datos de origen de esta expresión");
+        JLabel practiceSourceLabel = new JLabel("Source database:");
+        practiceSourceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        practiceSourceRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        practiceSourceRow.setOpaque(false);
+        practiceSourceRow.add(practiceSourceLabel);
+        practiceSourceRow.add(practiceSourceSelector);
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        topCard.add(practiceSourceRow, gbc);
+
+        feedbackArea = new JTextArea(5, 32);
         feedbackArea.setEditable(false);
         feedbackArea.setLineWrap(true);
         feedbackArea.setWrapStyleWord(true);
@@ -462,7 +528,9 @@ public class LearnedWordsReviewView extends JFrame {
 
         feedbackScrollPane = new JScrollPane(feedbackArea);
         feedbackScrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
-        gbc.gridy = 2;
+        feedbackScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        feedbackScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        gbc.gridy = 3;
         gbc.insets = new Insets(8, 0, 8, 0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         topCard.add(feedbackScrollPane, gbc);
@@ -484,7 +552,7 @@ public class LearnedWordsReviewView extends JFrame {
         JPanel scoreRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         scoreRow.setOpaque(false);
         scoreRow.add(scoreCenterPill);
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.insets = new Insets(4, 0, 0, 0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         topCard.add(scoreRow, gbc);
@@ -628,6 +696,7 @@ public class LearnedWordsReviewView extends JFrame {
                 outcome == LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED;
         int secs = Math.max(1, CORRECT_ANSWER_NEXT_ROUND_DELAY_MS / 1000);
         feedbackArea.setText(feedbackArea.getText() + "\n\nSiguiente tarjeta en " + secs + " s...");
+        fitFeedbackScrollToContent();
         correctAnswerNextRoundTimer = new Timer(CORRECT_ANSWER_NEXT_ROUND_DELAY_MS, e -> {
             correctAnswerNextRoundTimer = null;
             if (deck.isEmpty()) {
@@ -686,9 +755,14 @@ public class LearnedWordsReviewView extends JFrame {
     private void showCurrentRound() {
         cancelPendingAutoAdvanceAfterCorrect();
         feedbackArea.setText("");
+        fitFeedbackScrollToContent();
         applyFeedbackAreaToneOk();
         answerField.setText("");
         answerField.setEditable(true);
+        if (practiceSourceSelector != null) {
+            practiceSourceSelector.setEnabled(true);
+            practiceSourceSelector.setSelectedIndex(0);
+        }
         submitButton.setEnabled(true);
         newRoundButton.setEnabled(!deck.isEmpty());
         if (deck.isEmpty()) {
@@ -703,6 +777,7 @@ public class LearnedWordsReviewView extends JFrame {
         String es = summarizeSpanish(esSourceLines(en));
         promptTextArea.setText(es);
         promptTextArea.setCaretPosition(0);
+        refreshPracticeSourceSelector();
         refreshScoreLabel(en);
         answerField.requestFocusInWindow();
         SwingUtilities.invokeLater(() -> getRootPane().setDefaultButton(submitButton));
@@ -737,9 +812,16 @@ public class LearnedWordsReviewView extends JFrame {
         if (deck.isEmpty()) {
             return;
         }
+        if (isDefinitionMode() && selectedPracticeSourceOrNull() == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Selecciona la base de datos de origen antes de enviar.",
+                    "Review", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         EnglishExpression current = deck.get(Math.max(0, Math.min(index, deck.size() - 1)));
         Optional<LearnedWordsReviewResult> res =
-                gameController.submitLearnedWordsReviewAnswer(current, answerField.getText(), currentReviewDatabaseKey);
+                gameController.submitLearnedWordsReviewAnswer(
+                        current, answerField.getText(), currentReviewDatabaseKey, selectedPracticeSourceOrNull());
 
         if (res.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -753,6 +835,8 @@ public class LearnedWordsReviewView extends JFrame {
         LearnedWordsReviewResult r = res.get();
         showReviewMilestoneCongratulations(r);
         feedbackArea.setText(buildFeedbackLines(r));
+        feedbackArea.setCaretPosition(0);
+        fitFeedbackScrollToContent();
         if (isPenaltyFeedback(r)) {
             applyFeedbackAreaTonePenalty();
         } else {
@@ -773,6 +857,9 @@ public class LearnedWordsReviewView extends JFrame {
         refreshReviewStatsLabels();
 
         answerField.setEditable(false);
+        if (practiceSourceSelector != null) {
+            practiceSourceSelector.setEnabled(false);
+        }
         submitButton.setEnabled(false);
 
         if (deck.isEmpty()) {
@@ -830,27 +917,135 @@ public class LearnedWordsReviewView extends JFrame {
 
     private String buildFeedbackLines(LearnedWordsReviewResult r) {
         List<String> parts = new ArrayList<>();
-        switch (r.outcome()) {
-            case MASTERED_REMOVED_EVERYWHERE -> parts.add("Dominado (35): la expresión sale de todas las bases.");
-            case PROMOTED_TO_DEFINITELY_LEARNED ->
-                    parts.add("28 puntos: pasa a Words definitely learned para seguir repaso (29–35).");
-            case RETURNED_TO_LEARNED ->
-                    parts.add("Incorrecto (−5): vuelve a Learned words con el nuevo score.");
-            case DEMOTED_TO_PRACTICE -> {
+        if (r.answeredCorrectly()) {
+            switch (r.outcome()) {
+                case MASTERED_REMOVED_EVERYWHERE -> parts.add("Dominado (35): la expresión sale de todas las bases.");
+                case PROMOTED_TO_DEFINITELY_LEARNED ->
+                        parts.add("28 puntos: pasa a Words definitely learned para seguir repaso (29–35).");
+                default -> parts.add("Correcto (+1).");
+            }
+            return String.join("\n", parts);
+        }
+
+        parts.add("Esperado: " + quote(r.expectedEnglish()));
+        parts.add("Tu respuesta: " + quote(r.userEntered()));
+        if (isDefinitionMode() && r.expectedPracticeSourceDatabase() != null
+                && !r.expectedPracticeSourceDatabase().isBlank()) {
+            parts.add("Base de origen esperada: " + quote(r.expectedPracticeSourceDatabase()));
+            parts.add("Base elegida: " + quote(
+                    Optional.ofNullable(r.userPracticeSourceDatabase()).orElse("—")));
+        }
+        parts.add("");
+        appendWrongAnswerSummary(parts, r);
+        return String.join("\n", parts);
+    }
+
+    private void appendWrongAnswerSummary(List<String> parts, LearnedWordsReviewResult r) {
+        parts.add("Incorrecto (−5).");
+
+        if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE) {
+            appendPracticeReturnMessage(parts, r, true);
+            return;
+        }
+
+        if (r.outcome() != LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED) {
+            return;
+        }
+
+        if (isDefinitionMode() && r.expressionMatched()) {
+            parts.add("Expresión correcta, pero la base de origen no coincide.");
+        }
+        appendPracticeReturnMessage(parts, r, false);
+    }
+
+    private void appendPracticeReturnMessage(List<String> parts, LearnedWordsReviewResult r, boolean demoted) {
+        if (demoted) {
+            if (isDefinitionMode()) {
+                appendImmediateOriginReturnMessage(parts, r);
+            } else {
                 String db = r.restoredToPracticeDatabase();
                 if (db != null && !db.isBlank()) {
-                    parts.add("Por debajo de 21: vuelve a práctica (" + db + ").");
+                    parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                            + ": la expresión vuelve a práctica (" + db + ").");
                 } else {
-                    parts.add("Por debajo de 21: vuelve a práctica.");
+                    parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                            + ": la expresión vuelve a práctica.");
                 }
             }
-            default -> parts.add(r.answeredCorrectly() ? "Correcto (+1)." : "Incorrecto (−5).");
+            return;
         }
-        if (!r.answeredCorrectly()) {
-            parts.add("Esperado: " + quote(r.expectedEnglish()));
-            parts.add("Tu respuesta: " + quote(r.userEntered()));
+
+        int score = r.scoreAfter();
+        String reviewDb = currentReviewDisplayName();
+        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
+        String stayLine = "Permanece en " + reviewDb + " (score " + score + ").";
+        if (isDefinitionMode()) {
+            String originDb = originDbLabelForWarning(r);
+            if (originDb == null || originDb.isBlank()) {
+                parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
+                        + ", volverá a práctica.");
+            } else {
+                parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
+                        + ", regresará a su base de origen «" + originDb + "».");
+            }
+        } else {
+            parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
+                    + ", volverá a práctica.");
         }
-        return String.join("\n", parts);
+    }
+
+    private void appendImmediateOriginReturnMessage(List<String> parts, LearnedWordsReviewResult r) {
+        String originDb = originDbLabelForWarning(r);
+        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
+        if (originDb == null || originDb.isBlank()) {
+            parts.add("Score por debajo de " + threshold + ": la expresión vuelve a práctica.");
+            return;
+        }
+        parts.add("Score por debajo de " + threshold + ": la expresión regresa a su base de origen «"
+                + originDb + "».");
+    }
+
+    private static String originDbLabelForWarning(LearnedWordsReviewResult r) {
+        if (r.expectedPracticeSourceDatabase() != null && !r.expectedPracticeSourceDatabase().isBlank()) {
+            return r.expectedPracticeSourceDatabase();
+        }
+        String restored = r.restoredToPracticeDatabase();
+        return (restored != null && !restored.isBlank()) ? restored : null;
+    }
+
+    private void fitFeedbackScrollToContent() {
+        if (feedbackScrollPane == null || feedbackArea == null) {
+            return;
+        }
+        String text = feedbackArea.getText();
+        if (text == null || text.isBlank()) {
+            applyFeedbackScrollHeight(REVIEW_FEEDBACK_SCROLL_DEFAULT_H);
+            return;
+        }
+
+        int width = feedbackScrollPane.getWidth();
+        if (width <= 12) {
+            width = REVIEW_FEEDBACK_SCROLL_W;
+        }
+        Insets scrollInsets = feedbackScrollPane.getInsets();
+        int innerWidth = width - scrollInsets.left - scrollInsets.right - 8;
+        innerWidth = Math.max(360, innerWidth);
+
+        feedbackArea.setSize(new Dimension(innerWidth, Short.MAX_VALUE));
+        int contentHeight = feedbackArea.getPreferredSize().height;
+        int height = contentHeight + scrollInsets.top + scrollInsets.bottom + 4;
+        height = Math.max(REVIEW_FEEDBACK_SCROLL_MIN_H, Math.min(REVIEW_FEEDBACK_SCROLL_MAX_H, height));
+        applyFeedbackScrollHeight(height);
+    }
+
+    private void applyFeedbackScrollHeight(int height) {
+        feedbackScrollPane.setPreferredSize(new Dimension(REVIEW_FEEDBACK_SCROLL_W, height));
+        feedbackScrollPane.setMaximumSize(new Dimension(REVIEW_FEEDBACK_SCROLL_MAX_W, height));
+        feedbackScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        feedbackScrollPane.revalidate();
+        if (topCardPanel != null) {
+            topCardPanel.revalidate();
+        }
     }
 
     private static String quote(String s) {

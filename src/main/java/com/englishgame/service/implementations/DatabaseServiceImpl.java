@@ -27,7 +27,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     private static final String PHRASAL_VERBS_DATABASE = "Phrasal verbs";
 
     /** Review learned_words: +1 / −5; reapertura a práctica bajo este umbral. */
-    private static final int LEARNED_REVIEW_DEMOTION_UNDER = 21;
+    private static final int LEARNED_REVIEW_DEMOTION_UNDER = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
     /** learned_words: al alcanzar esta puntuación pasa a words_definitely_learned (no se purga). */
     private static final int LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT = 28;
     /** words_definitely_learned: dominio final y purga en todas las BBDD. */
@@ -700,7 +700,8 @@ public class DatabaseServiceImpl implements DatabaseService {
 
     @Override
     public Optional<LearnedWordsReviewResult> submitLearnedWordsReviewAttempt(EnglishExpression learnedCard,
-            String userAnswer, String reviewDatabaseName) {
+            String userAnswer, String reviewDatabaseName, boolean requirePracticeSourceMatch,
+            String userSelectedPracticeDatabase) {
         if (learnedCard == null || userAnswer == null) {
             return Optional.empty();
         }
@@ -717,8 +718,19 @@ public class DatabaseServiceImpl implements DatabaseService {
         }
         String expectedRaw = Optional.ofNullable(learnedCard.getExpression()).map(String::trim).orElse("");
         String typed = squashWhitespace(userAnswer);
-        boolean ok = !expectedRaw.isEmpty()
+        boolean expressionOk = !expectedRaw.isEmpty()
                 && squashWhitespace(expectedRaw).equalsIgnoreCase(typed);
+
+        String expectedSourceLabel = null;
+        String userSourceLabel = null;
+        boolean sourceOk = true;
+        if (requirePracticeSourceMatch) {
+            expectedSourceLabel = formatPracticeSourceForReview(learnedCard.getPracticeSourceDatabase());
+            userSourceLabel = formatPracticeSourceForReview(userSelectedPracticeDatabase);
+            sourceOk = practiceSourceMatches(learnedCard, userSelectedPracticeDatabase);
+        }
+
+        boolean ok = expressionOk && sourceOk;
         int prior = learnedCard.getScore();
         boolean definitelyReview = WORDS_DEFINITELY_LEARNED_DATABASE.equals(reviewDb);
 
@@ -732,17 +744,15 @@ public class DatabaseServiceImpl implements DatabaseService {
                     purgeEnglishLemmaEverywhere(expectedRaw);
                     pruneSpanishRowsWithoutTranslations();
                     gameDataService.saveGameData();
-                    return Optional.of(new LearnedWordsReviewResult(
+                    return Optional.of(reviewResult(
                             LearnedWordsReviewResult.Outcome.MASTERED_REMOVED_EVERYWHERE,
-                            true,
-                            DEFINITELY_REVIEW_MASTER_AT,
-                            expectedRaw,
-                            typed,
-                            null));
+                            true, DEFINITELY_REVIEW_MASTER_AT, expectedRaw, typed, null,
+                            true, expectedSourceLabel, userSourceLabel));
                 }
                 gameDataService.saveGameData();
-                return Optional.of(new LearnedWordsReviewResult(
-                        LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, s, expectedRaw, typed, null));
+                return Optional.of(reviewResult(
+                        LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, s, expectedRaw, typed, null,
+                        true, expectedSourceLabel, userSourceLabel));
             }
             if (s >= LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT) {
                 learnedCard.setScore(LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT);
@@ -752,44 +762,26 @@ public class DatabaseServiceImpl implements DatabaseService {
                     JOptionPane.showMessageDialog(null,
                             "No se pudo mover la expresión a Words definitely learned.",
                             "Review Learned Words", JOptionPane.WARNING_MESSAGE);
-                    return Optional.of(new LearnedWordsReviewResult(
-                            LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, prior, expectedRaw, typed, null));
+                    return Optional.of(reviewResult(
+                            LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, prior, expectedRaw, typed, null,
+                            true, expectedSourceLabel, userSourceLabel));
                 }
                 gameDataService.saveGameData();
-                return Optional.of(new LearnedWordsReviewResult(
+                return Optional.of(reviewResult(
                         LearnedWordsReviewResult.Outcome.PROMOTED_TO_DEFINITELY_LEARNED,
                         true,
                         LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT,
-                        expectedRaw,
-                        typed,
-                        null));
+                        expectedRaw, typed, null,
+                        true, expectedSourceLabel, userSourceLabel));
             }
             gameDataService.saveGameData();
-            return Optional.of(new LearnedWordsReviewResult(
-                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, s, expectedRaw, typed, null));
+            return Optional.of(reviewResult(
+                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, s, expectedRaw, typed, null,
+                    true, expectedSourceLabel, userSourceLabel));
         }
 
         int penalized = Math.max(0, prior - 5);
         learnedCard.setScore(penalized);
-        if (definitelyReview) {
-            if (!returnDefinitelyLearnedCardToLearned(learnedCard, learnedBucket)) {
-                learnedCard.setScore(prior);
-                gameDataService.saveGameData();
-                JOptionPane.showMessageDialog(null,
-                        "No se pudo devolver la expresión a Learned words.",
-                        "Review Learned Words", JOptionPane.WARNING_MESSAGE);
-                return Optional.of(new LearnedWordsReviewResult(
-                        LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null));
-            }
-            gameDataService.saveGameData();
-            return Optional.of(new LearnedWordsReviewResult(
-                    LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED,
-                    false,
-                    penalized,
-                    expectedRaw,
-                    typed,
-                    null));
-        }
         if (penalized < LEARNED_REVIEW_DEMOTION_UNDER) {
             if (demoteLearnedCardToPractice(learnedCard, penalized, learnedBucket)) {
                 pruneSpanishRowsWithoutTranslations();
@@ -798,26 +790,78 @@ public class DatabaseServiceImpl implements DatabaseService {
                         .map(String::trim)
                         .filter(s -> !s.isEmpty())
                         .orElse(null);
-                return Optional.of(new LearnedWordsReviewResult(
+                return Optional.of(reviewResult(
                         LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE,
                         false,
                         penalized,
-                        expectedRaw,
-                        typed,
-                        restoredDb));
+                        expectedRaw, typed, restoredDb,
+                        expressionOk, expectedSourceLabel, userSourceLabel));
             }
             learnedCard.setScore(prior);
             gameDataService.saveGameData();
             JOptionPane.showMessageDialog(null,
                     "No se pudo devolver la expresión a la base de práctica (sin frase español enlazada o sin BBDD de destino). El score anterior se mantuvo.",
                     "Review Learned Words", JOptionPane.WARNING_MESSAGE);
-            return Optional.of(new LearnedWordsReviewResult(
-                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null));
+            return Optional.of(reviewResult(
+                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null,
+                    expressionOk, expectedSourceLabel, userSourceLabel));
         }
 
         gameDataService.saveGameData();
-        return Optional.of(new LearnedWordsReviewResult(
-                LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, penalized, expectedRaw, typed, null));
+        return Optional.of(reviewResult(
+                LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, penalized, expectedRaw, typed, null,
+                expressionOk, expectedSourceLabel, userSourceLabel));
+    }
+
+    private static LearnedWordsReviewResult reviewResult(
+            LearnedWordsReviewResult.Outcome outcome,
+            boolean answeredCorrectly,
+            int scoreAfter,
+            String expectedEnglish,
+            String userEntered,
+            String restoredToPracticeDatabase,
+            boolean expressionMatched,
+            String expectedPracticeSourceDatabase,
+            String userPracticeSourceDatabase) {
+        return new LearnedWordsReviewResult(
+                outcome,
+                answeredCorrectly,
+                scoreAfter,
+                expectedEnglish,
+                userEntered,
+                restoredToPracticeDatabase,
+                expressionMatched,
+                expectedPracticeSourceDatabase,
+                userPracticeSourceDatabase);
+    }
+
+    private boolean practiceSourceMatches(EnglishExpression card, String userSelectedPracticeDatabase) {
+        if (userSelectedPracticeDatabase == null || userSelectedPracticeDatabase.isBlank()) {
+            return false;
+        }
+        String expected = Optional.ofNullable(card.getPracticeSourceDatabase()).map(String::trim).orElse("");
+        if (expected.isEmpty()) {
+            return false;
+        }
+        Optional<String> expectedCanon = resolveCanonicalDatabaseKey(expected);
+        Optional<String> selectedCanon = resolveCanonicalDatabaseKey(userSelectedPracticeDatabase.trim());
+        if (expectedCanon.isPresent() && selectedCanon.isPresent()) {
+            return expectedCanon.get().equalsIgnoreCase(selectedCanon.get());
+        }
+        return expected.equalsIgnoreCase(userSelectedPracticeDatabase.trim());
+    }
+
+    private String formatPracticeSourceForReview(String databaseName) {
+        if (databaseName == null || databaseName.isBlank()) {
+            return "";
+        }
+        return resolveCanonicalDatabaseKey(databaseName.trim())
+                .flatMap(key -> getAvailableDatabases().stream()
+                        .filter(db -> resolveCanonicalDatabaseKey(db)
+                                .map(k -> k.equalsIgnoreCase(key))
+                                .orElse(false))
+                        .findFirst())
+                .orElse(databaseName.trim());
     }
 
     private boolean promoteLearnedCardToDefinitelyLearned(EnglishExpression card,
@@ -836,25 +880,6 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         definitelyBucket.add(card);
-        return true;
-    }
-
-    private boolean returnDefinitelyLearnedCardToLearned(EnglishExpression card,
-            Set<EnglishExpression> definitelyBucket) {
-        Set<EnglishExpression> learnedBucket = englishDatabases.get(LEARNED_WORDS_DATABASE);
-        if (learnedBucket == null) {
-            return false;
-        }
-        String phrase = Optional.ofNullable(card.getExpression()).map(String::trim).orElse("");
-        if (!phrase.isEmpty() && learnedBucket.stream().anyMatch(e -> e != null && e.getExpression() != null
-                && e.getExpression().trim().equalsIgnoreCase(phrase))) {
-            log.warn("Review return: '{}' already in learned_words", phrase);
-            return false;
-        }
-        if (!definitelyBucket.remove(card)) {
-            return false;
-        }
-        learnedBucket.add(card);
         return true;
     }
 
