@@ -782,6 +782,31 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         int penalized = Math.max(0, prior - 5);
         learnedCard.setScore(penalized);
+        if (definitelyReview) {
+            if (penalized < LEARNED_REVIEW_DEMOTION_UNDER) {
+                if (returnDefinitelyLearnedCardToLearned(learnedCard, learnedBucket)) {
+                    gameDataService.saveGameData();
+                    return Optional.of(reviewResult(
+                            LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED,
+                            false,
+                            penalized,
+                            expectedRaw, typed, null,
+                            expressionOk, expectedSourceLabel, userSourceLabel));
+                }
+                learnedCard.setScore(prior);
+                gameDataService.saveGameData();
+                JOptionPane.showMessageDialog(null,
+                        "No se pudo devolver la expresión a Learned words.",
+                        "Review Learned Words", JOptionPane.WARNING_MESSAGE);
+                return Optional.of(reviewResult(
+                        LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null,
+                        expressionOk, expectedSourceLabel, userSourceLabel));
+            }
+            gameDataService.saveGameData();
+            return Optional.of(reviewResult(
+                    LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, penalized, expectedRaw, typed, null,
+                    expressionOk, expectedSourceLabel, userSourceLabel));
+        }
         if (penalized < LEARNED_REVIEW_DEMOTION_UNDER) {
             if (demoteLearnedCardToPractice(learnedCard, penalized, learnedBucket)) {
                 pruneSpanishRowsWithoutTranslations();
@@ -880,6 +905,25 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
         definitelyBucket.add(card);
+        return true;
+    }
+
+    private boolean returnDefinitelyLearnedCardToLearned(EnglishExpression card,
+            Set<EnglishExpression> definitelyBucket) {
+        Set<EnglishExpression> learnedBucket = englishDatabases.get(LEARNED_WORDS_DATABASE);
+        if (learnedBucket == null) {
+            return false;
+        }
+        String phrase = Optional.ofNullable(card.getExpression()).map(String::trim).orElse("");
+        if (!phrase.isEmpty() && learnedBucket.stream().anyMatch(e -> e != null && e.getExpression() != null
+                && e.getExpression().trim().equalsIgnoreCase(phrase))) {
+            log.warn("Review return: '{}' already in learned_words", phrase);
+            return false;
+        }
+        if (!definitelyBucket.remove(card)) {
+            return false;
+        }
+        learnedBucket.add(card);
         return true;
     }
 

@@ -173,6 +173,10 @@ public class LearnedWordsReviewView extends JFrame {
         return ReviewDatabases.displayNameForKey(currentReviewDatabaseKey);
     }
 
+    private boolean isDefinitelyReviewDatabase() {
+        return ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY.equalsIgnoreCase(currentReviewDatabaseKey);
+    }
+
     /**
      * Solo Review: orden aleatorio sesgado por antigüedad en la lista ({@code includedAtEpochMillis}).
      * Cuanto más tiempo lleva la entrada en learned_words, más peso y más suele ir al principio del mazo,
@@ -943,6 +947,12 @@ public class LearnedWordsReviewView extends JFrame {
     private void appendWrongAnswerSummary(List<String> parts, LearnedWordsReviewResult r) {
         parts.add("Incorrecto (−5).");
 
+        if (r.outcome() == LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED) {
+            parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                    + ": la expresión vuelve a " + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+            return;
+        }
+
         if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE) {
             appendPracticeReturnMessage(parts, r, true);
             return;
@@ -959,6 +969,20 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     private void appendPracticeReturnMessage(List<String> parts, LearnedWordsReviewResult r, boolean demoted) {
+        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
+        if (isDefinitelyReviewDatabase()) {
+            if (demoted) {
+                parts.add("Score por debajo de " + threshold + ": la expresión vuelve a "
+                        + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+            } else {
+                int score = r.scoreAfter();
+                parts.add("Permanece en " + currentReviewDisplayName() + " (score " + score + ")."
+                        + " Si un fallo futuro deja el score por debajo de " + threshold + ", volverá a "
+                        + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+            }
+            return;
+        }
+
         if (demoted) {
             if (isDefinitionMode()) {
                 appendImmediateOriginReturnMessage(parts, r);
