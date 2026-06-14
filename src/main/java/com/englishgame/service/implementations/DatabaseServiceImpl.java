@@ -581,7 +581,9 @@ public class DatabaseServiceImpl implements DatabaseService {
             return false;
         }
 
-        englishExpression.setIncludedAtEpochMillis(System.currentTimeMillis());
+        if (englishExpression.getIncludedAtEpochMillis() <= 0L) {
+            englishExpression.setIncludedAtEpochMillis(System.currentTimeMillis());
+        }
 
         boolean added = addEnglishExpression(LEARNED_WORDS_DATABASE, englishExpression);
         if (added) {
@@ -668,7 +670,9 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         Set<EnglishExpression> learned = englishDatabases.get(LEARNED_WORDS_DATABASE);
         learned.removeIf(en -> en.getExpression().equalsIgnoreCase(englishTranslation.getExpression()));
-        englishTranslation.setIncludedAtEpochMillis(System.currentTimeMillis());
+        if (englishTranslation.getIncludedAtEpochMillis() <= 0L) {
+            englishTranslation.setIncludedAtEpochMillis(System.currentTimeMillis());
+        }
         learned.add(englishTranslation);
 
         // Quitar también filas inglés sueltas duplicadas (misma gráfía) que queden en esta BBDD de práctica.

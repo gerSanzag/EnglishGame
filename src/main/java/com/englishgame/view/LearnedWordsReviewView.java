@@ -18,10 +18,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -53,6 +50,16 @@ public class LearnedWordsReviewView extends JFrame {
     private static final int REVIEW_FEEDBACK_SCROLL_MAX_H = 260;
     private static final int REVIEW_SCORE_CARD_W = 560;
 
+    /**
+     * Sesgo hacia entradas antiguas en learned/review: exponente sobre días desde {@code included_at}.
+     * Valores &gt; 1 amplifican la diferencia entre reciente y antiguo.
+     */
+    private static final double REVIEW_AGE_WEIGHT_EXPONENT = 1.85;
+    private static final double REVIEW_MIN_AGE_DAYS = 1.0;
+    /** Evita rachas largas de la misma BBDD de origen en sesiones con muchas entradas de una sola fuente. */
+    private static final double REVIEW_SAME_SOURCE_WEIGHT_FACTOR = 0.22;
+    private static final double REVIEW_REPEAT_CARD_WEIGHT_FACTOR = 0.06;
+
     private final GameController gameController;
     private final LearnedWordsView learnedWordsOwner;
     private final LandingPageView landingPage;
@@ -63,6 +70,8 @@ public class LearnedWordsReviewView extends JFrame {
     private final List<EnglishExpression> deck = new ArrayList<>();
     private final Random reviewDeckRandom = new Random();
     private int index;
+    private int lastPickedDeckIndex = -1;
+    private String lastShownPracticeSourceKey;
     private String currentReviewDatabaseKey = ReviewDatabases.LEARNED_WORDS_KEY;
 
     private JComboBox<String> reviewDatabaseSelector;
@@ -165,8 +174,9 @@ public class LearnedWordsReviewView extends JFrame {
         deck.clear();
         deck.addAll(gameController.getEnglishExpressionsFromDatabase(currentReviewDatabaseKey));
         refreshReviewStatsLabels();
-        orderReviewDeckByInclusionAgeBias();
-        index = 0;
+        lastPickedDeckIndex = -1;
+        lastShownPracticeSourceKey = null;
+        pickNextReviewCardWeighted();
     }
 
     private String currentReviewDisplayName() {
@@ -178,37 +188,85 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     /**
-     * Solo Review: orden aleatorio sesgado por antigüedad en la lista ({@code includedAtEpochMillis}).
-     * Cuanto más tiempo lleva la entrada en learned_words, más peso y más suele ir al principio del mazo,
-     * para dar tiempo a que la memoria se estabilice antes de insistir en lo recién añadido.
+     * Review: en cada tirada elige una tarjeta al azar con peso creciente según antigüedad en la lista
+     * ({@code includedAtEpochMillis}). Las más recientes salen menos; se penaliza repetir la misma BBDD
+     * de origen o la misma tarjeta en la ronda siguiente.
      */
-    private void orderReviewDeckByInclusionAgeBias() {
-        if (deck.size() <= 1) {
+    private void pickNextReviewCardWeighted() {
+        if (deck.isEmpty()) {
+            index = 0;
             return;
         }
-        long now = System.currentTimeMillis();
-        Map<EnglishExpression, Double> sortKeys = new HashMap<>(deck.size());
-        for (EnglishExpression e : deck) {
-            sortKeys.put(e, weightedReviewSortKey(now, e));
+        if (deck.size() == 1) {
+            index = 0;
+            rememberLastShownCard(deck.get(0));
+            return;
         }
-        deck.sort(Comparator.comparingDouble(e -> sortKeys.getOrDefault(e, 0.0)));
+
+        long now = System.currentTimeMillis();
+        double[] weights = new double[deck.size()];
+        for (int i = 0; i < deck.size(); i++) {
+            EnglishExpression card = deck.get(i);
+            double w = reviewSelectionWeight(now, card);
+            if (i == lastPickedDeckIndex) {
+                w *= REVIEW_REPEAT_CARD_WEIGHT_FACTOR;
+            }
+            String sourceKey = practiceSourceKey(card);
+            if (lastShownPracticeSourceKey != null && sourceKey != null
+                    && lastShownPracticeSourceKey.equalsIgnoreCase(sourceKey)) {
+                w *= REVIEW_SAME_SOURCE_WEIGHT_FACTOR;
+            }
+            weights[i] = Math.max(1e-9, w);
+        }
+
+        index = pickWeightedIndex(weights);
+        lastPickedDeckIndex = index;
+        rememberLastShownCard(deck.get(index));
     }
 
-    private double weightedReviewSortKey(long nowMillis, EnglishExpression e) {
-        double w = inclusionWeightDaysSinceLearned(nowMillis, e);
-        double u = reviewDeckRandom.nextDouble();
-        u = Math.max(u, 1e-12);
-        return -Math.log(u) / w;
+    private void rememberLastShownCard(EnglishExpression card) {
+        lastShownPracticeSourceKey = practiceSourceKey(card);
     }
 
-    private static double inclusionWeightDaysSinceLearned(long nowMillis, EnglishExpression e) {
+    private static String practiceSourceKey(EnglishExpression card) {
+        if (card == null) {
+            return null;
+        }
+        String raw = Optional.ofNullable(card.getPracticeSourceDatabase()).map(String::trim).orElse("");
+        return raw.isEmpty() ? null : raw;
+    }
+
+    private double reviewSelectionWeight(long nowMillis, EnglishExpression e) {
+        double days = inclusionAgeDays(nowMillis, e);
+        return Math.pow(Math.max(REVIEW_MIN_AGE_DAYS, days), REVIEW_AGE_WEIGHT_EXPONENT);
+    }
+
+    private static double inclusionAgeDays(long nowMillis, EnglishExpression e) {
         long inc = e.getIncludedAtEpochMillis();
         if (inc <= 0L) {
-            inc = 0L;
+            return 365.0;
         }
         long ageMs = Math.max(0L, nowMillis - inc);
-        double days = ageMs / (double) MS_PER_DAY;
-        return Math.max(1.0, days);
+        return ageMs / (double) MS_PER_DAY;
+    }
+
+    private int pickWeightedIndex(double[] weights) {
+        double sum = 0.0;
+        for (double w : weights) {
+            sum += w;
+        }
+        if (sum <= 0.0) {
+            return reviewDeckRandom.nextInt(weights.length);
+        }
+        double r = reviewDeckRandom.nextDouble() * sum;
+        double acc = 0.0;
+        for (int i = 0; i < weights.length; i++) {
+            acc += weights[i];
+            if (r < acc) {
+                return i;
+            }
+        }
+        return weights.length - 1;
     }
 
     private JPanel createSectionPanel(String title) {
@@ -710,7 +768,7 @@ public class LearnedWordsReviewView extends JFrame {
                 return;
             }
             if (incrementIndex) {
-                index = (index + 1) % deck.size();
+                pickNextReviewCardWeighted();
             }
             showCurrentRound();
         });
@@ -854,6 +912,7 @@ public class LearnedWordsReviewView extends JFrame {
                 || r.outcome() == LearnedWordsReviewResult.Outcome.PROMOTED_TO_DEFINITELY_LEARNED
                 || r.outcome() == LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED) {
             deck.remove(current);
+            lastPickedDeckIndex = -1;
             if (!deck.isEmpty()) {
                 index = Math.min(index, deck.size() - 1);
             }
@@ -891,8 +950,9 @@ public class LearnedWordsReviewView extends JFrame {
         }
         deck.clear();
         deck.addAll(fresh);
-        orderReviewDeckByInclusionAgeBias();
-        index = 0;
+        lastPickedDeckIndex = -1;
+        lastShownPracticeSourceKey = null;
+        pickNextReviewCardWeighted();
         showCurrentRound();
     }
 
@@ -1082,7 +1142,7 @@ public class LearnedWordsReviewView extends JFrame {
             dispose();
             return;
         }
-        index = (index + 1) % deck.size();
+        pickNextReviewCardWeighted();
         showCurrentRound();
     }
 }

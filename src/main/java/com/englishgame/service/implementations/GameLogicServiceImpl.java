@@ -60,9 +60,17 @@ public class GameLogicServiceImpl implements GameLogicService {
         return cohort.isEmpty() ? List.of(anchor) : cohort;
     }
 
+    private static String normalizeEnglishLemmaForCompare(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.trim().toLowerCase(Locale.ROOT).replace('-', ' ').replaceAll("\\s+", " ");
+    }
+
     private static boolean englishMatchesUser(String userTrimmed, EnglishExpression en) {
         return en != null && en.getExpression() != null
-                && userTrimmed.equalsIgnoreCase(en.getExpression().trim());
+                && normalizeEnglishLemmaForCompare(userTrimmed)
+                        .equals(normalizeEnglishLemmaForCompare(en.getExpression()));
     }
 
     @Override

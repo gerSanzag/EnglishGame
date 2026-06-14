@@ -92,8 +92,6 @@ public class GameView extends JFrame {
     private String revealFullText = "";
     private int revealCharIndex;
     private boolean revealCommittedThisRound;
-    /** Tras feedback de error phrasal en modo con puntuación, limita acciones hasta New Round o activar práctica. */
-    private boolean postIncorrectPhrasalLock;
 
     private static final int REVEAL_CHAR_INTERVAL_MS = 380;
 
@@ -1200,7 +1198,6 @@ public class GameView extends JFrame {
     }
 
     private void beginNewRoundCore() {
-        postIncorrectPhrasalLock = false;
         preparePracticeRevealStateForNewRound();
         cancelPendingAutoNextRound();
         syncControllerWithComboSelection(false);
@@ -1341,7 +1338,9 @@ public class GameView extends JFrame {
         } else {
             if (isPhrasalRound()) {
                 showPhrasalPedagogicFeedback(userTranslation, false);
-                activatePostIncorrectPhrasalLock();
+                clearPhrasalInputs();
+                updatePhrasalInputStepState();
+                requestFocusForCurrentRound();
             } else {
                 String detail = buildExpectedVsTypedDetail(userTranslation);
                 showFeedbackInRevealArea("Incorrect. Try again or start a new round.\n" + detail, Color.RED);
@@ -1364,6 +1363,9 @@ public class GameView extends JFrame {
         msg.append(modePrefix).append("\n");
         msg.append(slotDiagnosisPlain(userTokens, expectedTokens)).append("\n");
         msg.append("Correcto: ").append(String.join(" ", expectedTokens));
+        if (!noScoreMode) {
+            msg.append("\nVuelve a intentarlo o pulsa New Round.");
+        }
         showFeedbackInRevealArea(msg.toString(), new Color(188, 48, 48));
     }
 
@@ -1437,45 +1439,6 @@ public class GameView extends JFrame {
             }
         }
         return out.toString();
-    }
-
-    private void activatePostIncorrectPhrasalLock() {
-        postIncorrectPhrasalLock = true;
-        englishTranslationField.setEnabled(false);
-        phrasalVerbInput.setEnabled(false);
-        phrasalParticle1Input.setEnabled(false);
-        phrasalParticle2Input.setEnabled(false);
-        phrasalParticle3Input.setEnabled(false);
-        submitButton.setEnabled(false);
-        noScoreCheckBox.setEnabled(false);
-        revealAnswerButton.setEnabled(false);
-        revealAllButton.setEnabled(false);
-        newRoundButton.setEnabled(true);
-        practiceModeCheckBox.setEnabled(true);
-    }
-
-    private void refreshPostIncorrectPhrasalLockState() {
-        if (!postIncorrectPhrasalLock) {
-            return;
-        }
-        if (practiceModeCheckBox.isSelected()) {
-            postIncorrectPhrasalLock = false;
-            englishTranslationField.setEnabled(true);
-            updatePhrasalInputStepState();
-            updatePracticeDependentUi();
-            return;
-        }
-        englishTranslationField.setEnabled(false);
-        phrasalVerbInput.setEnabled(false);
-        phrasalParticle1Input.setEnabled(false);
-        phrasalParticle2Input.setEnabled(false);
-        phrasalParticle3Input.setEnabled(false);
-        submitButton.setEnabled(false);
-        noScoreCheckBox.setEnabled(false);
-        revealAnswerButton.setEnabled(false);
-        revealAllButton.setEnabled(false);
-        newRoundButton.setEnabled(true);
-        practiceModeCheckBox.setEnabled(true);
     }
 
     private void refreshCurrentWordScores() {
@@ -1640,14 +1603,15 @@ public class GameView extends JFrame {
     }
 
     /**
-     * Tokens for phrasal-slot UI: strips a leading {@code to} (infinitive) so "to come back"
-     * becomes {@code [come, back]} instead of misclassifying {@code to} as the verb.
+     * Tokens for phrasal-slot UI: strips a leading {@code to} (infinitive) and trata guiones como
+     * separadores ({@code hang-up} → {@code [hang, up]}) para alinear opciones y feedback.
      */
     private static List<String> tokensAfterOptionalTo(String englishExpr) {
         if (englishExpr == null || englishExpr.isBlank()) {
             return Collections.emptyList();
         }
-        String[] raw = englishExpr.trim().toLowerCase().split("\\s+");
+        String normalized = englishExpr.trim().toLowerCase(Locale.ROOT).replace('-', ' ');
+        String[] raw = normalized.split("\\s+");
         int i = 0;
         if (raw.length > 0 && "to".equals(raw[0])) {
             i = 1;
@@ -2131,11 +2095,9 @@ public class GameView extends JFrame {
         submitButton.setToolTipText(neutral
                 ? "Comprueba la traducción sin modificar puntajes."
                 : "Submit your translation for scoring.");
-        refreshPostIncorrectPhrasalLockState();
     }
 
     private void resetGameDisplay() {
-        postIncorrectPhrasalLock = false;
         cancelPendingAutoNextRound();
         applyGameLayoutModel(false);
         if (isDefinitionMode()) {
