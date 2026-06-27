@@ -41,13 +41,13 @@ public final class GameModeSelector {
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout(12, 12));
 
-        JLabel title = new JLabel("Elige el modo de aprendizaje", JLabel.CENTER);
+        JLabel title = new JLabel("Choose learning mode", JLabel.CENTER);
         title.setFont(new Font("Arial", Font.BOLD, 20));
         title.setBorder(BorderFactory.createEmptyBorder(16, 20, 8, 20));
 
         JLabel hint = new JLabel(
-                "<html><center>Cada modo usa su propio archivo de datos.<br>"
-                        + "Puedes volver a elegir al reiniciar la aplicación.</center></html>",
+                "<html><center>Each mode uses its own data file.<br>"
+                        + "You can choose again when you restart the application.</center></html>",
                 JLabel.CENTER);
         hint.setFont(new Font("Arial", Font.PLAIN, 13));
         hint.setBorder(BorderFactory.createEmptyBorder(0, 20, 12, 20));
@@ -73,7 +73,7 @@ public final class GameModeSelector {
         buttons.add(definitionBtn);
 
         JPanel south = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton cancel = new JButton("Salir");
+        JButton cancel = new JButton("Exit");
         cancel.addActionListener(e -> dialog.dispose());
         south.add(cancel);
 

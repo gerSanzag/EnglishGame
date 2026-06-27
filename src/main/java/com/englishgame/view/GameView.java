@@ -2,6 +2,7 @@ package com.englishgame.view;
 
 import com.englishgame.AppGameMode;
 import com.englishgame.AppVersion;
+import com.englishgame.UiText;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.AnswerResult;
 import com.englishgame.model.EnglishExpression;
@@ -194,6 +195,10 @@ public class GameView extends JFrame {
         return gameController.getAppGameMode() == AppGameMode.DEFINITION;
     }
 
+    private String ui(String en, String es) {
+        return UiText.t(gameController.getAppGameMode(), en, es);
+    }
+
     private void applyPromptDefinitionTextStyle() {
         if (promptDefinitionInstructionLabel != null) {
             promptDefinitionInstructionLabel.setFont(
@@ -324,7 +329,8 @@ public class GameView extends JFrame {
         feedbackLabel.setBorder(BorderFactory.createEmptyBorder(0, 24, 20, 24));
         feedbackLabel.setVisible(false);
         
-        scoreLabel = new JLabel("Phrase score (this word)", SwingConstants.CENTER);
+        scoreLabel = new JLabel(ui("Phrase score (this word)", "Puntuación de la frase (esta palabra)"),
+                SwingConstants.CENTER);
         scoreLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
         scoreLabel.setForeground(new Color(0, 130, 50));
         scoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -336,25 +342,29 @@ public class GameView extends JFrame {
         viewWordsButton = createStyledButton("View Words", "View saved words");
         learnedWordsButton = createStyledButton("Learned Words", "View learned words");
 
-        practiceModeCheckBox = new JCheckBox("Modo práctica (sin puntuación)");
+        practiceModeCheckBox = new JCheckBox(ui("Practice mode (no scoring)", "Modo práctica (sin puntuación)"));
         practiceModeCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
-        practiceModeCheckBox.setToolTipText(
-                "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\".");
+        practiceModeCheckBox.setToolTipText(ui(
+                "Checks do not add or subtract points. Lets you use \"Show answer\".",
+                "Las comprobaciones no suman ni restan puntos. Permite usar \"Mostrar respuesta\"."));
         styleSelectionToggle(practiceModeCheckBox, new Color(232, 248, 240), new Color(46, 156, 112));
 
-        noScoreCheckBox = new JCheckBox("Comprobar sin puntuación (juego real)");
+        noScoreCheckBox = new JCheckBox(ui("Check without scoring (real game)",
+                "Comprobar sin puntuación (juego real)"));
         noScoreCheckBox.setFont(new Font("Arial", Font.PLAIN, 14));
-        noScoreCheckBox.setToolTipText(
-                "Comprueba tu respuesta sin recompensa ni penalización, sin entrar en modo práctica.");
+        noScoreCheckBox.setToolTipText(ui(
+                "Checks your answer with no reward or penalty, without entering practice mode.",
+                "Comprueba tu respuesta sin recompensa ni penalización, sin entrar en modo práctica."));
         styleSelectionToggle(noScoreCheckBox, new Color(234, 241, 253), new Color(62, 110, 202));
 
-        revealAnswerButton = createStyledButton("Mostrar respuesta",
-                "Revela la respuesta escrita gradualmente", false);
+        revealAnswerButton = createStyledButton(ui("Show answer", "Mostrar respuesta"),
+                ui("Reveals the reference answer gradually", "Revela la respuesta escrita gradualmente"), false);
         revealAnswerButton.setPreferredSize(new Dimension(200, 36));
         revealAnswerButton.setEnabled(false);
         wireRevealToggleButtonAdaptiveHover();
 
-        revealAllButton = createStyledButton("Mostrar todo", "Muestra la respuesta completa de golpe");
+        revealAllButton = createStyledButton(ui("Show all", "Mostrar todo"),
+                ui("Shows the complete answer at once", "Muestra la respuesta completa de golpe"));
         revealAllButton.setPreferredSize(new Dimension(130, 36));
         revealAllButton.setEnabled(false);
 
@@ -368,17 +378,23 @@ public class GameView extends JFrame {
         revealAnswerArea.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(180, 180, 200)),
                 BorderFactory.createEmptyBorder(6, 8, 6, 8)));
-        revealAnswerArea.setToolTipText("Aquí aparece la respuesta de referencia cuando usas modo práctica");
+        revealAnswerArea.setToolTipText(ui(
+                "Reference answer appears here when you use practice mode",
+                "Aquí aparece la respuesta de referencia cuando usas modo práctica"));
 
         phrasalVerbInput = new PhrasalTokenField();
         phrasalParticle1Input = new PhrasalTokenField();
         phrasalParticle2Input = new PhrasalTokenField();
         phrasalParticle3Input = new PhrasalTokenField();
-        stylePhrasalInput(phrasalVerbInput, "Escribe el verbo");
-        stylePhrasalInput(phrasalParticle1Input, "Primera partícula o palabra siguiente al verbo");
-        stylePhrasalInput(phrasalParticle2Input, "Segunda partícula o preposición (p. ej. of, with)");
+        stylePhrasalInput(phrasalVerbInput, ui("Type the verb", "Escribe el verbo"));
+        stylePhrasalInput(phrasalParticle1Input,
+                ui("First particle or word after the verb", "Primera partícula o palabra siguiente al verbo"));
+        stylePhrasalInput(phrasalParticle2Input,
+                ui("Second particle or preposition (e.g. of, with)",
+                        "Segunda partícula o preposición (p. ej. of, with)"));
         stylePhrasalInput(phrasalParticle3Input,
-                "Cuarta parte del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")");
+                ui("Fourth phrasal part (only if the answer has more than three words excluding \"to\")",
+                        "Cuarta parte del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")"));
 
         phrasalVerbOptionsArea = buildPhrasalOptionsTextArea();
         phrasalParticle1OptionsArea = buildPhrasalOptionsTextArea();
@@ -392,13 +408,16 @@ public class GameView extends JFrame {
         phrasalBuilderPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         phrasalColumnsBand = new JPanel(new GridLayout(1, 4, PHRASAL_COL_HGAP, 0));
         phrasalColumnsBand.setOpaque(false);
-        phrasalColumnsBand.add(buildPhrasalInputRow("1) Verbo", phrasalVerbOptionsArea, phrasalVerbInput));
-        phrasalColumnsBand.add(buildPhrasalInputRow("2) Partícula", phrasalParticle1OptionsArea, phrasalParticle1Input));
+        phrasalColumnsBand.add(buildPhrasalInputRow(ui("1) Verb", "1) Verbo"), phrasalVerbOptionsArea, phrasalVerbInput));
+        phrasalColumnsBand.add(buildPhrasalInputRow(ui("2) Particle", "2) Partícula"),
+                phrasalParticle1OptionsArea, phrasalParticle1Input));
         phrasalThirdSlotPanel = buildPhrasalInputRow(
-                "3) Partícula / preposición", phrasalParticle2OptionsArea, phrasalParticle2Input);
+                ui("3) Particle / preposition", "3) Partícula / preposición"),
+                phrasalParticle2OptionsArea, phrasalParticle2Input);
         phrasalColumnsBand.add(phrasalThirdSlotPanel);
         phrasalFourthSlotPanel = buildPhrasalInputRow(
-                "4) Siguiente (si aplica)", phrasalParticle3OptionsArea, phrasalParticle3Input);
+                ui("4) Next (if applicable)", "4) Siguiente (si aplica)"),
+                phrasalParticle3OptionsArea, phrasalParticle3Input);
         phrasalColumnsBand.add(phrasalFourthSlotPanel);
         phrasalBuilderPanel.add(phrasalColumnsBand);
         phrasalBuilderPanel.setVisible(false);
@@ -420,7 +439,7 @@ public class GameView extends JFrame {
                 BorderFactory.createLineBorder(new Color(198, 204, 218), 1),
                 BorderFactory.createEmptyBorder(1, 2, 2, 2)));
         ta.setTabSize(4);
-        ta.setText("Opciones: -");
+        ta.setText(ui("Options: -", "Opciones: -"));
         ta.setCaretPosition(0);
         ta.setAlignmentX(Component.LEFT_ALIGNMENT);
         return ta;
@@ -599,40 +618,50 @@ public class GameView extends JFrame {
         if (!isPhrasalRound()) {
             return;
         }
-        applyPhrasalOptionPlainText(phrasalVerbOptionsArea, "Opciones: " + joinOptions(currentVerbOptions));
+        applyPhrasalOptionPlainText(phrasalVerbOptionsArea,
+                ui("Options: ", "Opciones: ") + joinOptions(currentVerbOptions));
         applyPhrasalOptionsAreaTone(phrasalVerbOptionsArea, true);
 
         applyPhrasalOptionPlainText(phrasalParticle1OptionsArea,
-                "Opciones: " + joinOptions(currentParticle1Options));
+                ui("Options: ", "Opciones: ") + joinOptions(currentParticle1Options));
         applyPhrasalOptionsAreaTone(phrasalParticle1OptionsArea, true);
 
         boolean thirdSlotActive = currentPhrasalSlotsNeeded >= 3;
         applyPhrasalOptionPlainText(phrasalParticle2OptionsArea,
                 thirdSlotActive
-                        ? "Opciones: " + joinOptions(currentParticle2Options)
-                        : "Opciones: inactivas — Esta tarjeta solo usa dos piezas; rellena solo 1) y 2).");
+                        ? ui("Options: ", "Opciones: ") + joinOptions(currentParticle2Options)
+                        : ui("Options: inactive — This card only uses two parts; fill in 1) and 2) only.",
+                                "Opciones: inactivas — Esta tarjeta solo usa dos piezas; rellena solo 1) y 2)."));
         applyPhrasalOptionsAreaTone(phrasalParticle2OptionsArea, thirdSlotActive);
         phrasalParticle2Input.setToolTipText(thirdSlotActive
-                ? "Segunda partícula o preposición (p. ej. of, with)"
-                : "Inactivo en esta tarjeta: no hace falta tercera pieza.");
+                ? ui("Second particle or preposition (e.g. of, with)",
+                        "Segunda partícula o preposición (p. ej. of, with)")
+                : ui("Inactive on this card: no third part needed.",
+                        "Inactivo en esta tarjeta: no hace falta tercera pieza."));
 
         boolean fourthSlotActive = currentPhrasalSlotsNeeded >= 4;
         if (fourthSlotActive) {
             applyPhrasalOptionPlainText(phrasalParticle3OptionsArea,
-                    "Opciones: " + joinOptions(currentParticle3Options));
+                    ui("Options: ", "Opciones: ") + joinOptions(currentParticle3Options));
             applyPhrasalOptionsAreaTone(phrasalParticle3OptionsArea, true);
-            phrasalParticle3Input.setToolTipText(
-                    "Cuarta pieza del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")");
+            phrasalParticle3Input.setToolTipText(ui(
+                    "Fourth phrasal part (only if the answer has more than three words excluding \"to\")",
+                    "Cuarta pieza del phrasal (solo si la respuesta lleva más de tres palabras sin contar \"to\")"));
         } else {
             String fourthInactiveMsg;
             if (currentPhrasalSlotsNeeded <= 2) {
-                fourthInactiveMsg = "Opciones: inactivas — Esta tarjeta solo usa dos piezas; rellena solo 1) y 2).";
+                fourthInactiveMsg = ui(
+                        "Options: inactive — This card only uses two parts; fill in 1) and 2) only.",
+                        "Opciones: inactivas — Esta tarjeta solo usa dos piezas; rellena solo 1) y 2).");
             } else {
-                fourthInactiveMsg = "Opciones: inactivas — Esta tarjeta no usa cuarta pieza (basta con 1), 2) y 3).";
+                fourthInactiveMsg = ui(
+                        "Options: inactive — This card does not use a fourth part (1), 2) and 3) are enough).",
+                        "Opciones: inactivas — Esta tarjeta no usa cuarta pieza (basta con 1), 2) y 3).");
             }
             applyPhrasalOptionPlainText(phrasalParticle3OptionsArea, fourthInactiveMsg);
             applyPhrasalOptionsAreaTone(phrasalParticle3OptionsArea, false);
-            phrasalParticle3Input.setToolTipText("Inactivo en esta tarjeta: no hace falta cuarta pieza.");
+            phrasalParticle3Input.setToolTipText(ui("Inactive on this card: no fourth part needed.",
+                    "Inactivo en esta tarjeta: no hace falta cuarta pieza."));
         }
     }
 
@@ -825,7 +854,7 @@ public class GameView extends JFrame {
 
     private Color getButtonColor(String buttonText) {
         // Assign colors based on button function
-        if (buttonText.contains("Comprobar")) {
+        if (buttonText.contains("Comprobar") || buttonText.contains("Check")) {
             return new Color(56, 189, 248);
         } else if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
             return new Color(16, 185, 129); // Vibrant green for submit actions
@@ -837,11 +866,11 @@ public class GameView extends JFrame {
             return new Color(16, 185, 129); // Vibrant green for view actions
         } else if (buttonText.contains("Learned")) {
             return new Color(124, 58, 237); // Vibrant purple for learned words
-        } else if (buttonText.contains("Detener")) {
+        } else if (buttonText.contains("Detener") || buttonText.contains("Stop reveal")) {
             return new Color(249, 115, 22);
-        } else if (buttonText.contains("Mostrar todo")) {
+        } else if (buttonText.contains("Mostrar todo") || buttonText.contains("Show all")) {
             return new Color(100, 116, 139);
-        } else if (buttonText.contains("Mostrar")) {
+        } else if (buttonText.contains("Mostrar") || buttonText.contains("Show answer")) {
             return new Color(14, 165, 233);
         } else if (buttonText.contains("Back") || buttonText.contains("Main")) {
             return new Color(220, 38, 127); // Vibrant pink for return actions
@@ -1170,11 +1199,12 @@ public class GameView extends JFrame {
         }
         String db = (String) databaseSelector.getSelectedItem();
         if (db == null || db.isBlank()) {
-            databaseExpressionCountLabel.setText("Expressions in database: —");
+            databaseExpressionCountLabel.setText(ui("Expressions in database: —",
+                    "Expresiones en la base: —"));
             return;
         }
         int count = gameController.getDatabaseExpressionCount(db);
-        databaseExpressionCountLabel.setText(db + ": " + count + " expressions");
+        databaseExpressionCountLabel.setText(db + ": " + count + ui(" expressions", " expresiones"));
     }
 
     /**
@@ -1203,7 +1233,9 @@ public class GameView extends JFrame {
         syncControllerWithComboSelection(false);
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (selectedDb == null) {
-            JOptionPane.showMessageDialog(this, "Please select a database first", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Please select a database first.", "Selecciona una base de datos primero."),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1220,13 +1252,17 @@ public class GameView extends JFrame {
         } else {
             if (isDefinitionMode()) {
                 promptDefinitionInstructionLabel.setText("");
-                promptDefinitionArea.setText(
-                        "No expressions available. Add some words or select another database.");
+                promptDefinitionArea.setText(ui(
+                        "No expressions available. Add some words or select another database.",
+                        "No hay expresiones disponibles. Añade palabras o elige otra base de datos."));
             } else {
-                spanishExpressionLabel.setText(
-                        "No expressions available. Add some words or select another database.");
+                spanishExpressionLabel.setText(ui(
+                        "No expressions available. Add some words or select another database.",
+                        "No hay expresiones disponibles. Añade palabras o elige otra base de datos."));
             }
-            showFeedbackInRevealArea("Please add expressions to this database or select another one.", Color.RED);
+            showFeedbackInRevealArea(ui(
+                    "Please add expressions to this database or select another one.",
+                    "Añade expresiones a esta base de datos o elige otra."), Color.RED);
             updatePracticeDependentUi();
             refreshCurrentWordScores();
         }
@@ -1280,13 +1316,15 @@ public class GameView extends JFrame {
 
     private void processAnswer() {
         if (currentSpanishExpression == null) {
-            JOptionPane.showMessageDialog(this, "Please start a new round first", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Please start a new round first.", "Empieza una ronda nueva primero."),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         String userTranslation = canonicalUserTranslationFromField();
         if (userTranslation.isEmpty()) {
-            showFeedbackInRevealArea("Please enter a translation.", Color.RED);
+            showFeedbackInRevealArea(ui("Please enter a translation.", "Escribe una traducción."), Color.RED);
             return;
         }
         
@@ -1294,21 +1332,23 @@ public class GameView extends JFrame {
             Optional<Boolean> probe = gameController.checkAnswerWithoutScoring(userTranslation);
             if (probe.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                        "Empieza una ronda nueva antes de comprobar.",
-                        "Sin frase actual",
+                        ui("Start a new round before checking.", "Empieza una ronda nueva antes de comprobar."),
+                        ui("No current phrase", "Sin frase actual"),
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
             boolean correctPractice = probe.get();
             if (correctPractice) {
-                showFeedbackInRevealArea("Correcto — solo comprobación, sin cambiar puntajes.", new Color(0, 130, 60));
+                showFeedbackInRevealArea(ui("Correct — check only, scores unchanged.",
+                        "Correcto — solo comprobación, sin cambiar puntajes."), new Color(0, 130, 60));
             } else {
                 if (isPhrasalRound()) {
                     showPhrasalPedagogicFeedback(userTranslation, true);
                 } else {
                     String detail = buildExpectedVsTypedDetail(userTranslation);
                     showFeedbackInRevealArea(
-                            "Incorrecto — sin penalización en esta ronda.\n" + detail,
+                            ui("Incorrect — no penalty this round.\n", "Incorrecto — sin penalización en esta ronda.\n")
+                                    + detail,
                             new Color(200, 80, 0));
                 }
             }
@@ -1325,13 +1365,16 @@ public class GameView extends JFrame {
         if (isCorrect) {
             if (answerResult.isNewlyLearned()) {
                 JOptionPane.showMessageDialog(this,
-                        "Congratulations! \"" + answerResult.newlyLearnedEnglishWord()
-                                + "\" reached the threshold and is now in Learned Words.\nKeep it up!",
-                        "Word learned",
+                        ui("Congratulations! \"" + answerResult.newlyLearnedEnglishWord()
+                                        + "\" reached the threshold and is now in Learned Words.\nKeep it up!",
+                                "¡Enhorabuena! \"" + answerResult.newlyLearnedEnglishWord()
+                                        + "\" alcanzó el umbral y pasa a Learned Words.\n¡Sigue así!"),
+                        ui("Word learned", "Palabra aprendida"),
                         JOptionPane.INFORMATION_MESSAGE);
             }
             int seconds = Math.max(1, CORRECT_ANSWER_NEXT_ROUND_DELAY_MS / 1000);
-            showFeedbackInRevealArea("Correct! Well done. Next round in " + seconds + " seconds...",
+            showFeedbackInRevealArea(ui("Correct! Well done. Next round in ", "¡Correcto! Bien hecho. Siguiente ronda en ")
+                            + seconds + ui(" seconds...", " segundos..."),
                     new Color(0, 150, 0));
             log.info("Correct answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
             scheduleAutoAdvanceAfterCorrect();
@@ -1343,7 +1386,9 @@ public class GameView extends JFrame {
                 requestFocusForCurrentRound();
             } else {
                 String detail = buildExpectedVsTypedDetail(userTranslation);
-                showFeedbackInRevealArea("Incorrect. Try again or start a new round.\n" + detail, Color.RED);
+                showFeedbackInRevealArea(ui("Incorrect. Try again or start a new round.\n",
+                                "Incorrecto. Vuelve a intentarlo o empieza una ronda nueva.\n") + detail,
+                        Color.RED);
             }
             log.info("Incorrect answer: '{}' for '{}'", userTranslation, currentSpanishExpression.getExpression());
         }
@@ -1357,14 +1402,15 @@ public class GameView extends JFrame {
         List<String> expectedTokens = bestReferencePhrasalTokens(userTokens);
 
         String modePrefix = noScoreMode
-                ? "Incorrecto (sin penalización)"
-                : "Incorrecto";
+                ? ui("Incorrect (no penalty)", "Incorrecto (sin penalización)")
+                : ui("Incorrect", "Incorrecto");
         StringBuilder msg = new StringBuilder();
         msg.append(modePrefix).append("\n");
         msg.append(slotDiagnosisPlain(userTokens, expectedTokens)).append("\n");
-        msg.append("Correcto: ").append(String.join(" ", expectedTokens));
+        msg.append(ui("Correct: ", "Correcto: ")).append(String.join(" ", expectedTokens));
         if (!noScoreMode) {
-            msg.append("\nVuelve a intentarlo o pulsa New Round.");
+            msg.append("\n").append(ui("Try again or press New Round.",
+                    "Vuelve a intentarlo o pulsa New Round."));
         }
         showFeedbackInRevealArea(msg.toString(), new Color(188, 48, 48));
     }
@@ -1416,7 +1462,12 @@ public class GameView extends JFrame {
 
     private String slotDiagnosisPlain(List<String> userTokens, List<String> expectedTokens) {
         int slots = Math.max(2, Math.min(4, expectedTokens.size()));
-        String[] slotNames = { "Verbo", "Partícula 1", "Partícula 2", "Partícula 3" };
+        String[] slotNames = {
+                ui("Verb", "Verbo"),
+                ui("Particle 1", "Partícula 1"),
+                ui("Particle 2", "Partícula 2"),
+                ui("Particle 3", "Partícula 3")
+        };
         StringBuilder out = new StringBuilder();
         for (int i = 0; i < slots; i++) {
             String expected = i < expectedTokens.size() ? expectedTokens.get(i) : "—";
@@ -1428,11 +1479,12 @@ public class GameView extends JFrame {
             if (ok) {
                 out.append("OK");
             } else if (i >= userTokens.size()) {
-                out.append("Falta (esperado: ").append(expected).append(")");
+                out.append(ui("Missing (expected: ", "Falta (esperado: ")).append(expected).append(")");
             } else if (i >= expectedTokens.size()) {
-                out.append("No aplica");
+                out.append(ui("N/A", "No aplica"));
         } else {
-                out.append("esperado ").append(expected).append(", escribiste ").append(typed);
+                out.append(ui("expected ", "esperado ")).append(expected)
+                        .append(ui(", you typed ", ", escribiste ")).append(typed);
             }
             if (i < slots - 1) {
                 out.append("\n");
@@ -1443,17 +1495,20 @@ public class GameView extends JFrame {
 
     private void refreshCurrentWordScores() {
         if (currentSpanishExpression == null) {
-            scoreLabel.setText("This phrase score");
+            scoreLabel.setText(ui("This phrase score", "Puntuación de esta frase"));
             scoreLabel.setForeground(new Color(90, 90, 90));
             return;
         }
 
         int phraseScore = currentSpanishExpression.getScore();
         if (isNeutralScoringRound()) {
-            scoreLabel.setText(buildScoreLabelHtml("This phrase score:", phraseScore, " (sin puntuación)"));
+            scoreLabel.setText(buildScoreLabelHtml(
+                    ui("This phrase score:", "Puntuación de esta frase:"), phraseScore,
+                    ui(" (no scoring)", " (sin puntuación)")));
             scoreLabel.setForeground(new Color(105, 105, 115));
         } else {
-            scoreLabel.setText(buildScoreLabelHtml("This phrase score:", phraseScore, ""));
+            scoreLabel.setText(buildScoreLabelHtml(
+                    ui("This phrase score:", "Puntuación de esta frase:"), phraseScore, ""));
             scoreLabel.setForeground(new Color(0, 130, 50));
         }
     }
@@ -1589,8 +1644,9 @@ public class GameView extends JFrame {
         }
 
         englishTranslationField.setEditable(true);
-        englishTranslationField.setToolTipText(
-                "Construye el phrasal escribiendo cada parte desde las opciones mostradas.");
+        englishTranslationField.setToolTipText(ui(
+                "Build the phrasal by typing each part from the options shown.",
+                "Construye el phrasal escribiendo cada parte desde las opciones mostradas."));
         buildPhrasalOptionsForCurrentRound();
         clearPhrasalInputs();
         // Siempre rearmamos el estado base de inputs al empezar ronda phrasal nueva.
@@ -1939,11 +1995,13 @@ public class GameView extends JFrame {
     }
 
     private String buildExpectedVsTypedDetail(String userTranslation) {
-        String typed = userTranslation == null || userTranslation.isBlank() ? "(vacío)" : userTranslation.trim();
+        String typed = userTranslation == null || userTranslation.isBlank()
+                ? ui("(empty)", "(vacío)") : userTranslation.trim();
         String expected = gameController.getRevealAnswersLine()
                 .filter(line -> !line.isBlank())
-                .orElse("(sin referencia disponible)");
-        return "Se esperaba: " + expected + "\nHas escrito: " + typed;
+                .orElse(ui("(no reference available)", "(sin referencia disponible)"));
+        return ui("Expected: ", "Se esperaba: ") + expected + "\n"
+                + ui("You typed: ", "Has escrito: ") + typed;
     }
 
     private void stopRevealCharTimer() {
@@ -1986,12 +2044,14 @@ public class GameView extends JFrame {
     private void applyRevealToggleButtonChrome() {
         boolean revealing = revealCharTimer != null;
         if (revealing) {
-            revealAnswerButton.setText("Detener revelación");
-            revealAnswerButton.setToolTipText(
-                    "Detiene la animación; puedes seguir intentando (sin puntaje esta ronda).");
+            revealAnswerButton.setText(ui("Stop reveal", "Detener revelación"));
+            revealAnswerButton.setToolTipText(ui(
+                    "Stops the animation; you can keep trying (no score this round).",
+                    "Detiene la animación; puedes seguir intentando (sin puntaje esta ronda)."));
         } else {
-            revealAnswerButton.setText("Mostrar respuesta");
-            revealAnswerButton.setToolTipText("Revela la respuesta de referencia gradualmente.");
+            revealAnswerButton.setText(ui("Show answer", "Mostrar respuesta"));
+            revealAnswerButton.setToolTipText(ui("Reveals the reference answer gradually.",
+                    "Revela la respuesta de referencia gradualmente."));
         }
         Color base = getButtonColor(revealAnswerButton.getText());
         revealAnswerButton.setBackground(base);
@@ -2019,8 +2079,9 @@ public class GameView extends JFrame {
         Optional<String> line = gameController.getRevealAnswersLine();
         if (line.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Esta tarjeta no tiene traducciones para mostrar.",
-                    "Sin respuesta",
+                    ui("This card has no translations to show.",
+                            "Esta tarjeta no tiene traducciones para mostrar."),
+                    ui("No answer", "Sin respuesta"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -2056,8 +2117,9 @@ public class GameView extends JFrame {
         Optional<String> line = gameController.getRevealAnswersLine();
         if (line.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Esta tarjeta no tiene traducciones para mostrar.",
-                    "Sin respuesta",
+                    ui("This card has no translations to show.",
+                            "Esta tarjeta no tiene traducciones para mostrar."),
+                    ui("No answer", "Sin respuesta"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -2090,11 +2152,13 @@ public class GameView extends JFrame {
 
         boolean noScoreRequested = isNoScoreCheckRequested();
         boolean neutral = isNeutralScoringRound();
-        submitButton.setText(noScoreRequested ? "Comprobar (sin puntos)" : "Submit Answer");
+        submitButton.setText(noScoreRequested
+                ? ui("Check (no score)", "Comprobar (sin puntos)") : "Submit Answer");
         submitButton.setBackground(getButtonColor(submitButton.getText()));
         submitButton.setToolTipText(neutral
-                ? "Comprueba la traducción sin modificar puntajes."
-                : "Submit your translation for scoring.");
+                ? ui("Checks the translation without changing scores.",
+                        "Comprueba la traducción sin modificar puntajes.")
+                : ui("Submit your answer for scoring.", "Envía tu respuesta para puntuar."));
     }
 
     private void resetGameDisplay() {
@@ -2103,9 +2167,11 @@ public class GameView extends JFrame {
         if (isDefinitionMode()) {
             promptDefinitionInstructionLabel.setText(
                     gameController.getAppGameMode().getRoundPromptInstructionLine());
-            promptDefinitionArea.setText("Select a database and start a new round!");
+            promptDefinitionArea.setText(ui("Select a database and start a new round!",
+                    "Selecciona una base de datos y empieza una ronda nueva."));
         } else {
-            spanishExpressionLabel.setText("Select a database and start a new round!");
+            spanishExpressionLabel.setText(ui("Select a database and start a new round!",
+                    "Selecciona una base de datos y empieza una ronda nueva."));
         }
         englishTranslationField.setText("");
         showFeedbackInRevealArea("", new Color(40, 40, 40));

@@ -2,6 +2,7 @@ package com.englishgame.view;
 
 import com.englishgame.AppGameMode;
 import com.englishgame.AppVersion;
+import com.englishgame.UiText;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.LearnedWordsReviewResult;
@@ -40,7 +41,6 @@ public class LearnedWordsReviewView extends JFrame {
     private static final Color REVIEW_FEEDBACK_ERR_FG = new Color(231, 76, 60);
     private static final Color REVIEW_FEEDBACK_ERR_BG = new Color(253, 242, 242);
     private static final Color REVIEW_FEEDBACK_ERR_BORDER = new Color(230, 165, 158);
-    private static final String PRACTICE_SOURCE_PLACEHOLDER = "— Selecciona la base de origen —";
     private static final int REVIEW_PROMPT_SCROLL_W = 980;
     private static final int REVIEW_PROMPT_SCROLL_MAX_W = 1120;
     private static final int REVIEW_FEEDBACK_SCROLL_W = 980;
@@ -151,20 +151,24 @@ public class LearnedWordsReviewView extends JFrame {
         boolean definitelyDb = ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY.equalsIgnoreCase(currentReviewDatabaseKey);
         reviewStatsSection.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
-                definitelyDb ? "Words definitely learned — totals" : "Learned words — totals"));
+                definitelyDb
+                        ? ui("Words definitely learned — totals", "Words definitely learned — totales")
+                        : ui("Learned words — totals", "Learned words — totales")));
         if (definitelyDb) {
             int mastered = gameController.getWordsDefinitelyMasteredTotal();
             int current = gameController.getEnglishExpressionsFromDatabase(
                     ReviewDatabases.WORDS_DEFINITELY_LEARNED_KEY).size();
             reviewStatsPrimaryLabel.setVisible(true);
             reviewStatsSecondaryLabel.setVisible(true);
-            reviewStatsPrimaryLabel.setText("Words definitely learned: " + mastered);
-            reviewStatsSecondaryLabel.setText("Actualmente en Words definitely learned: " + current);
+            reviewStatsPrimaryLabel.setText(ui("Words learned and deleted: ", "Palabras aprendidas y borradas: ")
+                    + mastered);
+            reviewStatsSecondaryLabel.setText(ui("Currently in Words definitely learned: ",
+                    "Actualmente en Words definitely learned: ") + current);
         } else {
             int current = gameController.getEnglishExpressionsFromDatabase(ReviewDatabases.LEARNED_WORDS_KEY).size();
             reviewStatsPrimaryLabel.setVisible(true);
             reviewStatsSecondaryLabel.setVisible(false);
-            reviewStatsPrimaryLabel.setText("Learned words: " + current);
+            reviewStatsPrimaryLabel.setText(ui("Learned words: ", "Learned words: ") + current);
         }
         reviewStatsPanel.revalidate();
         reviewStatsPanel.repaint();
@@ -329,7 +333,7 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     private Color getButtonColor(String buttonText) {
-        if (buttonText.contains("Comprobar")) {
+        if (buttonText.contains("Comprobar") || buttonText.contains("Check")) {
             return new Color(56, 189, 248);
         } else if (buttonText.contains("Submit") || buttonText.contains("Answer")) {
             return new Color(16, 185, 129);
@@ -341,11 +345,11 @@ public class LearnedWordsReviewView extends JFrame {
             return new Color(16, 185, 129);
         } else if (buttonText.contains("Learned")) {
             return new Color(124, 58, 237);
-        } else if (buttonText.contains("Detener")) {
+        } else if (buttonText.contains("Detener") || buttonText.contains("Stop reveal")) {
             return new Color(249, 115, 22);
-        } else if (buttonText.contains("Mostrar todo")) {
+        } else if (buttonText.contains("Mostrar todo") || buttonText.contains("Show all")) {
             return new Color(100, 116, 139);
-        } else if (buttonText.contains("Mostrar")) {
+        } else if (buttonText.contains("Mostrar") || buttonText.contains("Show answer")) {
             return new Color(14, 165, 233);
         } else if (buttonText.contains("Back") || buttonText.contains("Main")) {
             return new Color(220, 38, 127);
@@ -363,6 +367,14 @@ public class LearnedWordsReviewView extends JFrame {
 
     private boolean isDefinitionMode() {
         return gameController.getAppGameMode() == AppGameMode.DEFINITION;
+    }
+
+    private String ui(String en, String es) {
+        return UiText.t(gameController.getAppGameMode(), en, es);
+    }
+
+    private String practiceSourcePlaceholder() {
+        return ui("— Select source database —", "— Selecciona la base de origen —");
     }
 
     private void applyNormalVisualProfile() {
@@ -425,11 +437,11 @@ public class LearnedWordsReviewView extends JFrame {
         }
         String previous = (String) practiceSourceSelector.getSelectedItem();
         practiceSourceSelector.removeAllItems();
-        practiceSourceSelector.addItem(PRACTICE_SOURCE_PLACEHOLDER);
+        practiceSourceSelector.addItem(practiceSourcePlaceholder());
         gameController.getAvailableDatabases().stream()
                 .sorted(String.CASE_INSENSITIVE_ORDER)
                 .forEach(practiceSourceSelector::addItem);
-        if (previous != null && !PRACTICE_SOURCE_PLACEHOLDER.equals(previous)) {
+        if (previous != null && !practiceSourcePlaceholder().equals(previous)) {
             for (int i = 0; i < practiceSourceSelector.getItemCount(); i++) {
                 String item = practiceSourceSelector.getItemAt(i);
                 if (item != null && item.equalsIgnoreCase(previous.trim())) {
@@ -446,7 +458,7 @@ public class LearnedWordsReviewView extends JFrame {
             return null;
         }
         String selected = (String) practiceSourceSelector.getSelectedItem();
-        if (selected == null || PRACTICE_SOURCE_PLACEHOLDER.equals(selected)) {
+        if (selected == null || practiceSourcePlaceholder().equals(selected)) {
             return null;
         }
         return selected.trim();
@@ -490,20 +502,21 @@ public class LearnedWordsReviewView extends JFrame {
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel reviewDbSection = createSectionPanel("Review database");
+        JPanel reviewDbSection = createSectionPanel(ui("Review database", "Base de datos de repaso"));
         JPanel reviewDbPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-        JLabel reviewDbLabel = new JLabel("Database:");
+        JLabel reviewDbLabel = new JLabel(ui("Database:", "Base de datos:"));
         reviewDbLabel.setFont(new Font("Arial", Font.BOLD, 14));
         reviewDatabaseSelector = new JComboBox<>(gameController.getReviewDatabaseDisplayNames().toArray(new String[0]));
         reviewDatabaseSelector.setPreferredSize(new Dimension(320, 30));
-        reviewDatabaseSelector.setToolTipText("Elige la base de datos para este repaso");
+        reviewDatabaseSelector.setToolTipText(ui("Choose the database for this review session",
+                "Elige la base de datos para este repaso"));
         reviewDatabaseSelector.setSelectedItem(ReviewDatabases.displayNameForKey(currentReviewDatabaseKey));
         reviewDatabaseSelector.addActionListener(e -> onReviewDatabaseChanged());
         reviewDbPanel.add(reviewDbLabel);
         reviewDbPanel.add(reviewDatabaseSelector);
         reviewDbSection.add(reviewDbPanel);
 
-        reviewStatsSection = createSectionPanel("Learned words — totals");
+        reviewStatsSection = createSectionPanel(ui("Learned words — totals", "Learned words — totales"));
         reviewStatsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 64, 10));
         reviewStatsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         reviewStatsPanel.setBorder(BorderFactory.createEmptyBorder(6, 4, 10, 4));
@@ -517,7 +530,7 @@ public class LearnedWordsReviewView extends JFrame {
         reviewStatsSection.add(reviewStatsPanel);
         refreshReviewStatsLabels();
 
-        JPanel gameSection = createSectionPanel("Interactive Game");
+        JPanel gameSection = createSectionPanel(ui("Interactive Game", "Juego interactivo"));
         gameSection.setLayout(new BorderLayout());
 
         JPanel gameUpperPanel = new JPanel(new BorderLayout());
@@ -551,7 +564,8 @@ public class LearnedWordsReviewView extends JFrame {
         topCard.add(promptScrollPane, gbc);
 
         answerField = new JTextField();
-        answerField.setToolTipText("Enter your English translation here");
+        answerField.setToolTipText(ui("Enter your English expression here",
+                "Escribe aquí la expresión en inglés"));
         answerField.setBackground(new Color(248, 252, 255));
         answerField.setForeground(new Color(34, 45, 58));
         answerField.setCaretColor(new Color(34, 45, 58));
@@ -570,8 +584,9 @@ public class LearnedWordsReviewView extends JFrame {
 
         practiceSourceSelector = new JComboBox<>();
         practiceSourceSelector.setPreferredSize(new Dimension(420, 34));
-        practiceSourceSelector.setToolTipText("Elige la base de datos de origen de esta expresión");
-        JLabel practiceSourceLabel = new JLabel("Source database:");
+        practiceSourceSelector.setToolTipText(ui("Choose the source database for this expression",
+                "Elige la base de datos de origen de esta expresión"));
+        JLabel practiceSourceLabel = new JLabel(ui("Source database:", "Base de origen:"));
         practiceSourceLabel.setFont(new Font("Arial", Font.BOLD, 14));
         practiceSourceRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         practiceSourceRow.setOpaque(false);
@@ -586,7 +601,7 @@ public class LearnedWordsReviewView extends JFrame {
         feedbackArea.setLineWrap(true);
         feedbackArea.setWrapStyleWord(true);
         applyFeedbackAreaToneOk();
-        feedbackArea.setToolTipText("Feedback de la última comprobación");
+        feedbackArea.setToolTipText(ui("Feedback from the last check", "Feedback de la última comprobación"));
 
         feedbackScrollPane = new JScrollPane(feedbackArea);
         feedbackScrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 208, 219), 1));
@@ -605,7 +620,7 @@ public class LearnedWordsReviewView extends JFrame {
                 BorderFactory.createLineBorder(new Color(186, 201, 219), 1),
                 BorderFactory.createEmptyBorder(6, 18, 6, 18)));
 
-        scoreLabel = new JLabel("This phrase score", SwingConstants.CENTER);
+        scoreLabel = new JLabel(ui("This phrase score", "Puntuación de esta frase"), SwingConstants.CENTER);
         scoreLabel.setHorizontalAlignment(SwingConstants.CENTER);
         scoreLabel.setVerticalAlignment(SwingConstants.CENTER);
         scoreLabel.setForeground(new Color(90, 90, 90));
@@ -643,8 +658,10 @@ public class LearnedWordsReviewView extends JFrame {
         mainScrollPane.setBorder(BorderFactory.createEmptyBorder());
         mainScrollPane.getVerticalScrollBar().setUnitIncrement(24);
 
-        submitButton = createStyledButton("Submit Answer", "Submit your translation");
-        newRoundButton = createStyledButton("New Round", "Otra tarjeta del repaso Learned Words");
+        submitButton = createStyledButton("Submit Answer",
+                ui("Submit your answer", "Enviar tu respuesta"));
+        newRoundButton = createStyledButton("New Round",
+                ui("Another card from the Learned Words review", "Otra tarjeta del repaso Learned Words"));
         submitButton.setPreferredSize(new Dimension(180, 48));
         newRoundButton.setPreferredSize(new Dimension(180, 48));
 
@@ -658,7 +675,7 @@ public class LearnedWordsReviewView extends JFrame {
         viewWordsButton = createStyledButton("View Words", "View saved words");
         learnedWordsButton = createStyledButton("Learned Words", "View learned words");
 
-        JPanel navSection = createSectionPanel("Navigation");
+        JPanel navSection = createSectionPanel(ui("Navigation", "Navegación"));
         navSection.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
                 BorderFactory.createEmptyBorder(8, 10, 8, 10)));
@@ -757,12 +774,14 @@ public class LearnedWordsReviewView extends JFrame {
         final boolean incrementIndex =
                 outcome == LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED;
         int secs = Math.max(1, CORRECT_ANSWER_NEXT_ROUND_DELAY_MS / 1000);
-        feedbackArea.setText(feedbackArea.getText() + "\n\nSiguiente tarjeta en " + secs + " s...");
+        feedbackArea.setText(feedbackArea.getText() + "\n\n"
+                + ui("Next card in " + secs + " s...", "Siguiente tarjeta en " + secs + " s..."));
         fitFeedbackScrollToContent();
         correctAnswerNextRoundTimer = new Timer(CORRECT_ANSWER_NEXT_ROUND_DELAY_MS, e -> {
             correctAnswerNextRoundTimer = null;
             if (deck.isEmpty()) {
-                JOptionPane.showMessageDialog(LearnedWordsReviewView.this, "Sesión terminada.", "Review",
+                JOptionPane.showMessageDialog(LearnedWordsReviewView.this,
+                        ui("Session finished.", "Sesión terminada."), "Review",
                         JOptionPane.INFORMATION_MESSAGE);
                 dispose();
                 return;
@@ -779,12 +798,13 @@ public class LearnedWordsReviewView extends JFrame {
 
     private void refreshScoreLabel(EnglishExpression en) {
         if (en == null) {
-            scoreLabel.setText("This phrase score");
+            scoreLabel.setText(ui("This phrase score", "Puntuación de esta frase"));
             scoreLabel.setForeground(new Color(90, 90, 90));
             return;
         }
         int phraseScore = en.getScore();
-        scoreLabel.setText(buildScoreLabelHtml("This phrase score:", phraseScore, ""));
+        scoreLabel.setText(buildScoreLabelHtml(
+                ui("This phrase score:", "Puntuación de esta frase:"), phraseScore, ""));
         scoreLabel.setForeground(REVIEW_FEEDBACK_OK_FG);
     }
 
@@ -828,7 +848,7 @@ public class LearnedWordsReviewView extends JFrame {
         submitButton.setEnabled(true);
         newRoundButton.setEnabled(!deck.isEmpty());
         if (deck.isEmpty()) {
-            promptTextArea.setText("No quedan entradas.");
+            promptTextArea.setText(ui("No entries left.", "No quedan entradas."));
             refreshScoreLabel(null);
             submitButton.setEnabled(false);
             newRoundButton.setEnabled(false);
@@ -857,8 +877,10 @@ public class LearnedWordsReviewView extends JFrame {
         }
         if (list.isEmpty()) {
             list.add(isDefinitionMode()
-                    ? "(Sin definición de referencia en esta entrada)"
-                    : "(Sin referencia en español en esta entrada)");
+                    ? ui("(No reference definition on this entry)",
+                            "(Sin definición de referencia en esta entrada)")
+                    : ui("(No Spanish reference on this entry)",
+                            "(Sin referencia en español en esta entrada)"));
         }
         return list;
     }
@@ -876,7 +898,8 @@ public class LearnedWordsReviewView extends JFrame {
         }
         if (isDefinitionMode() && selectedPracticeSourceOrNull() == null) {
             JOptionPane.showMessageDialog(this,
-                    "Selecciona la base de datos de origen antes de enviar.",
+                    ui("Select the source database before submitting.",
+                            "Selecciona la base de datos de origen antes de enviar."),
                     "Review", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -887,7 +910,8 @@ public class LearnedWordsReviewView extends JFrame {
 
         if (res.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "No se ha podido aplicar la corrección (la entrada ya no está en "
+                    ui("Could not apply the correction (the entry is no longer in ",
+                            "No se ha podido aplicar la corrección (la entrada ya no está en ")
                             + currentReviewDisplayName() + ").",
                     "Review", JOptionPane.WARNING_MESSAGE);
             reloadDeckIfStillAnyOrClose();
@@ -904,7 +928,8 @@ public class LearnedWordsReviewView extends JFrame {
         } else {
             applyFeedbackAreaToneOk();
         }
-        scoreLabel.setText(buildScoreLabelHtml("This phrase score:", r.scoreAfter(), ""));
+        scoreLabel.setText(buildScoreLabelHtml(
+                ui("This phrase score:", "Puntuación de esta frase:"), r.scoreAfter(), ""));
         scoreLabel.setForeground(REVIEW_FEEDBACK_OK_FG);
 
         if (r.outcome() == LearnedWordsReviewResult.Outcome.DEMOTED_TO_PRACTICE
@@ -927,7 +952,8 @@ public class LearnedWordsReviewView extends JFrame {
 
         if (deck.isEmpty()) {
             cancelPendingAutoAdvanceAfterCorrect();
-            JOptionPane.showMessageDialog(this, "Sesión terminada.", "Review", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, ui("Session finished.", "Sesión terminada."), "Review",
+                    JOptionPane.INFORMATION_MESSAGE);
             dispose();
             return;
         }
@@ -966,14 +992,18 @@ public class LearnedWordsReviewView extends JFrame {
         }
         switch (r.outcome()) {
             case PROMOTED_TO_DEFINITELY_LEARNED -> JOptionPane.showMessageDialog(this,
-                    "Congratulations! \"" + word
-                            + "\" reached score 28 in Learned words and is now in Words definitely learned.\nKeep it up!",
-                    "Word learned",
+                    ui("Congratulations! \"" + word
+                                    + "\" reached score 28 in Learned words and is now in Words definitely learned.\nKeep it up!",
+                            "¡Enhorabuena! \"" + word
+                                    + "\" alcanzó score 28 en Learned words y pasa a Words definitely learned.\n¡Sigue así!"),
+                    ui("Word learned", "Palabra aprendida"),
                     JOptionPane.INFORMATION_MESSAGE);
             case MASTERED_REMOVED_EVERYWHERE -> JOptionPane.showMessageDialog(this,
-                    "Congratulations! \"" + word
-                            + "\" reached the maximum review score (35) and is mastered.\nKeep it up!",
-                    "Word learned",
+                    ui("Congratulations! \"" + word
+                                    + "\" reached the maximum review score (35) and is mastered.\nKeep it up!",
+                            "¡Enhorabuena! \"" + word
+                                    + "\" alcanzó el score máximo de repaso (35) y queda dominada.\n¡Sigue así!"),
+                    ui("Word learned", "Palabra aprendida"),
                     JOptionPane.INFORMATION_MESSAGE);
             default -> { }
         }
@@ -983,20 +1013,25 @@ public class LearnedWordsReviewView extends JFrame {
         List<String> parts = new ArrayList<>();
         if (r.answeredCorrectly()) {
             switch (r.outcome()) {
-                case MASTERED_REMOVED_EVERYWHERE -> parts.add("Dominado (35): la expresión sale de todas las bases.");
+                case MASTERED_REMOVED_EVERYWHERE -> parts.add(ui(
+                        "Mastered (35): the expression is removed from all databases.",
+                        "Dominado (35): la expresión sale de todas las bases."));
                 case PROMOTED_TO_DEFINITELY_LEARNED ->
-                        parts.add("28 puntos: pasa a Words definitely learned para seguir repaso (29–35).");
-                default -> parts.add("Correcto (+1).");
+                        parts.add(ui(
+                                "28 points: moves to Words definitely learned for further review (29–35).",
+                                "28 puntos: pasa a Words definitely learned para seguir repaso (29–35)."));
+                default -> parts.add(ui("Correct (+1).", "Correcto (+1)."));
             }
             return String.join("\n", parts);
         }
 
-        parts.add("Esperado: " + quote(r.expectedEnglish()));
-        parts.add("Tu respuesta: " + quote(r.userEntered()));
+        parts.add(ui("Expected: ", "Esperado: ") + quote(r.expectedEnglish()));
+        parts.add(ui("Your answer: ", "Tu respuesta: ") + quote(r.userEntered()));
         if (isDefinitionMode() && r.expectedPracticeSourceDatabase() != null
                 && !r.expectedPracticeSourceDatabase().isBlank()) {
-            parts.add("Base de origen esperada: " + quote(r.expectedPracticeSourceDatabase()));
-            parts.add("Base elegida: " + quote(
+            parts.add(ui("Expected source database: ", "Base de origen esperada: ")
+                    + quote(r.expectedPracticeSourceDatabase()));
+            parts.add(ui("Selected database: ", "Base elegida: ") + quote(
                     Optional.ofNullable(r.userPracticeSourceDatabase()).orElse("—")));
         }
         parts.add("");
@@ -1005,11 +1040,13 @@ public class LearnedWordsReviewView extends JFrame {
     }
 
     private void appendWrongAnswerSummary(List<String> parts, LearnedWordsReviewResult r) {
-        parts.add("Incorrecto (−5).");
+        parts.add(ui("Incorrect (−5).", "Incorrecto (−5)."));
 
         if (r.outcome() == LearnedWordsReviewResult.Outcome.RETURNED_TO_LEARNED) {
-            parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
-                    + ": la expresión vuelve a " + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+            parts.add(ui("Score below " + ReviewDatabases.DEFINITELY_REVIEW_DEMOTION_UNDER_SCORE
+                            + ": the expression returns to " + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".",
+                    "Score por debajo de " + ReviewDatabases.DEFINITELY_REVIEW_DEMOTION_UNDER_SCORE
+                            + ": la expresión vuelve a " + ReviewDatabases.LEARNED_WORDS_DISPLAY + "."));
             return;
         }
 
@@ -1023,37 +1060,48 @@ public class LearnedWordsReviewView extends JFrame {
         }
 
         if (isDefinitionMode() && r.expressionMatched()) {
-            parts.add("Expresión correcta, pero la base de origen no coincide.");
+            parts.add(ui("Expression correct, but the source database does not match.",
+                    "Expresión correcta, pero la base de origen no coincide."));
         }
         appendPracticeReturnMessage(parts, r, false);
     }
 
     private void appendPracticeReturnMessage(List<String> parts, LearnedWordsReviewResult r, boolean demoted) {
-        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
         if (isDefinitelyReviewDatabase()) {
+            int threshold = ReviewDatabases.DEFINITELY_REVIEW_DEMOTION_UNDER_SCORE;
             if (demoted) {
-                parts.add("Score por debajo de " + threshold + ": la expresión vuelve a "
-                        + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+                parts.add(ui("Score below " + threshold + ": the expression returns to "
+                                + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".",
+                        "Score por debajo de " + threshold + ": la expresión vuelve a "
+                                + ReviewDatabases.LEARNED_WORDS_DISPLAY + "."));
             } else {
                 int score = r.scoreAfter();
-                parts.add("Permanece en " + currentReviewDisplayName() + " (score " + score + ")."
-                        + " Si un fallo futuro deja el score por debajo de " + threshold + ", volverá a "
-                        + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".");
+                parts.add(ui("Remains in " + currentReviewDisplayName() + " (score " + score + ")."
+                                + " If a future mistake leaves the score below " + threshold + ", it will return to "
+                                + ReviewDatabases.LEARNED_WORDS_DISPLAY + ".",
+                        "Permanece en " + currentReviewDisplayName() + " (score " + score + ")."
+                                + " Si un fallo futuro deja el score por debajo de " + threshold + ", volverá a "
+                                + ReviewDatabases.LEARNED_WORDS_DISPLAY + "."));
             }
             return;
         }
 
+        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
         if (demoted) {
             if (isDefinitionMode()) {
                 appendImmediateOriginReturnMessage(parts, r);
             } else {
                 String db = r.restoredToPracticeDatabase();
                 if (db != null && !db.isBlank()) {
-                    parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
-                            + ": la expresión vuelve a práctica (" + db + ").");
+                    parts.add(ui("Score below " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                                    + ": the expression returns to practice (" + db + ").",
+                            "Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                                    + ": la expresión vuelve a práctica (" + db + ")."));
                 } else {
-                    parts.add("Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
-                            + ": la expresión vuelve a práctica.");
+                    parts.add(ui("Score below " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                                    + ": the expression returns to practice.",
+                            "Score por debajo de " + ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE
+                                    + ": la expresión vuelve a práctica."));
                 }
             }
             return;
@@ -1061,20 +1109,26 @@ public class LearnedWordsReviewView extends JFrame {
 
         int score = r.scoreAfter();
         String reviewDb = currentReviewDisplayName();
-        int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
-        String stayLine = "Permanece en " + reviewDb + " (score " + score + ").";
+        String stayLine = ui("Remains in " + reviewDb + " (score " + score + ").",
+                "Permanece en " + reviewDb + " (score " + score + ").");
         if (isDefinitionMode()) {
             String originDb = originDbLabelForWarning(r);
             if (originDb == null || originDb.isBlank()) {
-                parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
-                        + ", volverá a práctica.");
+                parts.add(stayLine + ui(" If a future mistake leaves the score below " + threshold
+                                + ", it will return to practice.",
+                        " Si un fallo futuro deja el score por debajo de " + threshold
+                                + ", volverá a práctica."));
             } else {
-                parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
-                        + ", regresará a su base de origen «" + originDb + "».");
+                parts.add(stayLine + ui(" If a future mistake leaves the score below " + threshold
+                                + ", it will return to its source database «" + originDb + "».",
+                        " Si un fallo futuro deja el score por debajo de " + threshold
+                                + ", regresará a su base de origen «" + originDb + "»."));
             }
         } else {
-            parts.add(stayLine + " Si un fallo futuro deja el score por debajo de " + threshold
-                    + ", volverá a práctica.");
+            parts.add(stayLine + ui(" If a future mistake leaves the score below " + threshold
+                            + ", it will return to practice.",
+                    " Si un fallo futuro deja el score por debajo de " + threshold
+                            + ", volverá a práctica."));
         }
     }
 
@@ -1082,11 +1136,14 @@ public class LearnedWordsReviewView extends JFrame {
         String originDb = originDbLabelForWarning(r);
         int threshold = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
         if (originDb == null || originDb.isBlank()) {
-            parts.add("Score por debajo de " + threshold + ": la expresión vuelve a práctica.");
+            parts.add(ui("Score below " + threshold + ": the expression returns to practice.",
+                    "Score por debajo de " + threshold + ": la expresión vuelve a práctica."));
             return;
         }
-        parts.add("Score por debajo de " + threshold + ": la expresión regresa a su base de origen «"
-                + originDb + "».");
+        parts.add(ui("Score below " + threshold + ": the expression returns to its source database «"
+                        + originDb + "».",
+                "Score por debajo de " + threshold + ": la expresión regresa a su base de origen «"
+                        + originDb + "»."));
     }
 
     private static String originDbLabelForWarning(LearnedWordsReviewResult r) {

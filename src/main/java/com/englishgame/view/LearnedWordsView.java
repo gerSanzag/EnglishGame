@@ -1,5 +1,6 @@
 package com.englishgame.view;
 
+import com.englishgame.UiText;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.util.InclusionDisplay;
@@ -93,9 +94,14 @@ public class LearnedWordsView extends JFrame {
         log.info("Learned words window initialized");
     }
 
+    private String ui(String en, String es) {
+        return UiText.t(gameController.getAppGameMode(), en, es);
+    }
+
     private void initComponents() {
         // Learned words table
-        String[] columnNames = {"Expression", "Translation", "Score", "Inclusión", "BBDD origen", "Move", "Delete"};
+        String[] columnNames = {"Expression", "Translation", "Score",
+                ui("Added", "Inclusión"), ui("Source database", "BBDD origen"), "Move", "Delete"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -105,7 +111,9 @@ public class LearnedWordsView extends JFrame {
         learnedWordsTable = new JTable(tableModel);
         learnedWordsTable.setRowHeight(35);
         learnedWordsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        learnedWordsTable.setToolTipText("Mantén Ctrl/Cmd o Shift para seleccionar varias filas; usa los botones de grupo.");
+        learnedWordsTable.setToolTipText(ui(
+                "Hold Ctrl/Cmd or Shift to select multiple rows; use the bulk buttons.",
+                "Mantén Ctrl/Cmd o Shift para seleccionar varias filas; usa los botones de grupo."));
         
         // Set custom renderer for button columns
         learnedWordsTable.getColumn("Move").setCellRenderer(new ButtonRenderer("Move"));
@@ -121,28 +129,36 @@ public class LearnedWordsView extends JFrame {
 
         String promptSort = gameController.getAppGameMode().getBrowseSortPromptLabel() + " (A-Z)";
         sortSelector = new JComboBox<>(new String[] {
-                promptSort, "Inglés (A-Z)", "Score (mayor a menor)",
-                "Inclusión (reciente primero)", "Inclusión (antigua primero)",
-                "BBDD origen (A-Z)"
+                promptSort,
+                ui("English (A-Z)", "Inglés (A-Z)"),
+                ui("Score (high to low)", "Score (mayor a menor)"),
+                ui("Inclusion (newest first)", "Inclusión (reciente primero)"),
+                ui("Inclusion (oldest first)", "Inclusión (antigua primero)"),
+                ui("Source database (A-Z)", "BBDD origen (A-Z)")
         });
         sortSelector.setPreferredSize(new Dimension(300, 30));
-        sortSelector.setToolTipText("Ordena por prompt, inglés, score, inclusión o base de práctica de origen");
+        sortSelector.setToolTipText(ui(
+                "Sort by prompt, English, score, inclusion date, or practice source database",
+                "Ordena por prompt, inglés, score, inclusión o base de práctica de origen"));
 
-        recordsCountLabel = new JLabel("Registros: 0");
+        recordsCountLabel = new JLabel(ui("Records: 0", "Registros: 0"));
         recordsCountLabel.setFont(new Font("Arial", Font.BOLD, 13));
         recordsCountLabel.setForeground(new Color(70, 70, 80));
         
         // Buttons
         refreshButton = createStyledButton("Refresh", "Refresh the learned words list");
         deleteAllButton = createStyledButton("Delete All", "Delete all learned words");
-        moveSelectedButton = createStyledButton("Mover seleccionados",
-                "Mueve las filas seleccionadas a una base de práctica");
-        deleteSelectedButton = createStyledButton("Borrar seleccionados",
-                "Elimina las filas seleccionadas de Learned Words");
-        selectAllRowsButton = createStyledButton("Seleccionar todo",
-                "Selecciona todas las filas visibles en la tabla");
-        clearSelectionButton = createStyledButton("Quitar selección",
-                "Deselecciona todas las filas");
+        moveSelectedButton = createStyledButton(ui("Move selected", "Mover seleccionados"),
+                ui("Move selected rows to a practice database",
+                        "Mueve las filas seleccionadas a una base de práctica"));
+        deleteSelectedButton = createStyledButton(ui("Delete selected", "Borrar seleccionados"),
+                ui("Delete selected rows from Learned Words",
+                        "Elimina las filas seleccionadas de Learned Words"));
+        selectAllRowsButton = createStyledButton(ui("Select all", "Seleccionar todo"),
+                ui("Select all visible rows in the table",
+                        "Selecciona todas las filas visibles en la tabla"));
+        clearSelectionButton = createStyledButton(ui("Clear selection", "Quitar selección"),
+                ui("Deselect all rows", "Deselecciona todas las filas"));
         reviewButton = createStyledButton("Review", "Review learned words");
         backToLandingButton = createStyledButton("Back to Main Menu", "Return to main menu");
         dataManagementButton = createStyledButton("Manage Data", "Go to data management");
@@ -205,11 +221,12 @@ public class LearnedWordsView extends JFrame {
         // Assign colors based on button function
         if (buttonText.contains("Refresh")) {
             return new Color(59, 130, 246); // Vibrant blue for refresh
-        } else if (buttonText.contains("Borrar seleccionados")) {
+        } else if (buttonText.contains("Delete selected") || buttonText.contains("Borrar seleccionados")) {
             return new Color(220, 38, 127);
-        } else if (buttonText.contains("Mover seleccionados")) {
+        } else if (buttonText.contains("Move selected") || buttonText.contains("Mover seleccionados")) {
             return new Color(245, 158, 11);
-        } else if (buttonText.contains("Seleccionar") || buttonText.contains("Quitar selección")) {
+        } else if (buttonText.contains("Select all") || buttonText.contains("Seleccionar")
+                || buttonText.contains("Clear selection") || buttonText.contains("Quitar selección")) {
             return new Color(100, 116, 139);
         } else if (buttonText.contains("Delete") && buttonText.contains("All")) {
             return new Color(220, 38, 127); // Vibrant pink for delete all
@@ -258,7 +275,7 @@ public class LearnedWordsView extends JFrame {
         searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
         searchPanel.add(Box.createHorizontalStrut(10));
-        searchPanel.add(new JLabel("Orden:"));
+        searchPanel.add(new JLabel(ui("Sort:", "Orden:")));
         searchPanel.add(sortSelector);
         searchPanel.add(Box.createHorizontalStrut(14));
         searchPanel.add(recordsCountLabel);
@@ -377,7 +394,8 @@ public class LearnedWordsView extends JFrame {
             
         } catch (Exception e) {
             log.error("Error refreshing learned words table", e);
-            JOptionPane.showMessageDialog(this, "Error loading learned words: " + e.getMessage(), 
+            JOptionPane.showMessageDialog(this,
+                    ui("Error loading learned words: ", "Error al cargar palabras aprendidas: ") + e.getMessage(),
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -439,7 +457,7 @@ public class LearnedWordsView extends JFrame {
             });
         }
 
-        recordsCountLabel.setText("Registros: " + filtered.size());
+        recordsCountLabel.setText(ui("Records: ", "Registros: ") + filtered.size());
         log.debug("Learned words table filtered with search text: '{}', showing {} rows", searchText, model.getRowCount());
     }
 
@@ -476,19 +494,19 @@ public class LearnedWordsView extends JFrame {
         if (selected == null) {
             return SortMode.SPANISH_AZ;
         }
-        if (selected.startsWith("Ingl")) {
+        if (selected.startsWith("Ingl") || selected.startsWith("English")) {
             return SortMode.ENGLISH_AZ;
         }
         if (selected.startsWith("Score")) {
             return SortMode.SCORE_DESC;
         }
-        if (selected.startsWith("Inclusión")) {
-            if (selected.contains("reciente")) {
+        if (selected.startsWith("Inclusión") || selected.startsWith("Inclusion")) {
+            if (selected.contains("reciente") || selected.contains("newest")) {
                 return SortMode.INCLUSION_DESC;
             }
             return SortMode.INCLUSION_ASC;
         }
-        if (selected.startsWith("BBDD origen")) {
+        if (selected.startsWith("BBDD origen") || selected.startsWith("Source database")) {
             return SortMode.SOURCE_DB_AZ;
         }
         return SortMode.SPANISH_AZ;
@@ -496,8 +514,10 @@ public class LearnedWordsView extends JFrame {
 
     private void deleteAllLearnedWords() {
         int result = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete ALL learned words?\n\nThis action cannot be undone!",
-            "Confirm Delete All", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            ui("Are you sure you want to delete ALL learned words?\n\nThis action cannot be undone!",
+                    "¿Seguro de borrar TODAS las palabras aprendidas?\n\nEsta acción no se puede deshacer."),
+            ui("Confirm Delete All", "Confirmar borrar todo"),
+            JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         
         if (result == JOptionPane.YES_OPTION) {
             try {
@@ -505,17 +525,22 @@ public class LearnedWordsView extends JFrame {
                 boolean deleted = gameController.deleteAllExpressions(LEARNED_WORDS_DB);
                 if (deleted) {
                     JOptionPane.showMessageDialog(this,
-                            "Se eliminaron todas las palabras aprendidas.",
-                            "Borrado completado", JOptionPane.INFORMATION_MESSAGE);
+                            ui("All learned words were deleted.",
+                                    "Se eliminaron todas las palabras aprendidas."),
+                            ui("Delete completed", "Borrado completado"),
+                            JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this,
-                            "No había palabras aprendidas que borrar.",
-                            "Sin datos", JOptionPane.INFORMATION_MESSAGE);
+                            ui("There were no learned words to delete.",
+                                    "No había palabras aprendidas que borrar."),
+                            ui("No data", "Sin datos"), JOptionPane.INFORMATION_MESSAGE);
                 }
                 refreshLearnedWordsTable();
             } catch (Exception e) {
                 log.error("Error deleting all learned words", e);
-                JOptionPane.showMessageDialog(this, "Error al borrar palabras aprendidas: " + e.getMessage(),
+                JOptionPane.showMessageDialog(this,
+                        ui("Error deleting learned words: ", "Error al borrar palabras aprendidas: ")
+                                + e.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -525,7 +550,8 @@ public class LearnedWordsView extends JFrame {
         log.info("Review learned words requested");
         if (!gameController.hasAnyReviewContent()) {
             JOptionPane.showMessageDialog(this,
-                    "No hay expresiones en Learned words ni en Words definitely learned para repasar.",
+                    ui("No expressions in Learned words or Words definitely learned to review.",
+                            "No hay expresiones en Learned words ni en Words definitely learned para repasar."),
                     "Review", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -566,21 +592,24 @@ public class LearnedWordsView extends JFrame {
         List<String> expressions = selectedExpressionsFromTable();
         if (expressions.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
-                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+                    ui("Select one or more rows in the table (Ctrl/Cmd or Shift + click).",
+                            "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic)."),
+                    ui("No selection", "Sin selección"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         List<String> targets = new ArrayList<>(gameController.getMoveTargetsFromLearnedWordsDatabase());
         if (targets.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "No hay ninguna base de vocabulario disponible como destino.",
-                    "Sin destino", JOptionPane.INFORMATION_MESSAGE);
+                    ui("No vocabulary database is available as a destination.",
+                            "No hay ninguna base de vocabulario disponible como destino."),
+                    ui("No destination", "Sin destino"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         String targetDatabase = (String) JOptionPane.showInputDialog(
                 this,
-                "Destino para " + expressions.size() + " expresión(es):",
-                "Mover seleccionados",
+                ui("Destination for " + expressions.size() + " expression(s):",
+                        "Destino para " + expressions.size() + " expresión(es):"),
+                ui("Move selected", "Mover seleccionados"),
                 JOptionPane.QUESTION_MESSAGE,
                 null,
                 targets.toArray(),
@@ -589,9 +618,11 @@ public class LearnedWordsView extends JFrame {
             return;
         }
         int confirm = JOptionPane.showConfirmDialog(this,
-                "¿Mover " + expressions.size() + " expresión(es) de Learned Words a \""
-                        + targetDatabase + "\"?",
-                "Confirmar movimiento en grupo",
+                ui("Move " + expressions.size() + " expression(s) from Learned Words to \""
+                                + targetDatabase + "\"?",
+                        "¿Mover " + expressions.size() + " expresión(es) de Learned Words a \""
+                                + targetDatabase + "\"?"),
+                ui("Confirm bulk move", "Confirmar movimiento en grupo"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.QUESTION_MESSAGE);
         if (confirm != JOptionPane.YES_OPTION) {
@@ -613,8 +644,9 @@ public class LearnedWordsView extends JFrame {
         }
         refreshLearnedWordsTable();
         JOptionPane.showMessageDialog(this,
-                "Movidas: " + moved + (failed > 0 ? "\nNo movidas: " + failed : ""),
-                "Movimiento en grupo",
+                ui("Moved: ", "Movidas: ") + moved
+                        + (failed > 0 ? "\n" + ui("Not moved: ", "No movidas: ") + failed : ""),
+                ui("Bulk move", "Movimiento en grupo"),
                 failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -622,13 +654,15 @@ public class LearnedWordsView extends JFrame {
         List<String> expressions = selectedExpressionsFromTable();
         if (expressions.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic).",
-                    "Sin selección", JOptionPane.WARNING_MESSAGE);
+                    ui("Select one or more rows in the table (Ctrl/Cmd or Shift + click).",
+                            "Selecciona una o más filas en la tabla (Ctrl/Cmd o Shift + clic)."),
+                    ui("No selection", "Sin selección"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         int confirm = JOptionPane.showConfirmDialog(this,
-                "¿Borrar " + expressions.size() + " expresión(es) de Learned Words permanentemente?",
-                "Confirmar borrado en grupo",
+                ui("Delete " + expressions.size() + " expression(s) from Learned Words permanently?",
+                        "¿Borrar " + expressions.size() + " expresión(es) de Learned Words permanentemente?"),
+                ui("Confirm bulk delete", "Confirmar borrado en grupo"),
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
         if (confirm != JOptionPane.YES_OPTION) {
@@ -650,8 +684,9 @@ public class LearnedWordsView extends JFrame {
         }
         refreshLearnedWordsTable();
         JOptionPane.showMessageDialog(this,
-                "Borradas: " + deleted + (failed > 0 ? "\nNo borradas: " + failed : ""),
-                "Borrado en grupo",
+                ui("Deleted: ", "Borradas: ") + deleted
+                        + (failed > 0 ? "\n" + ui("Not deleted: ", "No borradas: ") + failed : ""),
+                ui("Bulk delete", "Borrado en grupo"),
                 failed > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -662,14 +697,17 @@ public class LearnedWordsView extends JFrame {
         List<String> targets = new ArrayList<>(gameController.getMoveTargetsFromLearnedWordsDatabase());
         if (targets.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "No other vocabulary database is available to move this word into.",
-                    "No Target Database", JOptionPane.INFORMATION_MESSAGE);
+                    ui("No other vocabulary database is available to move this word into.",
+                            "No hay otra base de vocabulario disponible como destino."),
+                    ui("No Target Database", "Sin base de destino"),
+                    JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         String targetDatabase = (String) JOptionPane.showInputDialog(
                 this,
-                "Move English expression '" + englishExpression + "' from learned words to:",
-                "Move to Vocabulary",
+                ui("Move English expression '" + englishExpression + "' from learned words to:",
+                        "Mover la expresión '" + englishExpression + "' desde learned words a:"),
+                ui("Move to Vocabulary", "Mover a vocabulario"),
                 JOptionPane.QUESTION_MESSAGE,
                 null,
                 targets.toArray(),
@@ -678,8 +716,10 @@ public class LearnedWordsView extends JFrame {
             return;
         }
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Move '" + englishExpression + "' from learned words to '" + targetDatabase + "'?",
-                "Confirm Move", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                ui("Move '" + englishExpression + "' from learned words to '" + targetDatabase + "'?",
+                        "¿Mover '" + englishExpression + "' de learned words a '" + targetDatabase + "'?"),
+                ui("Confirm Move", "Confirmar movimiento"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (confirm != JOptionPane.YES_OPTION) {
             return;
         }
@@ -687,17 +727,24 @@ public class LearnedWordsView extends JFrame {
             boolean moved = gameController.moveExpression(LEARNED_WORDS_DB, targetDatabase, englishExpression);
             if (moved) {
                 JOptionPane.showMessageDialog(this,
-                        "Moved '" + englishExpression + "' to '" + targetDatabase + "'.",
-                        "Move Successful", JOptionPane.INFORMATION_MESSAGE);
+                        ui("Moved '" + englishExpression + "' to '" + targetDatabase + "'.",
+                                "Movida '" + englishExpression + "' a '" + targetDatabase + "'."),
+                        ui("Move Successful", "Movimiento correcto"),
+                        JOptionPane.INFORMATION_MESSAGE);
                 refreshLearnedWordsTable();
             } else {
                 JOptionPane.showMessageDialog(this,
-                        "Could not move '" + englishExpression + "'. It may no longer be in learned words.",
-                        "Move Failed", JOptionPane.ERROR_MESSAGE);
+                        ui("Could not move '" + englishExpression
+                                        + "'. It may no longer be in learned words.",
+                                "No se pudo mover '" + englishExpression
+                                        + "'. Puede que ya no esté en learned words."),
+                        ui("Move Failed", "Movimiento fallido"),
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             log.error("Error moving learned word", e);
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Error: ", "Error: ") + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -706,8 +753,10 @@ public class LearnedWordsView extends JFrame {
             return;
         }
         int result = JOptionPane.showConfirmDialog(this,
-                "Delete learned word '" + englishExpression + "' permanently?",
-                "Confirm Delete", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                ui("Delete learned word '" + englishExpression + "' permanently?",
+                        "¿Borrar permanentemente la palabra aprendida '" + englishExpression + "'?"),
+                ui("Confirm Delete", "Confirmar borrado"),
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (result != JOptionPane.YES_OPTION) {
             return;
         }
@@ -715,17 +764,22 @@ public class LearnedWordsView extends JFrame {
             boolean deleted = gameController.deleteExpression(LEARNED_WORDS_DB, englishExpression);
             if (deleted) {
                 JOptionPane.showMessageDialog(this,
-                        "Deleted '" + englishExpression + "' from learned words.",
-                        "Delete Successful", JOptionPane.INFORMATION_MESSAGE);
+                        ui("Deleted '" + englishExpression + "' from learned words.",
+                                "Borrada '" + englishExpression + "' de learned words."),
+                        ui("Delete Successful", "Borrado correcto"),
+                        JOptionPane.INFORMATION_MESSAGE);
                 refreshLearnedWordsTable();
             } else {
                 JOptionPane.showMessageDialog(this,
-                        "Could not delete '" + englishExpression + "'.",
-                        "Delete Failed", JOptionPane.ERROR_MESSAGE);
+                        ui("Could not delete '" + englishExpression + "'.",
+                                "No se pudo borrar '" + englishExpression + "'."),
+                        ui("Delete Failed", "Borrado fallido"),
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             log.error("Error deleting learned word", e);
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Error: ", "Error: ") + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

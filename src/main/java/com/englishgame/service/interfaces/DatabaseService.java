@@ -202,7 +202,7 @@ public interface DatabaseService {
 
     /**
      * Review en cualquier BBDD de {@link com.englishgame.model.ReviewDatabases}: +1/−5. En {@code learned_words},
-     * score &lt; 21 → práctica; en {@code words_definitely_learned}, score &lt; 21 → {@code learned_words}; dominio en 35.
+     * score &lt; 21 → práctica; en {@code words_definitely_learned}, score &lt; 28 → {@code learned_words}; dominio en 35.
      *
      * @param reviewDatabaseName clave canónica o nombre mostrado de una BBDD de review.
      * @param requirePracticeSourceMatch si {@code true} (modo definición), también debe acertar la BBDD de origen.

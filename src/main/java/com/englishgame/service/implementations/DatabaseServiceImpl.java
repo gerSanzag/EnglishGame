@@ -1,6 +1,7 @@
 package com.englishgame.service.implementations;
 
 import com.englishgame.AppGameMode;
+import com.englishgame.UiText;
 import com.englishgame.model.LearnedWordsReviewResult;
 import com.englishgame.model.ReviewDatabases;
 import com.englishgame.model.SpanishExpression;
@@ -29,7 +30,9 @@ public class DatabaseServiceImpl implements DatabaseService {
     /** Review learned_words: +1 / −5; reapertura a práctica bajo este umbral. */
     private static final int LEARNED_REVIEW_DEMOTION_UNDER = ReviewDatabases.REVIEW_DEMOTION_UNDER_SCORE;
     /** learned_words: al alcanzar esta puntuación pasa a words_definitely_learned (no se purga). */
-    private static final int LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT = 28;
+    private static final int LEARNED_REVIEW_GRADUATE_TO_DEFINITELY_AT = ReviewDatabases.LEARNED_REVIEW_GRADUATE_SCORE;
+    /** words_definitely_learned: bajo este score tras fallo → vuelta a learned_words. */
+    private static final int DEFINITELY_REVIEW_DEMOTION_UNDER = ReviewDatabases.DEFINITELY_REVIEW_DEMOTION_UNDER_SCORE;
     /** words_definitely_learned: dominio final y purga en todas las BBDD. */
     private static final int DEFINITELY_REVIEW_MASTER_AT = ReviewDatabases.DEFINITELY_REVIEW_MASTER_SCORE;
 
@@ -764,7 +767,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                     learnedCard.setScore(prior);
                     gameDataService.saveGameData();
                     JOptionPane.showMessageDialog(null,
-                            "No se pudo mover la expresión a Words definitely learned.",
+                            ui("Could not move the expression to Words definitely learned.",
+                                    "No se pudo mover la expresión a Words definitely learned."),
                             "Review Learned Words", JOptionPane.WARNING_MESSAGE);
                     return Optional.of(reviewResult(
                             LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, true, prior, expectedRaw, typed, null,
@@ -787,7 +791,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         int penalized = Math.max(0, prior - 5);
         learnedCard.setScore(penalized);
         if (definitelyReview) {
-            if (penalized < LEARNED_REVIEW_DEMOTION_UNDER) {
+            if (penalized < DEFINITELY_REVIEW_DEMOTION_UNDER) {
                 if (returnDefinitelyLearnedCardToLearned(learnedCard, learnedBucket)) {
                     gameDataService.saveGameData();
                     return Optional.of(reviewResult(
@@ -800,7 +804,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                 learnedCard.setScore(prior);
                 gameDataService.saveGameData();
                 JOptionPane.showMessageDialog(null,
-                        "No se pudo devolver la expresión a Learned words.",
+                        ui("Could not return the expression to Learned words.",
+                                "No se pudo devolver la expresión a Learned words."),
                         "Review Learned Words", JOptionPane.WARNING_MESSAGE);
                 return Optional.of(reviewResult(
                         LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null,
@@ -829,7 +834,8 @@ public class DatabaseServiceImpl implements DatabaseService {
             learnedCard.setScore(prior);
             gameDataService.saveGameData();
             JOptionPane.showMessageDialog(null,
-                    "No se pudo devolver la expresión a la base de práctica (sin frase español enlazada o sin BBDD de destino). El score anterior se mantuvo.",
+                    ui("Could not return the expression to the practice database (no linked prompt or no target database). The previous score was kept.",
+                            "No se pudo devolver la expresión a la base de práctica (sin frase español enlazada o sin BBDD de destino). El score anterior se mantuvo."),
                     "Review Learned Words", JOptionPane.WARNING_MESSAGE);
             return Optional.of(reviewResult(
                     LearnedWordsReviewResult.Outcome.STILL_IN_LEARNED, false, prior, expectedRaw, typed, null,
@@ -912,6 +918,36 @@ public class DatabaseServiceImpl implements DatabaseService {
         return true;
     }
 
+    /**
+     * Repara datos legacy: entradas en {@code words_definitely_learned} con score &lt; 28 vuelven a
+     * {@code learned_words} (p. ej. sancionadas antes de corregir el umbral de degradación).
+     */
+    private void reconcileDefinitelyBelowGraduateScore() {
+        Set<EnglishExpression> definitelyBucket = englishDatabases.get(WORDS_DEFINITELY_LEARNED_DATABASE);
+        if (definitelyBucket == null || definitelyBucket.isEmpty()) {
+            return;
+        }
+        List<EnglishExpression> toMove = definitelyBucket.stream()
+                .filter(card -> card != null && card.getScore() < DEFINITELY_REVIEW_DEMOTION_UNDER)
+                .toList();
+        if (toMove.isEmpty()) {
+            return;
+        }
+        int moved = 0;
+        for (EnglishExpression card : toMove) {
+            if (returnDefinitelyLearnedCardToLearned(card, definitelyBucket)) {
+                moved++;
+            }
+        }
+        if (moved > 0) {
+            log.info("Reconciled {} expression(s) from words_definitely_learned to learned_words (score < {})",
+                    moved, DEFINITELY_REVIEW_DEMOTION_UNDER);
+            if (!loadingFromRepository) {
+                gameDataService.saveGameData();
+            }
+        }
+    }
+
     private boolean returnDefinitelyLearnedCardToLearned(EnglishExpression card,
             Set<EnglishExpression> definitelyBucket) {
         Set<EnglishExpression> learnedBucket = englishDatabases.get(LEARNED_WORDS_DATABASE);
@@ -951,7 +987,8 @@ public class DatabaseServiceImpl implements DatabaseService {
             Optional<String> auto = resolveAutomaticPracticeDatabaseForDemotion(card);
             if (auto.isEmpty()) {
                 JOptionPane.showMessageDialog(null,
-                        "No hay ninguna base de vocabulario donde reincorporar la expresión.",
+                        ui("There is no vocabulary database where the expression can be reinserted.",
+                                "No hay ninguna base de vocabulario donde reincorporar la expresión."),
                         "Review Learned Words", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
@@ -966,7 +1003,8 @@ public class DatabaseServiceImpl implements DatabaseService {
         String spanishPhrase = firstSpanishPhraseFor(card);
         if (spanishPhrase == null || spanishPhrase.trim().isEmpty()) {
             JOptionPane.showMessageDialog(null,
-                    "Esta entrada en learned_words no lleva texto español enlazado; no se puede reubicar.",
+                    ui("This learned_words entry has no linked prompt text; it cannot be relocated.",
+                            "Esta entrada en learned_words no lleva texto español enlazado; no se puede reubicar."),
                     "Review Learned Words", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -1152,10 +1190,11 @@ public class DatabaseServiceImpl implements DatabaseService {
             definitelyMasteredTotal = 0;
             initializeDefaultDatabases();
             loadDataFromRepository();
-            log.info("Database synchronization completed. Available databases: {}", getAvailableDatabases());
         } finally {
             loadingFromRepository = false;
         }
+        reconcileDefinitelyBelowGraduateScore();
+        log.info("Database synchronization completed. Available databases: {}", getAvailableDatabases());
     }
 
     /** Solo memoria: usado al cargar JSON; no persiste (evita sobrescribir game_data.json a medias). */
@@ -1615,6 +1654,10 @@ public class DatabaseServiceImpl implements DatabaseService {
             return impl.getAppGameMode();
         }
         return AppGameMode.CLASSIC;
+    }
+
+    private String ui(String en, String es) {
+        return UiText.t(resolveAppGameMode(), en, es);
     }
 
     private void populatePromptExpressionMap(Map<String, Object> expressionData, String databaseName,

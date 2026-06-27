@@ -1,6 +1,7 @@
 package com.englishgame.view;
 
 import com.englishgame.AppGameMode;
+import com.englishgame.UiText;
 import com.englishgame.controller.GameController;
 import com.englishgame.model.EnglishExpression;
 import com.englishgame.model.SpanishExpression;
@@ -26,8 +27,6 @@ public class DataManagementView extends JFrame {
     /**
      * No es el nombre de una BBDD: fuerza elegir una opción real para evitar añadir datos a la primera de la lista por descuido.
      */
-    private static final String DB_SELECTOR_PLACEHOLDER = "— Selecciona una base de datos —";
-
     private final GameController gameController;
     private final LandingPageView landingPage;
 
@@ -86,6 +85,14 @@ public class DataManagementView extends JFrame {
 
     private boolean isDefinitionMode() {
         return gameController.getAppGameMode() == AppGameMode.DEFINITION;
+    }
+
+    private String ui(String en, String es) {
+        return UiText.t(gameController.getAppGameMode(), en, es);
+    }
+
+    private String dbSelectorPlaceholder() {
+        return ui("— Select a database —", "— Selecciona una base de datos —");
     }
 
     private String readPromptInput() {
@@ -376,7 +383,7 @@ public class DataManagementView extends JFrame {
     private void refreshDatabaseSelector() {
         String previouslySelected = (String) databaseSelector.getSelectedItem();
         databaseSelector.removeAllItems();
-        databaseSelector.addItem(DB_SELECTOR_PLACEHOLDER);
+        databaseSelector.addItem(dbSelectorPlaceholder());
         gameController.getAvailableDatabases().forEach(databaseSelector::addItem);
         if (previouslySelected != null && !isNoDatabaseSelected(previouslySelected)) {
             String match = gameController.getAvailableDatabases().stream()
@@ -396,7 +403,7 @@ public class DataManagementView extends JFrame {
     }
 
     private boolean isNoDatabaseSelected(String item) {
-        return item == null || item.trim().isEmpty() || DB_SELECTOR_PLACEHOLDER.equals(item);
+        return item == null || item.trim().isEmpty() || dbSelectorPlaceholder().equals(item);
     }
 
     private Optional<String> selectedWorkingDatabase() {
@@ -412,15 +419,18 @@ public class DataManagementView extends JFrame {
         if (isNoDatabaseSelected(selectedDb)) {
             renameDatabaseButton.setEnabled(false);
             deleteDatabaseButton.setEnabled(false);
-            renameDatabaseButton.setToolTipText("Selecciona una base de datos para renombrar.");
-            deleteDatabaseButton.setToolTipText("Selecciona una base de datos para eliminar.");
+            renameDatabaseButton.setToolTipText(ui("Select a database to rename.",
+                    "Selecciona una base de datos para renombrar."));
+            deleteDatabaseButton.setToolTipText(ui("Select a database to delete.",
+                    "Selecciona una base de datos para eliminar."));
             return;
         }
         boolean systemDb = gameController.isSystemDatabase(selectedDb.trim());
         renameDatabaseButton.setEnabled(!systemDb);
         deleteDatabaseButton.setEnabled(!systemDb);
         if (systemDb) {
-            String tip = "Database de sistema: no se puede renombrar ni eliminar.";
+            String tip = ui("System database: cannot be renamed or deleted.",
+                    "Database de sistema: no se puede renombrar ni eliminar.");
             renameDatabaseButton.setToolTipText(tip);
             deleteDatabaseButton.setToolTipText(tip);
         } else {
@@ -433,8 +443,8 @@ public class DataManagementView extends JFrame {
         // Show input dialog to get database name
         String dbName = JOptionPane.showInputDialog(
             this,
-            "Enter the name for the new database:",
-            "Create New Database",
+            ui("Enter the name for the new database:", "Introduce el nombre de la nueva base de datos:"),
+            ui("Create New Database", "Crear nueva base de datos"),
             JOptionPane.QUESTION_MESSAGE
         );
         
@@ -449,8 +459,9 @@ public class DataManagementView extends JFrame {
         if (gameController.createNewDatabase(dbName)) {
             JOptionPane.showMessageDialog(
                 this, 
-                "Database '" + dbName + "' created successfully!",
-                "Success",
+                ui("Database '" + dbName + "' created successfully!",
+                        "Base de datos '" + dbName + "' creada correctamente."),
+                ui("Success", "Correcto"),
                 JOptionPane.INFORMATION_MESSAGE
             );
             refreshDatabaseSelector();
@@ -459,7 +470,8 @@ public class DataManagementView extends JFrame {
         } else {
             JOptionPane.showMessageDialog(
                 this, 
-                "Failed to create database '" + dbName + "'. It might already exist.",
+                ui("Failed to create database '" + dbName + "'. It might already exist.",
+                        "No se pudo crear la base '" + dbName + "'. Puede que ya exista."),
                 "Error", 
                 JOptionPane.ERROR_MESSAGE
             );
@@ -469,35 +481,39 @@ public class DataManagementView extends JFrame {
     private void renameDatabase() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (isNoDatabaseSelected(selectedDb)) {
-            JOptionPane.showMessageDialog(this, "Selecciona una base de datos para renombrar.", "Sin selección",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Select a database to rename.", "Selecciona una base de datos para renombrar."),
+                    ui("No selection", "Sin selección"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         if (gameController.isSystemDatabase(selectedDb.trim())) {
             JOptionPane.showMessageDialog(this,
-                    "Esta database de sistema no se puede renombrar.",
-                    "Not allowed",
-                    JOptionPane.WARNING_MESSAGE);
+                    ui("This system database cannot be renamed.",
+                            "Esta database de sistema no se puede renombrar."),
+                    "Not allowed", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         String newName = JOptionPane.showInputDialog(this,
-                "New name for database '" + selectedDb + "':",
-                "Rename database",
+                ui("New name for database '" + selectedDb + "':",
+                        "Nuevo nombre para la base '" + selectedDb + "':"),
+                ui("Rename database", "Renombrar base de datos"),
                 JOptionPane.PLAIN_MESSAGE);
         if (newName == null) {
             return;
         }
         String trimmed = newName.trim();
         if (trimmed.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a non-empty name.", "Error",
+            JOptionPane.showMessageDialog(this,
+                    ui("Please enter a non-empty name.", "Introduce un nombre no vacío."),
+                    "Error",
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (trimmed.equals(selectedDb.trim())) {
             JOptionPane.showMessageDialog(this,
-                    "The name is unchanged.",
-                    "Rename database",
+                    ui("The name is unchanged.", "El nombre no ha cambiado."),
+                    ui("Rename database", "Renombrar base de datos"),
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
@@ -506,14 +522,16 @@ public class DataManagementView extends JFrame {
             refreshDatabaseSelector();
             databaseSelector.setSelectedItem(trimmed);
             JOptionPane.showMessageDialog(this,
-                    "Database renamed successfully to \"" + trimmed + "\".",
-                    "Success",
+                    ui("Database renamed successfully to \"" + trimmed + "\".",
+                            "Base renombrada correctamente a \"" + trimmed + "\"."),
+                    ui("Success", "Correcto"),
                     JOptionPane.INFORMATION_MESSAGE);
             log.info("Renamed database from '{}' to '{}'", selectedDb, trimmed);
         } else {
             JOptionPane.showMessageDialog(this,
-                    "Could not rename. The new name might already exist, or an internal error occurred.",
-                    "Rename failed",
+                    ui("Could not rename. The new name might already exist, or an internal error occurred.",
+                            "No se pudo renombrar. El nombre nuevo puede existir ya, o hubo un error interno."),
+                    ui("Rename failed", "Renombrado fallido"),
                     JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -521,26 +539,35 @@ public class DataManagementView extends JFrame {
     private void deleteDatabase() {
         String selectedDb = (String) databaseSelector.getSelectedItem();
         if (isNoDatabaseSelected(selectedDb)) {
-            JOptionPane.showMessageDialog(this, "Selecciona una base de datos para eliminar.", "Sin selección",
-                    JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Select a database to delete.", "Selecciona una base de datos para eliminar."),
+                    ui("No selection", "Sin selección"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         
         if (gameController.isSystemDatabase(selectedDb)) {
-            JOptionPane.showMessageDialog(this, "Cannot delete a system database", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Cannot delete a system database.",
+                            "No se aplica borrar una base de sistema."),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         // Get expression count for confirmation message
         int expressionCount = gameController.getSpanishExpressionsFromDatabase(selectedDb).size();
-        String confirmationMessage = String.format(
-            "Are you sure you want to delete database '%s'?\n\nThis will permanently remove %d expression(s) and cannot be undone.",
-            selectedDb, expressionCount
-        );
+        String confirmationMessage = ui(
+                String.format(
+                        "Are you sure you want to delete database '%s'?\n\n"
+                                + "This will permanently remove %d expression(s) and cannot be undone.",
+                        selectedDb, expressionCount),
+                String.format(
+                        "¿Seguro de borrar la base '%s'?\n\n"
+                                + "Se eliminarán %d expresión(es) de forma permanente y no se puede deshacer.",
+                        selectedDb, expressionCount));
         
         int result = JOptionPane.showConfirmDialog(this, 
             confirmationMessage, 
-            "Confirm Delete Database", 
+            ui("Confirm Delete Database", "Confirmar borrar base de datos"), 
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE);
         
@@ -548,8 +575,9 @@ public class DataManagementView extends JFrame {
             if (gameController.deleteDatabase(selectedDb)) {
                 JOptionPane.showMessageDialog(
                     this, 
-                    "Database '" + selectedDb + "' deleted successfully!",
-                    "Success",
+                    ui("Database '" + selectedDb + "' deleted successfully!",
+                            "Base '" + selectedDb + "' borrada correctamente."),
+                    ui("Success", "Correcto"),
                     JOptionPane.INFORMATION_MESSAGE
                 );
                 refreshDatabaseSelector();
@@ -557,7 +585,9 @@ public class DataManagementView extends JFrame {
             } else {
                 JOptionPane.showMessageDialog(
                     this, 
-                    "Failed to delete database '" + selectedDb + "'. It may be protected or not exist.",
+                    ui("Failed to delete database '" + selectedDb + "'. It may be protected or not exist.",
+                            "No se pudo borrar la base '" + selectedDb
+                                    + "'. Puede estar protegida o no existir."),
                     "Error", 
                     JOptionPane.ERROR_MESSAGE
                 );
@@ -577,8 +607,10 @@ public class DataManagementView extends JFrame {
         
         Optional<String> dbOpt = selectedWorkingDatabase();
         if (dbOpt.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Selecciona una base de datos antes de añadir expresiones.",
-                    "Sin base de datos", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Select a database before adding expressions.",
+                            "Selecciona una base de datos antes de añadir expresiones."),
+                    ui("No database", "Sin base de datos"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         String selectedDb = dbOpt.get();
@@ -586,7 +618,7 @@ public class DataManagementView extends JFrame {
         if (existsExactPairDuplicate(selectedDb, spanish, english)) {
             JOptionPane.showMessageDialog(this,
                     gameController.getAppGameMode().duplicatePairMessage(selectedDb, spanish, english),
-                    "Duplicado exacto",
+                    ui("Exact duplicate", "Duplicado exacto"),
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -604,7 +636,11 @@ public class DataManagementView extends JFrame {
 
         // Add to database through GameController
         if (gameController.addExpressionToDatabase(selectedDb, spanishExpr)) {
-            JOptionPane.showMessageDialog(this, "Individual expression added successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Individual expression added successfully!",
+                            "Expresión individual añadida correctamente."),
+                    ui("Success", "Correcto"),
+                    JOptionPane.INFORMATION_MESSAGE);
             
             // Clear fields
             clearPromptInput();
@@ -612,7 +648,10 @@ public class DataManagementView extends JFrame {
             
             log.info("Individual expression added: '{}' - '{}'", spanish, english);
         } else {
-            JOptionPane.showMessageDialog(this, "Failed to add expression to database", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Failed to add expression to database.",
+                            "No se pudo añadir la expresión a la base de datos."),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -723,14 +762,19 @@ public class DataManagementView extends JFrame {
     private void processBulkData() {
         String content = bulkTextArea.getText().trim();
         if (content.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter some expressions to process", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Please enter some expressions to process.",
+                            "Introduce expresiones para procesar."),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
         
         Optional<String> dbOpt = selectedWorkingDatabase();
         if (dbOpt.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Selecciona una base de datos antes de procesar el lote.",
-                    "Sin base de datos", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Select a database before processing the batch.",
+                            "Selecciona una base de datos antes de procesar el lote."),
+                    ui("No database", "Sin base de datos"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         String selectedDb = dbOpt.get();
@@ -802,41 +846,67 @@ public class DataManagementView extends JFrame {
             }
             
             // Show result message
-            StringBuilder message = new StringBuilder();
-            message.append("Successfully processed ").append(processedCount).append(" expressions!");
+            String messageEn = formatBulkProcessingResultMessage(processedCount, ignoredCount, ignoredLines, false);
+            String messageEs = formatBulkProcessingResultMessage(processedCount, ignoredCount, ignoredLines, true);
             
-            if (ignoredCount > 0) {
-                message.append("\n\n").append(ignoredCount).append(" lines were ignored because they don't match the required format:");
-                message.append("\n\nFormat: Spanish - English");
-                message.append("\nExample: Casa - house, home");
-                message.append("\nSupported separators: -, =, ,");
-                
-                if (ignoredCount <= 5) {
-                    message.append("\n\nIgnored lines:");
-                    for (String ignoredLine : ignoredLines) {
-                        message.append("\n• ").append(ignoredLine);
-                    }
-                } else {
-                    message.append("\n\nFirst few ignored lines:");
-                    for (int i = 0; i < Math.min(3, ignoredLines.size()); i++) {
-                        message.append("\n• ").append(ignoredLines.get(i));
-                    }
-                    message.append("\n... and ").append(ignoredCount - 3).append(" more");
-                }
-            }
-            
-            JOptionPane.showMessageDialog(this, message.toString(), "Bulk Processing Complete", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, ui(messageEn, messageEs),
+                    ui("Bulk Processing Complete", "Procesamiento en lote completado"),
+                    JOptionPane.INFORMATION_MESSAGE);
             
             // Clear the text area
             bulkTextArea.setText("");
             log.info("Bulk data processed: {} expressions, {} lines ignored", processedCount, ignoredCount);
             
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error processing bulk data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    ui("Error processing bulk data: ", "Error al procesar el lote: ") + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             log.error("Error processing bulk data", e);
         }
     }
     
+    private String formatBulkProcessingResultMessage(int processedCount, int ignoredCount,
+            List<String> ignoredLines, boolean spanish) {
+        StringBuilder message = new StringBuilder();
+        if (spanish) {
+            message.append("Se procesaron correctamente ").append(processedCount).append(" expresiones.");
+        } else {
+            message.append("Successfully processed ").append(processedCount).append(" expressions!");
+        }
+
+        if (ignoredCount > 0) {
+            if (spanish) {
+                message.append("\n\n").append(ignoredCount)
+                        .append(" líneas se ignoraron porque no coinciden con el formato requerido:");
+                message.append("\n\nFormato: Español - Inglés");
+                message.append("\nEjemplo: Casa - house, home");
+                message.append("\nSeparadores admitidos: -, =, ,");
+            } else {
+                message.append("\n\n").append(ignoredCount)
+                        .append(" lines were ignored because they don't match the required format:");
+                message.append("\n\nFormat: Spanish - English");
+                message.append("\nExample: Casa - house, home");
+                message.append("\nSupported separators: -, =, ,");
+            }
+
+            if (ignoredCount <= 5) {
+                message.append(spanish ? "\n\nLíneas ignoradas:" : "\n\nIgnored lines:");
+                for (String ignoredLine : ignoredLines) {
+                    message.append("\n• ").append(ignoredLine);
+                }
+            } else {
+                message.append(spanish ? "\n\nPrimeras líneas ignoradas:" : "\n\nFirst few ignored lines:");
+                for (int i = 0; i < Math.min(3, ignoredLines.size()); i++) {
+                    message.append("\n• ").append(ignoredLines.get(i));
+                }
+                message.append(spanish
+                        ? "\n... y " + (ignoredCount - 3) + " más"
+                        : "\n... and " + (ignoredCount - 3) + " more");
+            }
+        }
+        return message.toString();
+    }
+
     /**
      * Turns one bulk Spanish side into one or more synonyms. Spaces are preserved inside each phrase.
      * Example: {@code casa / hogar - house} yields two Spanish entries for the same English side logic.

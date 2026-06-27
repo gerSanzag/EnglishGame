@@ -20,10 +20,10 @@ public enum AppGameMode {
             "english_definition",
             "english_definition_expression",
             "definition",
-            "Definición (inglés → expresión)",
+            "Definition (English → expression)",
             "Definition",
             "Type the English expression for:\n\n%s",
-            "Definición",
+            "Definition",
             "Format: Definition - English expression (one per line)",
             "Example: To deal with something continuously - live and breathe"
     );
@@ -118,11 +118,16 @@ public enum AppGameMode {
     }
 
     public String duplicatePairMessage(String databaseName, String prompt, String english) {
-        String promptLabel = this == CLASSIC ? "Español" : "Definición";
-        return "Registro rechazado por duplicado exacto.\n\n"
-                + "Ya existe en la base \"" + databaseName + "\" el mismo par:\n"
-                + "• " + promptLabel + ": " + prompt + "\n"
-                + "• Inglés: " + english;
+        if (this == CLASSIC) {
+            return "Registro rechazado por duplicado exacto.\n\n"
+                    + "Ya existe en la base \"" + databaseName + "\" el mismo par:\n"
+                    + "• Español: " + prompt + "\n"
+                    + "• Inglés: " + english;
+        }
+        return "Entry rejected: exact duplicate.\n\n"
+                + "The same pair already exists in \"" + databaseName + "\":\n"
+                + "• Definition: " + prompt + "\n"
+                + "• English: " + english;
     }
 
     public static AppGameMode fromProgramArgument(String raw) {

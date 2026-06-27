@@ -6,8 +6,8 @@ import java.util.List;
  * Bases de datos usadas solo en el flujo Review (no aparecen en juego, View Words ni Manage Data).
  * <p>
  * Reglas al fallar en review: −5 al score. En {@link #LEARNED_WORDS_KEY}, si queda por debajo de
- * {@link #REVIEW_DEMOTION_UNDER_SCORE} vuelve a práctica; en {@link #WORDS_DEFINITELY_LEARNED_KEY} vuelve a
- * {@link #LEARNED_WORDS_KEY}.
+ * {@link #REVIEW_DEMOTION_UNDER_SCORE} vuelve a práctica; en {@link #WORDS_DEFINITELY_LEARNED_KEY}, si queda por
+ * debajo de {@link #LEARNED_REVIEW_GRADUATE_SCORE} vuelve a {@link #LEARNED_WORDS_KEY}.
  */
 public final class ReviewDatabases {
 
@@ -22,6 +22,11 @@ public final class ReviewDatabases {
 
     /** Al alcanzar esta puntuación en {@link #LEARNED_WORDS_KEY} pasa a {@link #WORDS_DEFINITELY_LEARNED_KEY}. */
     public static final int LEARNED_REVIEW_GRADUATE_SCORE = 28;
+    /**
+     * Tras un fallo en {@link #WORDS_DEFINITELY_LEARNED_KEY}, score por debajo de este umbral → vuelta a
+     * {@link #LEARNED_WORDS_KEY} (mismo valor que la promoción).
+     */
+    public static final int DEFINITELY_REVIEW_DEMOTION_UNDER_SCORE = LEARNED_REVIEW_GRADUATE_SCORE;
     /** Puntuación de dominio final en {@link #WORDS_DEFINITELY_LEARNED_KEY}. */
     public static final int DEFINITELY_REVIEW_MASTER_SCORE = 35;
 

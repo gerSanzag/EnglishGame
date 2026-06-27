@@ -42,7 +42,7 @@ public record LearnedWordsReviewResult(
         MASTERED_REMOVED_EVERYWHERE,
         /** {@code learned_words} alcanzó 28: pasa a {@code words_definitely_learned} con 28. */
         PROMOTED_TO_DEFINITELY_LEARNED,
-        /** Fallo en {@code words_definitely_learned} con score &lt; 21: vuelve a {@code learned_words}. */
+        /** Fallo en {@code words_definitely_learned} con score &lt; 28: vuelve a {@code learned_words}. */
         RETURNED_TO_LEARNED
     }
 }
